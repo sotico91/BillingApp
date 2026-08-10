@@ -1,0 +1,246 @@
+import { useEffect, useState } from 'react';
+import {
+  Alert,
+  Modal,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import { useSettings } from '@/src/hooks/useSettings';
+import { useLanguage } from '@/src/i18n/LanguageContext';
+import { palette, radii } from '@/src/theme/colors';
+
+type Props = {
+  light?: boolean;
+};
+
+export function ProfileMenuButton({ light = true }: Props) {
+  const insets = useSafeAreaInsets();
+  const { t } = useLanguage();
+  const { settings, updateUserName } = useSettings();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [name, setName] = useState(settings.userName);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (editOpen) setName(settings.userName);
+  }, [editOpen, settings.userName]);
+
+  function openEditName() {
+    setMenuOpen(false);
+    setEditOpen(true);
+  }
+
+  async function saveName() {
+    const trimmed = name.trim();
+    if (!trimmed) {
+      Alert.alert(t('onboard.nameTitle'), t('onboard.nameNeed'));
+      return;
+    }
+    setSaving(true);
+    try {
+      await updateUserName(trimmed);
+      setEditOpen(false);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <>
+      <Pressable
+        onPress={() => setMenuOpen(true)}
+        hitSlop={10}
+        style={[styles.dotsBtn, light && styles.dotsBtnLight]}
+        accessibilityLabel={t('home.profileMenu')}>
+        <Text style={[styles.dots, light && styles.dotsLight]}>⋯</Text>
+      </Pressable>
+
+      <Modal
+        visible={menuOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setMenuOpen(false)}>
+        <Pressable style={styles.menuBackdrop} onPress={() => setMenuOpen(false)}>
+          <View style={[styles.menuSheet, { marginTop: insets.top + 56 }]}>
+            <Pressable onPress={openEditName} style={styles.menuItem}>
+              <Text style={styles.menuItemText}>{t('home.editName')}</Text>
+            </Pressable>
+            <Pressable onPress={() => setMenuOpen(false)} style={styles.menuCancel}>
+              <Text style={styles.menuCancelText}>{t('history.cancel')}</Text>
+            </Pressable>
+          </View>
+        </Pressable>
+      </Modal>
+
+      <Modal
+        visible={editOpen}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setEditOpen(false)}>
+        <View
+          style={[
+            styles.editBackdrop,
+            { paddingTop: insets.top + 12, paddingBottom: insets.bottom + 12 },
+          ]}>
+          <View style={styles.editSheet}>
+            <Text style={styles.editTitle}>{t('home.editNameTitle')}</Text>
+            <Text style={styles.editCopy}>{t('home.editNameBody')}</Text>
+            <TextInput
+              value={name}
+              onChangeText={setName}
+              placeholder={t('onboard.namePlaceholder')}
+              placeholderTextColor={palette.inkSoft}
+              autoCapitalize="words"
+              autoCorrect={false}
+              autoFocus
+              maxLength={40}
+              style={styles.nameInput}
+              returnKeyType="done"
+              onSubmitEditing={() => void saveName()}
+            />
+            <View style={styles.editActions}>
+              <Pressable onPress={() => setEditOpen(false)} style={styles.secondary}>
+                <Text style={styles.secondaryText}>{t('history.cancel')}</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => void saveName()}
+                disabled={saving}
+                style={[styles.primary, saving && { opacity: 0.7 }]}>
+                <Text style={styles.primaryText}>
+                  {saving ? t('add.saving') : t('home.saveName')}
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </>
+  );
+}
+
+const styles = StyleSheet.create({
+  dotsBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(8,20,28,0.08)',
+  },
+  dotsBtnLight: {
+    backgroundColor: 'rgba(255,255,255,0.22)',
+  },
+  dots: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 22,
+    color: palette.ink,
+    marginTop: -6,
+  },
+  dotsLight: {
+    color: palette.white,
+  },
+  menuBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(8,20,28,0.35)',
+    alignItems: 'flex-end',
+    paddingHorizontal: 18,
+  },
+  menuSheet: {
+    minWidth: 200,
+    backgroundColor: palette.surfaceSolid,
+    borderRadius: radii.md,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+  },
+  menuItem: {
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
+  menuItemText: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 15,
+    color: palette.ink,
+  },
+  menuCancel: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: palette.border,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
+  menuCancelText: {
+    fontFamily: 'DMSans_500Medium',
+    fontSize: 15,
+    color: palette.inkMuted,
+  },
+  editBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(8,20,28,0.72)',
+    justifyContent: 'center',
+    paddingHorizontal: 18,
+  },
+  editSheet: {
+    backgroundColor: palette.surfaceSolid,
+    borderRadius: radii.xl,
+    padding: 22,
+  },
+  editTitle: {
+    fontFamily: 'Fraunces_700Bold',
+    fontSize: 26,
+    color: palette.ink,
+  },
+  editCopy: {
+    marginTop: 6,
+    marginBottom: 14,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
+    color: palette.inkMuted,
+    lineHeight: 20,
+  },
+  nameInput: {
+    borderWidth: 1.5,
+    borderColor: palette.accent,
+    backgroundColor: '#FFF8F4',
+    borderRadius: radii.md,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontFamily: 'Fraunces_600SemiBold',
+    fontSize: 22,
+    color: palette.ink,
+  },
+  editActions: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 16,
+  },
+  secondary: {
+    flex: 1,
+    backgroundColor: '#EEF3F6',
+    borderRadius: 14,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  secondaryText: {
+    fontFamily: 'DMSans_600SemiBold',
+    color: palette.inkMuted,
+  },
+  primary: {
+    flex: 1.3,
+    backgroundColor: palette.accent,
+    borderRadius: 14,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  primaryText: {
+    fontFamily: 'DMSans_600SemiBold',
+    color: palette.white,
+  },
+});

@@ -1,0 +1,414 @@
+import { router } from 'expo-router';
+import { useMemo, useState } from 'react';
+import {
+  Alert,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import Animated, { FadeInDown, ZoomIn } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import { useFinance } from '@/src/hooks/useFinance';
+import { useMoney } from '@/src/hooks/useMoney';
+import { useLanguage } from '@/src/i18n/LanguageContext';
+import type { TranslationKey } from '@/src/i18n/translations';
+import { palette, radii } from '@/src/theme/colors';
+
+export function FloatingGlanceFab() {
+  const insets = useSafeAreaInsets();
+  const { t } = useLanguage();
+  const { format } = useMoney();
+  const {
+    insightsForPeriod,
+    totalForPeriod,
+    availableCash,
+    budgetStatus,
+    resetFinance,
+  } = useFinance();
+  const [open, setOpen] = useState(false);
+  const [resetting, setResetting] = useState(false);
+
+  const concepts = useMemo(
+    () => insightsForPeriod('mes').slice(0, 6),
+    [insightsForPeriod]
+  );
+  const expenses = totalForPeriod('mes', 'expense');
+  const income = totalForPeriod('mes', 'income');
+  const alerts = budgetStatus.filter((b) => b.ratio >= 0.8).length;
+
+  function confirmReset() {
+    Alert.alert(t('fab.resetTitle'), t('fab.resetMessage'), [
+      { text: t('history.cancel'), style: 'cancel' },
+      {
+        text: t('fab.resetConfirm'),
+        style: 'destructive',
+        onPress: () => {
+          void (async () => {
+            setResetting(true);
+            try {
+              await resetFinance();
+              setOpen(false);
+            } finally {
+              setResetting(false);
+            }
+          })();
+        },
+      },
+    ]);
+  }
+
+  return (
+    <>
+      <Animated.View
+        entering={ZoomIn.springify()}
+        style={[styles.fabWrap, { bottom: Math.max(insets.bottom, 12) + 78 }]}>
+        <Pressable
+          onPress={() => setOpen(true)}
+          style={styles.fab}
+          accessibilityLabel={t('fab.open')}>
+          <Text style={styles.fabGlyph}>◎</Text>
+        </Pressable>
+      </Animated.View>
+
+      <Modal
+        visible={open}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setOpen(false)}>
+        <View style={styles.backdrop}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => setOpen(false)} />
+          <Animated.View
+            entering={FadeInDown.springify()}
+            style={[styles.panel, { marginBottom: Math.max(insets.bottom, 12) + 90 }]}>
+            <View style={styles.panelHeader}>
+              <View>
+                <Text style={styles.panelEyebrow}>{t('fab.eyebrow')}</Text>
+                <Text style={styles.panelTitle}>{t('fab.title')}</Text>
+              </View>
+              <Pressable onPress={() => setOpen(false)} hitSlop={12}>
+                <Text style={styles.close}>✕</Text>
+              </Pressable>
+            </View>
+
+            <View style={styles.kpiRow}>
+              <Kpi label={t('home.expenses')} value={format(expenses)} tone="danger" />
+              <Kpi label={t('home.income')} value={format(income)} tone="good" />
+              <Kpi label={t('home.available')} value={format(availableCash)} tone="neutral" />
+            </View>
+
+            {alerts > 0 ? (
+              <Text style={styles.alertLine}>
+                {t('fab.budgetAlerts', { count: alerts })}
+              </Text>
+            ) : null}
+
+            <Text style={styles.section}>{t('fab.byConcept')}</Text>
+            <ScrollView style={styles.list} showsVerticalScrollIndicator={false}>
+              {concepts.length === 0 ? (
+                <Text style={styles.empty}>{t('fab.emptyConcepts')}</Text>
+              ) : (
+                concepts.map((item) => {
+                  const budget = budgetStatus.find(
+                    (b) => b.categoryId === item.categoryId
+                  );
+                  const over = budget && budget.ratio >= 1;
+                  const near = budget && budget.ratio >= 0.8 && budget.ratio < 1;
+                  return (
+                    <View
+                      key={item.categoryId}
+                      style={[
+                        styles.conceptRow,
+                        over && styles.conceptDanger,
+                        near && styles.conceptWarn,
+                      ]}>
+                      <View style={styles.conceptLeft}>
+                        <View
+                          style={[styles.swatch, { backgroundColor: item.color }]}
+                        />
+                        <View style={{ flex: 1 }}>
+                          <Text style={styles.conceptName}>
+                            {t(`category.${item.categoryId}` as TranslationKey)}
+                          </Text>
+                          <Text style={styles.conceptMeta}>
+                            {item.percent.toFixed(0)}% · {item.count}{' '}
+                            {item.count === 1
+                              ? t('insights.expense')
+                              : t('insights.expenses')}
+                          </Text>
+                        </View>
+                      </View>
+                      <Text
+                        style={[
+                          styles.conceptAmount,
+                          over && styles.textDanger,
+                        ]}>
+                        {format(item.total)}
+                      </Text>
+                    </View>
+                  );
+                })
+              )}
+            </ScrollView>
+
+            <View style={styles.actions}>
+              <Pressable
+                style={styles.secondary}
+                onPress={confirmReset}
+                disabled={resetting}>
+                <Text style={styles.secondaryText}>
+                  {resetting ? t('fab.resetting') : t('fab.reset')}
+                </Text>
+              </Pressable>
+              <Pressable
+                style={styles.primary}
+                onPress={() => {
+                  setOpen(false);
+                  router.push('/agregar');
+                }}>
+                <Text style={styles.primaryText}>{t('fab.add')}</Text>
+              </Pressable>
+            </View>
+            <Text style={styles.footnote}>{t('fab.footnote')}</Text>
+          </Animated.View>
+        </View>
+      </Modal>
+    </>
+  );
+}
+
+function Kpi({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone: 'good' | 'danger' | 'neutral';
+}) {
+  return (
+    <View
+      style={[
+        styles.kpi,
+        tone === 'good' && styles.kpiGood,
+        tone === 'danger' && styles.kpiDanger,
+      ]}>
+      <Text style={styles.kpiLabel}>{label}</Text>
+      <Text
+        style={[
+          styles.kpiValue,
+          tone === 'good' && styles.textGood,
+          tone === 'danger' && styles.textDanger,
+        ]}>
+        {value}
+      </Text>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  fabWrap: {
+    position: 'absolute',
+    right: 18,
+    zIndex: 40,
+  },
+  fab: {
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    backgroundColor: palette.accent,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.28,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 8,
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.35)',
+  },
+  fabGlyph: {
+    fontSize: 22,
+    color: palette.white,
+    fontFamily: 'Fraunces_700Bold',
+  },
+  backdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(8,20,28,0.55)',
+    justifyContent: 'flex-end',
+    paddingHorizontal: 14,
+  },
+  panel: {
+    backgroundColor: palette.surfaceSolid,
+    borderRadius: radii.xl,
+    padding: 18,
+    maxHeight: '78%',
+    borderWidth: 1,
+    borderColor: palette.border,
+  },
+  panelHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 12,
+  },
+  panelEyebrow: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 11,
+    color: palette.inkSoft,
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+  },
+  panelTitle: {
+    marginTop: 2,
+    fontFamily: 'Fraunces_700Bold',
+    fontSize: 24,
+    color: palette.ink,
+  },
+  close: {
+    fontSize: 18,
+    color: palette.inkMuted,
+    padding: 4,
+  },
+  kpiRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 10,
+  },
+  kpi: {
+    flex: 1,
+    backgroundColor: '#F7FAFC',
+    borderRadius: 14,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: palette.border,
+  },
+  kpiGood: {
+    backgroundColor: palette.successSoft,
+    borderColor: 'rgba(31,157,108,0.3)',
+  },
+  kpiDanger: {
+    backgroundColor: palette.dangerSoft,
+    borderColor: 'rgba(214,69,69,0.3)',
+  },
+  kpiLabel: {
+    fontFamily: 'DMSans_500Medium',
+    fontSize: 10,
+    color: palette.inkSoft,
+    textTransform: 'uppercase',
+  },
+  kpiValue: {
+    marginTop: 4,
+    fontFamily: 'Fraunces_600SemiBold',
+    fontSize: 14,
+    color: palette.ink,
+  },
+  alertLine: {
+    fontFamily: 'DMSans_500Medium',
+    fontSize: 12,
+    color: palette.danger,
+    marginBottom: 8,
+  },
+  section: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 13,
+    color: palette.inkMuted,
+    marginBottom: 8,
+  },
+  list: {
+    maxHeight: 220,
+  },
+  empty: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
+    color: palette.inkSoft,
+    paddingVertical: 12,
+  },
+  conceptRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+    borderRadius: 12,
+    marginBottom: 6,
+    backgroundColor: '#F7FAFC',
+  },
+  conceptDanger: {
+    backgroundColor: palette.dangerSoft,
+  },
+  conceptWarn: {
+    backgroundColor: palette.warnSoft,
+  },
+  conceptLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    flex: 1,
+  },
+  swatch: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  conceptName: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 14,
+    color: palette.ink,
+  },
+  conceptMeta: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 11,
+    color: palette.inkSoft,
+    marginTop: 2,
+  },
+  conceptAmount: {
+    fontFamily: 'Fraunces_600SemiBold',
+    fontSize: 15,
+    color: palette.ink,
+  },
+  actions: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 12,
+  },
+  secondary: {
+    flex: 1,
+    backgroundColor: palette.dangerSoft,
+    borderRadius: 14,
+    paddingVertical: 13,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(214,69,69,0.25)',
+  },
+  secondaryText: {
+    fontFamily: 'DMSans_600SemiBold',
+    color: palette.danger,
+    fontSize: 13,
+  },
+  primary: {
+    flex: 1.2,
+    backgroundColor: palette.accent,
+    borderRadius: 14,
+    paddingVertical: 13,
+    alignItems: 'center',
+  },
+  primaryText: {
+    fontFamily: 'DMSans_600SemiBold',
+    color: palette.white,
+    fontSize: 13,
+  },
+  footnote: {
+    marginTop: 10,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 11,
+    color: palette.inkSoft,
+    lineHeight: 15,
+  },
+  textGood: { color: palette.success },
+  textDanger: { color: palette.danger },
+});

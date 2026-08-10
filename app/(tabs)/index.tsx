@@ -1,0 +1,599 @@
+import { router } from 'expo-router';
+import { useState } from 'react';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from 'react-native-reanimated';
+
+import { CategoryBreakdown } from '@/src/components/CategoryBreakdown';
+import { EditTransactionModal } from '@/src/components/EditTransactionModal';
+import { ExpenseRow } from '@/src/components/ExpenseRow';
+import { FadeInBlock } from '@/src/components/FadeInBlock';
+import { LanguageSwitcher } from '@/src/components/LanguageSwitcher';
+import { ProfileMenuButton } from '@/src/components/ProfileMenuButton';
+import { QuickAddBar } from '@/src/components/QuickAddBar';
+import { SavingsDecor } from '@/src/components/SavingsDecor';
+import { ScreenBackground } from '@/src/components/ScreenBackground';
+import { useFinance } from '@/src/hooks/useFinance';
+import { useMoney } from '@/src/hooks/useMoney';
+import { useSettings } from '@/src/hooks/useSettings';
+import { useLanguage } from '@/src/i18n/LanguageContext';
+import type { TranslationKey } from '@/src/i18n/translations';
+import { palette, radii } from '@/src/theme/colors';
+import type { Transaction } from '@/src/types/finance';
+import { buildSmartInsights } from '@/src/utils/smartInsights';
+import {
+  toneFromExpensePressure,
+  toneFromSavings,
+  type SignalTone,
+} from '@/src/utils/signalTone';
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
+export default function HomeScreen() {
+  const { t } = useLanguage();
+  const { format } = useMoney();
+  const { settings } = useSettings();
+  const {
+    totalForPeriod,
+    insightsForPeriod,
+    transactionsForPeriod,
+    transactions,
+    loading,
+    availableCash,
+    netWorth,
+    debts,
+    antForPeriod,
+    budgetStatus,
+    removeTransaction,
+    canEditTransaction,
+  } = useFinance();
+  const [editing, setEditing] = useState<Transaction | null>(null);
+
+  const scale = useSharedValue(1);
+  const ctaStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const displayName = settings.userName.trim();
+  const greeting = displayName
+    ? t('home.greeting', { name: displayName })
+    : t('home.greetingFallback');
+  const spaceLabel = displayName
+    ? t('home.spaceLabel', { name: displayName })
+    : t('home.yours');
+  const initial = (displayName.charAt(0) || 'B').toUpperCase();
+
+  const income = totalForPeriod('mes', 'income');
+  const expenses = totalForPeriod('mes', 'expense');
+  const savings = income - expenses;
+  const debtTotal = debts.reduce((s, d) => s + d.balance, 0);
+  const ant = antForPeriod('mes');
+  const recent = transactionsForPeriod('hoy');
+  const monthInsights = insightsForPeriod('mes').slice(0, 5);
+  const smart = buildSmartInsights(transactions, t, format);
+  const alerts = budgetStatus.filter((b) => b.ratio >= 0.8);
+  const worstBudgetRatio = Math.max(0, ...budgetStatus.map((b) => b.ratio));
+  const savingsTone = toneFromSavings(savings);
+  const expensesTone = toneFromExpensePressure({
+    expenses,
+    income,
+    worstBudgetRatio,
+  });
+  const antShare = expenses > 0 ? ant.total / expenses : 0;
+  const antTone: SignalTone =
+    antShare >= 0.25 ? 'danger' : antShare >= 0.15 ? 'warn' : ant.total > 0 ? 'good' : 'neutral';
+
+  const mostFrequent = [...monthInsights].sort((a, b) => b.count - a.count)[0];
+  const showFrequent =
+    mostFrequent && mostFrequent.count >= 3
+      ? mostFrequent
+      : undefined;
+
+  const todayHint =
+    recent.length === 0
+      ? t('home.noExpensesToday')
+      : t(recent.length === 1 ? 'home.transactionsToday' : 'home.transactionsToday_other', {
+          count: recent.length,
+        });
+
+  function confirmDelete(tx: Transaction) {
+    if (!canEditTransaction(tx)) {
+      Alert.alert(t('history.deleteTitle'), t('history.onlyOwn'));
+      return;
+    }
+    Alert.alert(t('history.deleteTitle'), t('history.deleteMessage'), [
+      { text: t('history.cancel'), style: 'cancel' },
+      {
+        text: t('history.delete'),
+        style: 'destructive',
+        onPress: () => {
+          void removeTransaction(tx.id);
+        },
+      },
+    ]);
+  }
+
+  function openEdit(tx: Transaction) {
+    if (!canEditTransaction(tx)) {
+      Alert.alert(t('history.editTitle'), t('history.onlyOwn'));
+      return;
+    }
+    setEditing(tx);
+  }
+
+  return (
+    <ScreenBackground>
+      <ScrollView
+        style={styles.screen}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}>
+        <FadeInBlock>
+          <View style={styles.heroRow}>
+            <View style={styles.heroCopy}>
+              <Text style={styles.brandMark}>{t('brand.mark')}</Text>
+              <Text style={styles.greeting}>{greeting}</Text>
+              <Text style={styles.brand}>{t('brand.name')}</Text>
+              <Text style={styles.spaceLabel}>{spaceLabel}</Text>
+              <Text style={styles.subtitle}>{t('home.subtitle')}</Text>
+            </View>
+            <View style={styles.heroAside}>
+              <View style={styles.avatarRow}>
+                <ProfileMenuButton />
+                <View style={styles.avatar}>
+                  <Text style={styles.avatarText}>{initial}</Text>
+                </View>
+              </View>
+              <SavingsDecor />
+            </View>
+          </View>
+        </FadeInBlock>
+
+        <FadeInBlock index={1}>
+          <LanguageSwitcher />
+        </FadeInBlock>
+
+        <FadeInBlock index={2}>
+          <View style={styles.dashGrid}>
+            <DashTile label={t('home.income')} value={format(loading ? 0 : income)} tone="good" />
+            <DashTile
+              label={t('home.expenses')}
+              value={format(loading ? 0 : expenses)}
+              tone={expensesTone}
+            />
+            <DashTile
+              label={t('home.available')}
+              value={format(availableCash)}
+              tone={availableCash < expenses * 0.2 && expenses > 0 ? 'warn' : 'neutral'}
+            />
+            <DashTile
+              label={t('home.savings')}
+              value={format(savings)}
+              tone={savingsTone}
+              hint={
+                savingsTone === 'good'
+                  ? t('home.savingsGood')
+                  : savingsTone === 'danger'
+                    ? t('home.savingsBad')
+                    : undefined
+              }
+            />
+            <DashTile
+              label={t('home.debts')}
+              value={format(debtTotal)}
+              tone={debtTotal > 0 ? 'warn' : 'good'}
+            />
+            <DashTile
+              label={t('home.netWorth')}
+              value={format(netWorth.net)}
+              tone={toneFromSavings(netWorth.net)}
+            />
+          </View>
+          {!loading && expenses === 0 ? (
+            <Text style={styles.monthFresh}>
+              {t('home.monthFresh', { amount: format(0) })}
+            </Text>
+          ) : null}
+          <Text style={styles.todayHint}>{todayHint}</Text>
+        </FadeInBlock>
+
+        <FadeInBlock index={3}>
+          <Text style={styles.sectionTitle}>{t('home.attention')}</Text>
+          {smart.slice(0, 3).map((card) => (
+            <View
+              key={card.id}
+              style={[
+                styles.attentionCard,
+                card.tone === 'warn' && styles.warn,
+                card.tone === 'good' && styles.good,
+                card.tone === 'info' && styles.info,
+              ]}>
+              <Text style={styles.attentionText}>{card.text}</Text>
+            </View>
+          ))}
+          {alerts.map((a) => (
+            <View
+              key={a.categoryId}
+              style={[
+                styles.attentionCard,
+                a.ratio >= 1 ? styles.danger : styles.warn,
+              ]}>
+              <Text
+                style={[
+                  styles.attentionText,
+                  a.ratio >= 1 && styles.attentionDangerText,
+                ]}>
+                {t(a.ratio >= 1 ? 'insights.overBudget' : 'plan.nearLimit')}:{' '}
+                {t(`category.${a.categoryId}` as TranslationKey)} (
+                {Math.round(a.ratio * 100)}%)
+              </Text>
+            </View>
+          ))}
+          {showFrequent ? (
+            <View style={[styles.attentionCard, styles.danger]}>
+              <Text style={[styles.attentionText, styles.attentionDangerText]}>
+                {t('home.frequentAlert', {
+                  category: t(`category.${showFrequent.categoryId}` as TranslationKey),
+                  count: showFrequent.count,
+                })}
+              </Text>
+            </View>
+          ) : null}
+        </FadeInBlock>
+
+        <FadeInBlock index={4}>
+          <QuickAddBar />
+        </FadeInBlock>
+
+        <FadeInBlock index={5}>
+          <AnimatedPressable
+            onPress={() => router.push('/agregar')}
+            onPressIn={() => {
+              scale.value = withSpring(0.97, { damping: 16, stiffness: 240 });
+            }}
+            onPressOut={() => {
+              scale.value = withSpring(1, { damping: 16, stiffness: 240 });
+            }}
+            style={[styles.cta, ctaStyle]}>
+            <Text style={styles.ctaPlus}>+</Text>
+            <Text style={styles.ctaText}>{t('home.addExpense')}</Text>
+          </AnimatedPressable>
+        </FadeInBlock>
+
+        {recent.length > 0 ? (
+          <FadeInBlock index={6}>
+            <Text style={styles.sectionTitle}>{t('home.todayList')}</Text>
+            <View style={styles.todayList}>
+              {recent.slice(0, 8).map((tx, index) => {
+                const mine = canEditTransaction(tx);
+                return (
+                  <ExpenseRow
+                    key={tx.id}
+                    expense={tx}
+                    last={index === Math.min(recent.length, 8) - 1}
+                    showRegistrant={false}
+                    onEdit={mine ? () => openEdit(tx) : undefined}
+                    onDelete={mine ? () => confirmDelete(tx) : undefined}
+                  />
+                );
+              })}
+            </View>
+          </FadeInBlock>
+        ) : null}
+
+        <FadeInBlock index={7}>
+          <Text style={styles.sectionTitle}>{t('home.antTitle')}</Text>
+          <View
+            style={[
+              styles.antBox,
+              antTone === 'danger' && styles.boxDanger,
+              antTone === 'warn' && styles.boxWarn,
+              antTone === 'good' && styles.boxGood,
+            ]}>
+            <Text
+              style={[
+                styles.antTotal,
+                antTone === 'danger' && styles.textDanger,
+                antTone === 'good' && styles.textGood,
+              ]}>
+              {t('home.antTotal')}: {format(ant.total)}
+            </Text>
+            <Text
+              style={[
+                styles.antHint,
+                antTone === 'danger' && styles.textDanger,
+                antTone === 'good' && styles.textGood,
+              ]}>
+              {antTone === 'danger' || antTone === 'warn'
+                ? t('home.antAlert')
+                : t('home.antOk')}
+            </Text>
+            {ant.items.map((item) => (
+              <Text key={item.categoryId} style={styles.antLine}>
+                {t(`category.${item.categoryId}` as TranslationKey)}: {format(item.amount)}
+              </Text>
+            ))}
+          </View>
+        </FadeInBlock>
+
+        <FadeInBlock index={8}>
+          <Text style={styles.sectionTitle}>{t('home.todayByCategory')}</Text>
+          <CategoryBreakdown
+            insights={monthInsights}
+            emptyLabel={t('home.emptyCategory')}
+            budgetStatus={budgetStatus}
+          />
+        </FadeInBlock>
+      </ScrollView>
+
+      <EditTransactionModal
+        visible={!!editing}
+        transaction={editing}
+        onClose={() => setEditing(null)}
+      />
+    </ScreenBackground>
+  );
+}
+
+function DashTile({
+  label,
+  value,
+  tone = 'neutral',
+  hint,
+}: {
+  label: string;
+  value: string;
+  tone?: SignalTone;
+  hint?: string;
+}) {
+  return (
+    <View
+      style={[
+        styles.tile,
+        tone === 'danger' && styles.boxDanger,
+        tone === 'warn' && styles.boxWarn,
+        tone === 'good' && styles.boxGood,
+      ]}>
+      <Text
+        style={[
+          styles.tileLabel,
+          tone === 'danger' && styles.textDanger,
+          tone === 'good' && styles.textGood,
+          tone === 'warn' && styles.textWarn,
+        ]}>
+        {label}
+      </Text>
+      <Text
+        style={[
+          styles.tileValue,
+          tone === 'danger' && styles.textDanger,
+          tone === 'good' && styles.textGood,
+          tone === 'warn' && styles.textWarn,
+        ]}>
+        {value}
+      </Text>
+      {hint ? (
+        <Text
+          style={[
+            styles.tileHint,
+            tone === 'danger' && styles.textDanger,
+            tone === 'good' && styles.textGood,
+          ]}>
+          {hint}
+        </Text>
+      ) : null}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  screen: { flex: 1 },
+  content: { paddingHorizontal: 22, paddingBottom: 120, gap: 16 },
+  heroRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 8,
+    alignItems: 'flex-start',
+  },
+  heroCopy: { flex: 1, paddingRight: 4 },
+  brandMark: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 12,
+    color: palette.gold,
+    letterSpacing: 4.5,
+  },
+  greeting: {
+    marginTop: 8,
+    fontFamily: 'Fraunces_700Bold',
+    fontSize: 28,
+    color: palette.gold,
+    letterSpacing: -0.6,
+  },
+  brand: {
+    fontFamily: 'Fraunces_700Bold',
+    fontSize: 36,
+    color: palette.brand,
+    letterSpacing: -1.2,
+  },
+  spaceLabel: {
+    marginTop: 2,
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 14,
+    color: palette.brandMuted,
+  },
+  subtitle: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
+    color: palette.brandMuted,
+    marginTop: 4,
+  },
+  heroAside: {
+    alignItems: 'center',
+    gap: 10,
+  },
+  avatarRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  avatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: palette.accent,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.55)',
+  },
+  avatarText: {
+    fontFamily: 'Fraunces_700Bold',
+    fontSize: 20,
+    color: palette.white,
+  },
+  dashGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  tile: {
+    width: '48%',
+    backgroundColor: palette.surfaceSolid,
+    borderRadius: radii.md,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: palette.border,
+  },
+  tileLabel: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 11,
+    color: palette.inkMuted,
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+  },
+  tileValue: {
+    marginTop: 6,
+    fontFamily: 'Fraunces_600SemiBold',
+    fontSize: 20,
+    color: palette.ink,
+  },
+  tileHint: {
+    marginTop: 6,
+    fontFamily: 'DMSans_500Medium',
+    fontSize: 11,
+    color: palette.inkMuted,
+    lineHeight: 14,
+  },
+  todayHint: {
+    marginTop: 8,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
+    color: palette.brandMuted,
+  },
+  monthFresh: {
+    marginTop: 10,
+    fontFamily: 'DMSans_500Medium',
+    fontSize: 13,
+    color: palette.brand,
+    lineHeight: 18,
+  },
+  todayList: {
+    backgroundColor: palette.surfaceSolid,
+    borderRadius: radii.lg,
+    borderWidth: 1,
+    borderColor: palette.border,
+    paddingHorizontal: 16,
+  },
+  sectionTitle: {
+    fontFamily: 'Fraunces_600SemiBold',
+    fontSize: 24,
+    color: palette.brand,
+    marginBottom: 8,
+  },
+  attentionCard: {
+    backgroundColor: 'rgba(255,255,255,0.92)',
+    borderRadius: 14,
+    padding: 12,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: palette.border,
+  },
+  warn: {
+    backgroundColor: palette.warnSoft,
+    borderColor: 'rgba(255,107,74,0.35)',
+  },
+  danger: {
+    backgroundColor: palette.dangerSoft,
+    borderColor: 'rgba(214,69,69,0.4)',
+  },
+  good: {
+    backgroundColor: palette.successSoft,
+    borderColor: 'rgba(31,157,108,0.35)',
+  },
+  info: {
+    backgroundColor: palette.tealSoft,
+    borderColor: 'rgba(46,196,182,0.35)',
+  },
+  attentionText: {
+    fontFamily: 'DMSans_500Medium',
+    fontSize: 14,
+    color: palette.ink,
+    lineHeight: 20,
+  },
+  attentionDangerText: {
+    color: palette.danger,
+  },
+  cta: {
+    backgroundColor: palette.accent,
+    borderRadius: radii.lg,
+    paddingVertical: 18,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  ctaPlus: { fontFamily: 'DMSans_600SemiBold', fontSize: 24, color: palette.white },
+  ctaText: { fontFamily: 'DMSans_600SemiBold', fontSize: 17, color: palette.white },
+  antBox: {
+    backgroundColor: palette.surfaceSolid,
+    borderRadius: radii.lg,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: palette.border,
+    gap: 6,
+  },
+  boxDanger: {
+    backgroundColor: palette.dangerSoft,
+    borderColor: 'rgba(214,69,69,0.4)',
+  },
+  boxWarn: {
+    backgroundColor: palette.warnSoft,
+    borderColor: 'rgba(255,107,74,0.35)',
+  },
+  boxGood: {
+    backgroundColor: palette.successSoft,
+    borderColor: 'rgba(31,157,108,0.35)',
+  },
+  antTotal: {
+    fontFamily: 'Fraunces_600SemiBold',
+    fontSize: 18,
+    color: palette.ink,
+    marginBottom: 2,
+  },
+  antHint: {
+    fontFamily: 'DMSans_500Medium',
+    fontSize: 13,
+    color: palette.inkMuted,
+    marginBottom: 4,
+  },
+  antLine: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
+    color: palette.inkMuted,
+  },
+  textDanger: { color: palette.danger },
+  textGood: { color: palette.success },
+  textWarn: { color: palette.accentDeep },
+});
