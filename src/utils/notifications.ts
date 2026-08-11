@@ -12,8 +12,25 @@ Notifications.setNotificationHandler({
   }),
 });
 
+const ANDROID_CHANNEL_ID = 'billing-alerts';
+
+async function ensureAndroidChannel(): Promise<void> {
+  if (Platform.OS !== 'android') return;
+  // Omit `sound` so Android uses the system default.
+  // Passing sound: 'default' is treated as a custom file name and LogBox-errors.
+  // Channel id bumped so devices that already created the old channel pick this up.
+  await Notifications.setNotificationChannelAsync(ANDROID_CHANNEL_ID, {
+    name: 'BillingApp',
+    importance: Notifications.AndroidImportance.DEFAULT,
+    vibrationPattern: [0, 250, 250, 250],
+    lightColor: '#1B3A4B',
+  });
+}
+
 export async function ensureNotificationPermission(): Promise<boolean> {
   if (Platform.OS === 'web') return false;
+
+  await ensureAndroidChannel();
 
   const current = await Notifications.getPermissionsAsync();
   if (current.granted) return true;
@@ -29,7 +46,11 @@ export async function notifyExpenseRegistered(title: string, body: string): Prom
   if (!granted) return;
 
   await Notifications.scheduleNotificationAsync({
-    content: { title, body },
+    content: {
+      title,
+      body,
+      ...(Platform.OS === 'android' ? { channelId: ANDROID_CHANNEL_ID } : null),
+    },
     trigger: null,
   });
 }
@@ -92,7 +113,9 @@ export async function syncCategoryReminders(opts: {
           type: 'expense-reminder',
           dayOfMonth: day ?? null,
         },
-        sound: true,
+        // iOS: system default sound. Android: channel controls sound (no custom file).
+        ...(Platform.OS === 'ios' ? { sound: true } : null),
+        ...(Platform.OS === 'android' ? { channelId: ANDROID_CHANNEL_ID } : null),
       },
       trigger,
     });

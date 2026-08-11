@@ -183,14 +183,15 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
         });
       }
 
+      // Never block save on notification permission / scheduling (esp. Android).
       if (settings.notifyOnExpense) {
-        await notifyExpenseRegistered(
+        void notifyExpenseRegistered(
           t('notify.title'),
           t('notify.body', {
             amount: formatPlain(parsed),
             category: debtLabel,
           })
-        );
+        ).catch(() => undefined);
       }
 
       if (type === 'expense') {
@@ -200,6 +201,8 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
       } else {
         onSaved?.({ kind: 'other', amount: parsed });
       }
+    } catch {
+      Alert.alert(t('add.invalidTitle'), t('add.saveError'));
     } finally {
       setSaving(false);
     }

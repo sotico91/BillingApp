@@ -31,7 +31,20 @@ export default function AgregarScreen() {
         : result.kind === 'expense'
           ? 'add.savedExpense'
           : 'add.savedOther';
-    Alert.alert(t('add.savedTitle'), t(messageKey, { amount: format(result.amount) }), [
+    const title = t('add.savedTitle');
+    const message = t(messageKey, { amount: format(result.amount) });
+
+    // Android often fails to show Alert while a RN Modal is still open.
+    // Leave the modal first, then confirm (or just go back on failure to alert).
+    if (Platform.OS === 'android') {
+      router.back();
+      setTimeout(() => {
+        Alert.alert(title, message);
+      }, 350);
+      return;
+    }
+
+    Alert.alert(title, message, [
       {
         text: t('add.ok'),
         onPress: () => router.back(),

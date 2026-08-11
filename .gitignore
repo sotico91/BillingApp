@@ -36,7 +36,8 @@ yarn-error.*
 # typescript
 *.tsbuildinfo
 
-# generated native folders
+# generated native folders (regenerate with `npx expo prebuild`)
+# Keep ios/ tracked for device Release installs; android/ is generated locally or via EAS.
 /android
 
 # local IDE
@@ -49,3 +50,10 @@ ios/build/
 ios/DerivedData/
 *.xcuserstate
 xcuserdata/
+
+# Android local build outputs (if android/ is generated)
+android/app/build/
+android/.gradle/
+android/build/
+*.apk
+*.aab

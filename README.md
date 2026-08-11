@@ -9,7 +9,7 @@ A personal finance app to understand and control everyday money — especially *
 
 BillingApp helps you log income and expenses quickly, see the month clearly, and get local reminders for the concepts you choose. Every movement is attributed to the person who logged it, so if a household ledger is shared later, each expense still belongs to whoever registered it.
 
-Built for daily use on iPhone: guided onboarding, friendly logging (coffee, delivery, salary…), budgets only for concepts you already use, and an assistant for questions like “How much did I spend on delivery this month?”
+Built for daily use on **iPhone and Android** (same Expo codebase): guided onboarding, friendly logging (coffee, delivery, salary…), budgets only for concepts you already use, and an assistant for questions like “How much did I spend on delivery this month?”
 
 ## Features
 
@@ -38,6 +38,8 @@ npm install
 npx expo start
 # iOS device / simulator
 npx expo run:ios
+# Android emulator / device (needs Android Studio SDK)
+npx expo run:android
 ```
 
 Release build on a physical iPhone (example):
@@ -46,12 +48,25 @@ Release build on a physical iPhone (example):
 npx expo run:ios --device <UDID> --configuration Release
 ```
 
+Android release / Play Store path:
+
+```bash
+npm run android:prebuild
+npm run android:release
+# or cloud AAB:
+npm run eas:android:production
+```
+
+Full Android + Play checklist: [`docs/ANDROID.md`](./docs/ANDROID.md).
+
 ## Structure
 
 ```
 app/           # Screens (Expo Router)
 src/           # Components, hooks, i18n, data, and utilities
 assets/        # Icon, splash, and fonts
+docs/          # Platform guides (Android, …)
+ios/           # Native iOS project
 ```
 
 ## Privacy

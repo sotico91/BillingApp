@@ -135,7 +135,7 @@ export function ExpenseForm({ onSaved }: Props) {
       }
 
       if (settings.notifyOnExpense) {
-        await notifyExpenseRegistered(
+        void notifyExpenseRegistered(
           t('notify.title'),
           t('notify.body', {
             amount: formatPlain(parsed),
@@ -147,7 +147,7 @@ export function ExpenseForm({ onSaved }: Props) {
               spendConcepts
             ),
           })
-        );
+        ).catch(() => undefined);
       }
 
       setAmount('');
@@ -159,6 +159,8 @@ export function ExpenseForm({ onSaved }: Props) {
       } else {
         onSaved?.({ kind: 'other', amount: parsed });
       }
+    } catch {
+      Alert.alert(t('add.invalidTitle'), t('add.saveError'));
     } finally {
       setSaving(false);
     }
