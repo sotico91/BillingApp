@@ -10,6 +10,7 @@ import {
   filterByPeriod,
   previousMonthRange,
   sumByType,
+  sumSpendOut,
 } from '@/src/utils/financeMath';
 
 export type InsightCard = {
@@ -25,6 +26,7 @@ type AskOptions = {
   debtsTotal?: number;
   availableCash?: number;
   spendConcepts?: SpendConcept[];
+  budgetStatus?: { categoryId: string; ratio: number; limit: number }[];
 };
 
 const CATEGORY_ALIASES: Record<string, string[]> = {
@@ -148,8 +150,8 @@ export function buildSmartInsights(
   const { from, to } = previousMonthRange();
   const lastMonth = filterBetween(transactions, from, to);
 
-  const spendNow = sumByType(thisMonth, 'expense');
-  const spendPrev = sumByType(lastMonth, 'expense');
+  const spendNow = sumSpendOut(thisMonth);
+  const spendPrev = sumSpendOut(lastMonth);
   const incomeNow = sumByType(thisMonth, 'income');
   const ant = antExpenseBreakdown(thisMonth, spendConcepts);
   const cards: InsightCard[] = [];
@@ -211,19 +213,19 @@ function resolvePeriod(
   q: string,
   defaultPeriod: Period
 ): { key: 'hoy' | 'semana' | 'mes' | 'anio' | 'mesPasado'; labelKey: TranslationKey } {
-  if (includesAny(q, ['mes pasado', 'last month', 'pasado'])) {
+  if (includesAny(q, ['mes pasado', 'last month', 'el mes anterior', 'mes anterior'])) {
     return { key: 'mesPasado', labelKey: 'search.periodLastMonth' };
   }
-  if (includesAny(q, ['hoy', 'today', 'este dia', 'el dia'])) {
+  if (includesAny(q, ['hoy', 'today', 'este dia', 'el dia', 'esta manana', 'esta mañana'])) {
     return { key: 'hoy', labelKey: 'period.hoy' };
   }
-  if (includesAny(q, ['semana', 'week'])) {
+  if (includesAny(q, ['esta semana', 'semana', 'week', 'this week'])) {
     return { key: 'semana', labelKey: 'period.semana' };
   }
-  if (includesAny(q, ['ano', 'año', 'year', 'anual', 'este ano'])) {
+  if (includesAny(q, ['este ano', 'este año', 'ano', 'año', 'year', 'anual', 'this year'])) {
     return { key: 'anio', labelKey: 'search.periodYear' };
   }
-  if (includesAny(q, ['mes', 'month'])) {
+  if (includesAny(q, ['este mes', 'mes', 'month', 'this month'])) {
     return { key: 'mes', labelKey: 'period.mes' };
   }
   if (defaultPeriod === 'hoy') return { key: 'hoy', labelKey: 'period.hoy' };
@@ -246,43 +248,155 @@ function txsForPeriod(
   return filterByPeriod(transactions, periodKey);
 }
 
-function detectCategories(
-  q: string,
-  spendConcepts: SpendConcept[] = []
-): { ids: string[]; label: string } | null {
-  // Food / restaurant group when asking broadly about eating out / food.
-  if (includesAny(q, ['restaurante', 'restaurantes', 'restaurant', 'comida', 'food'])) {
-    return { ids: FOOD_GROUP, label: 'food-group' };
+const STOPWORDS = new Set([
+  'a', 'al', 'de', 'del', 'la', 'el', 'los', 'las', 'un', 'una', 'unos', 'unas',
+  'en', 'con', 'por', 'para', 'mi', 'mis', 'tu', 'tus', 'y', 'o', 'que', 'qué',
+  'cuanto', 'cuánto', 'cuanta', 'cuánta', 'cuantos', 'cuántos', 'cuantas', 'cuántas',
+  'gaste', 'gasté', 'gasto', 'gastos', 'pague', 'pagué', 'pago',
+  'how', 'much', 'did', 'i', 'my', 'the', 'on', 'for', 'to', 'of', 'is', 'was',
+  'spend', 'spent', 'expense', 'expenses', 'this', 'that', 'me', 'do', 'what',
+  'cual', 'cuál', 'como', 'cómo', 'donde', 'dónde', 'hay', 'tiene', 'tengo',
+  'sobre', 'about', 'fue', 'son', 'esta', 'está', 'este', 'estos',
+]);
+
+function tokenize(text: string): string[] {
+  return normalize(text)
+    .split(/[^a-z0-9áéíóúñü]+/i)
+    .map((t) => normalize(t))
+    .filter((t) => t.length >= 2 && !STOPWORDS.has(t));
+}
+
+function scorePhraseInQuery(q: string, phrase: string): number {
+  const p = normalize(phrase);
+  if (!p || p.length < 2) return 0;
+
+  // Exact phrase / word-boundary hit (strongest).
+  if (includesAny(q, [p])) {
+    let score = 40 + Math.min(p.length, 30);
+    if (p.includes(' ') || p.includes('/')) score += 15;
+    return score;
   }
 
-  // Prefer user spend tree (Concepto/Sub) so "agua" hits sub-agua, not only legacy id.
-  for (const concept of spendConcepts) {
-    for (const sub of concept.subs) {
-      const slug = sub.id.replace(/^(sub-|custom-|concept-)/, '');
-      const aliases = [
-        sub.name,
-        concept.name,
-        `${concept.name}/${sub.name}`,
-        `${concept.name} ${sub.name}`,
-        slug,
-        slug.replace(/-/g, ' '),
-      ];
-      if (includesAny(q, aliases)) {
-        return { ids: [sub.id], label: sub.id };
+  const qTokens = new Set(tokenize(q));
+  const pTokens = tokenize(p);
+  if (pTokens.length === 0) return 0;
+
+  let hits = 0;
+  for (const token of pTokens) {
+    if (qTokens.has(token)) {
+      hits += 1;
+      continue;
+    }
+    // Prefix match for partial typing (cafe → cafeteria) only if token is long enough.
+    if (token.length >= 4) {
+      for (const qt of qTokens) {
+        if (qt.startsWith(token) || token.startsWith(qt)) {
+          hits += 0.6;
+          break;
+        }
       }
     }
   }
 
+  if (hits <= 0) return 0;
+  const coverage = hits / pTokens.length;
+  if (coverage < 0.5) return 0;
+  return Math.round(12 + coverage * 20 + hits * 4);
+}
+
+type CategoryHit = {
+  ids: string[];
+  label: string;
+  score: number;
+  displayName?: string;
+};
+
+/**
+ * Ranked match against user spend tree first, then legacy aliases.
+ * Longer / more specific phrases win so "luz" beats vague concept names.
+ */
+function detectCategories(
+  q: string,
+  spendConcepts: SpendConcept[] = []
+): CategoryHit | null {
+  const candidates: CategoryHit[] = [];
+
+  if (includesAny(q, ['restaurante', 'restaurantes', 'restaurant', 'comida', 'food', 'alimentos'])) {
+    // Prefer user's food-like concept tree if present.
+    const foodSubs = flattenSpendSubs(spendConcepts).filter((sub) => {
+      const n = normalize(sub.name);
+      return includesAny(n, [
+        'comida',
+        'alimento',
+        'delivery',
+        'domicilio',
+        'cafe',
+        'café',
+        'snack',
+        'restaurante',
+        'almuerzo',
+        'cena',
+      ]);
+    });
+    if (foodSubs.length > 0) {
+      candidates.push({
+        ids: foodSubs.map((s) => s.id),
+        label: 'food-group',
+        score: 55,
+        displayName: 'food-group',
+      });
+    } else {
+      candidates.push({
+        ids: FOOD_GROUP,
+        label: 'food-group',
+        score: 50,
+        displayName: 'food-group',
+      });
+    }
+  }
+
   for (const concept of spendConcepts) {
-    if (includesAny(q, [concept.name])) {
-      const ids = concept.subs.map((s) => s.id);
-      if (ids.length > 0) return { ids, label: concept.id };
+    for (const sub of concept.subs) {
+      const slug = sub.id.replace(/^(sub-|custom-|concept-)/, '').replace(/-/g, ' ');
+      const phrases = [
+        `${concept.name}/${sub.name}`,
+        `${concept.name} ${sub.name}`,
+        sub.name,
+        slug,
+      ];
+      let best = 0;
+      for (const phrase of phrases) {
+        best = Math.max(best, scorePhraseInQuery(q, phrase));
+      }
+      // Sub names outrank bare concept matches.
+      if (best > 0) {
+        candidates.push({
+          ids: [sub.id],
+          label: sub.id,
+          score: best + 8,
+          displayName: `${concept.name}/${sub.name}`,
+        });
+      }
+    }
+
+    const conceptScore = scorePhraseInQuery(q, concept.name);
+    if (conceptScore > 0 && concept.subs.length > 0) {
+      candidates.push({
+        ids: concept.subs.map((s) => s.id),
+        label: concept.id,
+        score: conceptScore + 2,
+        displayName: concept.name,
+      });
     }
   }
 
   for (const cat of CATEGORIES) {
     const aliases = CATEGORY_ALIASES[cat.id] ?? [cat.id];
-    if (!includesAny(q, aliases)) continue;
+    let best = 0;
+    for (const alias of aliases) {
+      best = Math.max(best, scorePhraseInQuery(q, alias));
+    }
+    if (best <= 0) continue;
 
     const fromTree = flattenSpendSubs(spendConcepts).filter((sub) => {
       const slug = sub.id.replace(/^(sub-|custom-|concept-)/, '');
@@ -292,15 +406,60 @@ function detectCategories(
         sub.id === `sub-${cat.id}` ||
         slug === cat.id ||
         subName === normalize(cat.id) ||
-        aliases.some((a) => subName === normalize(a) || subName.includes(normalize(a)))
+        aliases.some((a) => {
+          const na = normalize(a);
+          return subName === na || (na.length >= 3 && subName.includes(na));
+        })
       );
     });
+
     if (fromTree.length > 0) {
-      return { ids: fromTree.map((s) => s.id), label: fromTree[0].id };
+      candidates.push({
+        ids: fromTree.map((s) => s.id),
+        label: fromTree[0].id,
+        score: best + 5,
+        displayName: fromTree.map((s) => s.name).join(' + '),
+      });
+    } else {
+      candidates.push({
+        ids: [cat.id],
+        label: cat.id,
+        score: best,
+        displayName: cat.id,
+      });
     }
-    return { ids: [cat.id], label: cat.id };
   }
-  return null;
+
+  if (candidates.length === 0) return null;
+  candidates.sort((a, b) => b.score - a.score || b.ids.length - a.ids.length);
+  const top = candidates[0];
+  // Ignore very weak matches (noise from stopwords / short tokens).
+  if (top.score < 14) return null;
+  return top;
+}
+
+function matchTransactionsToCategories(
+  list: Transaction[],
+  cats: CategoryHit,
+  spendConcepts: SpendConcept[]
+): Transaction[] {
+  const idSet = new Set(cats.ids);
+  return list.filter((x) => {
+    if (x.type !== 'expense' || !x.categoryId) return false;
+    const categoryId = x.categoryId;
+    if (idSet.has(categoryId)) return true;
+    return cats.ids.some((id) => {
+      if (categoryId === `sub-${id}` || id === `sub-${categoryId}`) return true;
+      const hit = findSpendSub(spendConcepts, categoryId);
+      if (!hit) return false;
+      const slug = categoryId.replace(/^(sub-|custom-|concept-)/, '');
+      return (
+        slug === id ||
+        normalize(hit.sub.name) === normalize(id) ||
+        cats.ids.includes(hit.concept.id)
+      );
+    });
+  });
 }
 
 function detectPaymentMethod(q: string): 'cash' | 'debit' | 'credit' | 'transfer' | null {
@@ -312,15 +471,106 @@ function detectPaymentMethod(q: string): 'cash' | 'debit' | 'credit' | 'transfer
 }
 
 function extractNoteNeedle(q: string): string | null {
-  // “a Juan”, “para Ana”, quotes, or residual tokens after removing stopwords — keep simple.
   const quoted = q.match(/["“']([^"”']+)["”']/);
   if (quoted?.[1]) return normalize(quoted[1]);
 
   const para = q.match(/\b(?:a|para|por|to)\s+([a-záéíóúñ]{2,})/i);
-  if (para?.[1] && !includesAny(para[1], ['mes', 'semana', 'ano', 'hoy', 'tarjeta', 'cuenta'])) {
+  if (
+    para?.[1] &&
+    !includesAny(para[1], [
+      'mes',
+      'semana',
+      'ano',
+      'año',
+      'hoy',
+      'tarjeta',
+      'cuenta',
+      'mi',
+      'la',
+    ])
+  ) {
     return normalize(para[1]);
   }
   return null;
+}
+
+function topExpenseCategory(
+  list: Transaction[],
+  spendConcepts: SpendConcept[]
+): { categoryId: string; amount: number; count: number } | null {
+  const map = new Map<string, { amount: number; count: number }>();
+  for (const tx of list) {
+    if (tx.type !== 'expense' || !tx.categoryId) continue;
+    const cur = map.get(tx.categoryId) ?? { amount: 0, count: 0 };
+    cur.amount += tx.amount;
+    cur.count += 1;
+    map.set(tx.categoryId, cur);
+  }
+  let best: { categoryId: string; amount: number; count: number } | null = null;
+  for (const [categoryId, v] of map) {
+    if (!best || v.amount > best.amount) {
+      best = { categoryId, amount: v.amount, count: v.count };
+    }
+  }
+  // Prefer grouping by parent concept when possible for clearer answers.
+  if (!best) return null;
+  const hit = findSpendSub(spendConcepts, best.categoryId);
+  if (!hit) return best;
+  let conceptAmount = 0;
+  let conceptCount = 0;
+  for (const sub of hit.concept.subs) {
+    const v = map.get(sub.id);
+    if (!v) continue;
+    conceptAmount += v.amount;
+    conceptCount += v.count;
+  }
+  if (conceptAmount >= best.amount) {
+    return {
+      categoryId: hit.concept.subs[0]?.id ?? best.categoryId,
+      amount: conceptAmount,
+      count: conceptCount,
+    };
+  }
+  return best;
+}
+
+export type SearchSuggestion = {
+  id: string;
+  /** Translation key or raw prompt text. */
+  prompt: string;
+};
+
+/** Quick prompts tailored to the user's concepts when possible. */
+export function buildSearchSuggestions(
+  spendConcepts: SpendConcept[],
+  language: 'en' | 'es'
+): string[] {
+  const prompts: string[] = [];
+  const subs = flattenSpendSubs(spendConcepts).slice(0, 4);
+  if (language === 'es') {
+    prompts.push('¿Cuánto gasté este mes?');
+    prompts.push('¿Cuánto ahorré este mes?');
+    prompts.push('¿Cuáles son mis gastos hormiga?');
+    for (const sub of subs) {
+      const hit = findSpendSub(spendConcepts, sub.id);
+      const name = hit ? `${hit.concept.name}/${sub.name}` : sub.name;
+      prompts.push(`¿Cuánto gasté en ${name} este mes?`);
+    }
+    prompts.push('¿En qué gasté más este mes?');
+    prompts.push('¿Cuánto tengo disponible?');
+  } else {
+    prompts.push('How much did I spend this month?');
+    prompts.push('How much did I save this month?');
+    prompts.push('What are my ant expenses?');
+    for (const sub of subs) {
+      const hit = findSpendSub(spendConcepts, sub.id);
+      const name = hit ? `${hit.concept.name}/${sub.name}` : sub.name;
+      prompts.push(`How much on ${name} this month?`);
+    }
+    prompts.push('Where did I spend the most this month?');
+    prompts.push('How much available cash do I have?');
+  }
+  return prompts.slice(0, 8);
 }
 
 /**
@@ -373,6 +623,7 @@ export function answerFinanceQuery(
     'sobró',
     'me queda',
     'balance',
+    'neto del mes',
   ]);
   const wantsAnt = includesAny(q, [
     'hormiga',
@@ -383,13 +634,14 @@ export function answerFinanceQuery(
     'ant expense',
     'ant expenses',
   ]);
-  const wantsDebt = includesAny(q, ['deuda', 'deudas', 'debt', 'loan']);
+  const wantsDebt = includesAny(q, ['deuda', 'deudas', 'debt', 'loan', 'credito activo', 'crédito activo']);
   const wantsAvailable = includesAny(q, [
     'disponible',
     'available',
     'liquidez',
     'cuanto tengo',
     'cuánto tengo',
+    'tengo en cuentas',
   ]);
   const wantsCompare = includesAny(q, [
     'mas que',
@@ -402,8 +654,42 @@ export function answerFinanceQuery(
     'vs',
     'versus',
     'respecto',
+    'contra el mes',
   ]);
   const wantsTransfer = includesAny(q, ['transferencia', 'transferencias', 'transfer', 'envie', 'envié']);
+  const wantsTop = includesAny(q, [
+    'mas gaste',
+    'más gasté',
+    'mas gasto',
+    'más gasto',
+    'en que gaste',
+    'en qué gasté',
+    'en que gaste mas',
+    'en qué gasté más',
+    'mayor gasto',
+    'top',
+    'biggest',
+    'most spent',
+    'where did i spend',
+    'categoria mas alta',
+    'categoría más alta',
+  ]);
+  const wantsAverage = includesAny(q, [
+    'promedio',
+    'average',
+    'media',
+    'por movimiento',
+    'por gasto',
+  ]);
+  const wantsBudget = includesAny(q, [
+    'tope',
+    'topes',
+    'presupuesto',
+    'budget',
+    'limite',
+    'límite',
+    'sobre el tope',
+  ]);
 
   const spendConcepts = options.spendConcepts ?? [];
   const cats = detectCategories(q, spendConcepts);
@@ -422,21 +708,42 @@ export function answerFinanceQuery(
     return t('search.answerDebt', { amount: format(options.debtsTotal) });
   }
 
-  // Category before "ant" so "cuánto… en agua" never becomes hormiga via substring bugs.
-  if (cats && !cats.ids.some((id) => INCOME_CATEGORY_IDS.includes(id))) {
-    let matched = list.filter((x) => {
-      if (x.type !== 'expense' || !x.categoryId) return false;
-      const categoryId = x.categoryId;
-      if (cats.ids.includes(categoryId)) return true;
-      // Legacy id "agua" should also match spend sub "sub-agua".
-      return cats.ids.some((id) => {
-        if (categoryId === `sub-${id}` || id === `sub-${categoryId}`) return true;
-        const hit = findSpendSub(spendConcepts, categoryId);
-        if (!hit) return false;
-        const slug = categoryId.replace(/^(sub-|custom-|concept-)/, '');
-        return slug === id || normalize(hit.sub.name) === normalize(id);
-      });
+  if (wantsTop && !cats) {
+    const top = topExpenseCategory(list, spendConcepts);
+    if (!top) {
+      return t('search.answerEmptyPeriod', { period: periodLabel });
+    }
+    const hit = findSpendSub(spendConcepts, top.categoryId);
+    const label = hit
+      ? hit.concept.name
+      : categoryLabel(top.categoryId);
+    return t('search.answerTop', {
+      label,
+      amount: format(top.amount),
+      period: periodLabel,
+      count: top.count,
     });
+  }
+
+  if (wantsBudget && options.budgetStatus && options.budgetStatus.length > 0) {
+    const over = options.budgetStatus
+      .filter((b) => b.ratio > 1 && b.limit > 0)
+      .sort((a, b) => b.ratio - a.ratio);
+    if (over.length === 0) {
+      return t('search.answerBudgetOk', { period: periodLabel });
+    }
+    const first = over[0];
+    return t('search.answerBudgetOver', {
+      label: categoryLabel(first.categoryId),
+      percent: Math.round(first.ratio * 100),
+      count: over.length,
+      period: periodLabel,
+    });
+  }
+
+  // Category before "ant" so specific concepts win over hormiga.
+  if (cats && !cats.ids.some((id) => INCOME_CATEGORY_IDS.includes(id))) {
+    let matched = matchTransactionsToCategories(list, cats, spendConcepts);
     if (method) {
       matched = matched.filter((x) => x.paymentMethod === method);
     }
@@ -444,7 +751,26 @@ export function answerFinanceQuery(
     const label =
       cats.label === 'food-group'
         ? t('search.labelFood')
-        : cats.ids.map(categoryLabel).join(' + ');
+        : cats.displayName && !cats.displayName.startsWith('concept-')
+          ? cats.displayName
+          : cats.ids.map(categoryLabel).join(' + ');
+
+    if (matched.length === 0) {
+      return t('search.answerCategoryEmpty', {
+        label,
+        period: periodLabel,
+      });
+    }
+
+    if (wantsAverage) {
+      const avg = amount / matched.length;
+      return t('search.answerAverage', {
+        label,
+        amount: format(avg),
+        period: periodLabel,
+        count: matched.length,
+      });
+    }
 
     if (wantsCount) {
       return t('search.answerCount', {
@@ -471,17 +797,25 @@ export function answerFinanceQuery(
 
   if (wantsAnt) {
     const ant = antExpenseBreakdown(list, spendConcepts);
-    return t('search.answerAntPeriod', {
+    if (ant.items.length === 0) {
+      return t('search.answerAntEmpty', { period: periodLabel });
+    }
+    const topItems = ant.items
+      .slice(0, 3)
+      .map((i) => `${categoryLabel(i.categoryId)} ${format(i.amount)}`)
+      .join(' · ');
+    return t('search.answerAntDetail', {
       amount: format(ant.total),
       period: periodLabel,
+      detail: topItems,
     });
   }
 
   if (wantsCompare) {
     const { from, to } = previousMonthRange();
     const prev = filterBetween(transactions, from, to);
-    const nowSpend = sumByType(filterByPeriod(transactions, 'mes'), 'expense');
-    const prevSpend = sumByType(prev, 'expense');
+    const nowSpend = sumSpendOut(filterByPeriod(transactions, 'mes'));
+    const prevSpend = sumSpendOut(prev);
     const diff = nowSpend - prevSpend;
     return t('search.answerCompare', {
       amount: format(Math.abs(diff)),
@@ -491,7 +825,7 @@ export function answerFinanceQuery(
 
   if (wantsSavings) {
     const income = sumByType(list, 'income');
-    const expense = sumByType(list, 'expense');
+    const expense = sumSpendOut(list);
     const saved = income - expense;
     return t('search.answerSavings', {
       amount: format(saved),
@@ -537,7 +871,6 @@ export function answerFinanceQuery(
     });
   }
 
-  // Payment method only (e.g. “cuánto gasté con tarjeta”)
   if (method) {
     const matched = list.filter(
       (x) => x.type === 'expense' && x.paymentMethod === method
@@ -557,7 +890,6 @@ export function answerFinanceQuery(
     });
   }
 
-  // Free-text note / person match
   if (noteNeedle) {
     const matched = list.filter((x) => normalize(x.note ?? '').includes(noteNeedle));
     const amount = matched.reduce((s, x) => s + x.amount, 0);
@@ -569,7 +901,6 @@ export function answerFinanceQuery(
     });
   }
 
-  // Explicit total spend question
   if (
     includesAny(q, [
       'gaste',
@@ -585,8 +916,22 @@ export function answerFinanceQuery(
       'total',
     ])
   ) {
-    const amount = sumByType(list, 'expense');
-    const count = list.filter((x) => x.type === 'expense').length;
+    const expenses = list.filter(
+      (x) => x.type === 'expense' || x.type === 'debt_payment'
+    );
+    const amount = expenses.reduce((s, x) => s + x.amount, 0);
+    const count = expenses.length;
+    if (count === 0) {
+      return t('search.answerEmptyPeriod', { period: periodLabel });
+    }
+    if (wantsAverage) {
+      return t('search.answerAverage', {
+        label: t('home.expenses'),
+        amount: format(amount / count),
+        period: periodLabel,
+        count,
+      });
+    }
     if (wantsCount) {
       return t('search.answerCount', {
         count,
@@ -601,7 +946,6 @@ export function answerFinanceQuery(
     });
   }
 
-  // Could not confidently map the question — explain instead of inventing a wrong total.
   return t('search.answerUnclear', {
     examples: t('search.examples'),
   });

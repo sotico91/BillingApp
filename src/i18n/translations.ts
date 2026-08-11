@@ -116,7 +116,9 @@ export const translations = {
     'insights.searchPlaceholder': 'How much did I spend on delivery this month?',
     'insights.searchAsk': 'Ask',
     'insights.searchHint':
-      'Ask about a category, period, income, savings, card, or ants — answers use your registered data.',
+      'Ask about your concepts, period, income, savings, card, ants or topes — answers use your data.',
+    'insights.searchSuggestions': 'Try one of these',
+    'insights.searchClear': 'Clear',
     'insights.ofBudget': 'of budget',
     'insights.mostFrequent': 'Most frequent spend',
     'insights.overBudget': 'Over the limit',
@@ -202,13 +204,18 @@ export const translations = {
     'plan.goDebts': 'Register a permanent installment (apartment, car, credit)',
 
     'wealth.title': 'Wealth',
+    'wealth.subtitle':
+      'Accounts, net worth, and installments linked to your Créditos concepts.',
     'wealth.accounts': 'Accounts',
+    'wealth.accountsCollapsed': '{count} accounts — tap to open',
     'wealth.assets': 'Assets',
     'wealth.liabilities': 'Liabilities',
     'wealth.net': 'Net worth',
     'wealth.debts': 'Installments & credit',
+    'wealth.debtsEmptyShort': 'No installments yet',
+    'wealth.debtsCollapsed': '{count} · {amount}/mo fixed — tap to open',
     'wealth.debtsEmpty':
-      'Register a permanent installment: apartment, car or credit. It becomes a fixed spend and payments reduce the balance.',
+      'Register a permanent installment: apartment, car or credit. It becomes a Créditos subcategory with a monthly tope.',
     'wealth.addDebt': 'Add installment / debt',
     'wealth.debtName': 'What are you paying',
     'wealth.debtNamePlaceholder': 'Apartment, car loan, card…',
@@ -218,9 +225,22 @@ export const translations = {
     'wealth.debtSave': 'Save installment',
     'wealth.debtDelete': 'Remove',
     'wealth.debtNeed': 'Name, balance and monthly installment must be greater than 0.',
-    'wealth.howToPay': 'To pay: Add → “I paid a debt”. Balance goes down automatically.',
+    'wealth.howToPay':
+      'To pay: Add → “I paid a debt”. Balance goes down and counts toward that concept/tope.',
     'wealth.debtPermanentHint':
       'This is a permanent spend: you pay the installment each month until the balance is gone.',
+    'wealth.debtConceptHint':
+      'Each installment is saved under Créditos and watched like your other concepts.',
+    'wealth.debtBudgetHint':
+      'Saving also sets a monthly tope equal to the installment on that subcategory.',
+    'wealth.fixedMonth': 'Fixed installments this month',
+    'wealth.fixedPaid': 'Paid {paid} of {due} due',
+    'wealth.openPlan': 'See concepts & topes in Plan',
+    'wealth.linkedConcept': 'Concept: {concept}',
+    'wealth.unlinkedConcept': 'Not linked to a concept yet',
+    'wealth.balanceLeft': 'Remaining balance',
+    'wealth.monthProgress': 'This month: {paid} / {due}',
+    'wealth.topeLinked': 'Monthly tope: {amount}',
     'wealth.subs': 'Subscriptions',
     'wealth.monthlySubs': 'Monthly subscriptions',
     'wealth.yearlySubs': 'Yearly estimate',
@@ -230,6 +250,7 @@ export const translations = {
     'wealth.capitalShare': '{percent}% of installment reduces capital',
 
     'add.title': 'New movement',
+    'add.privacyHint': 'Amounts stay hidden. Tap the eye to reveal them.',
     'add.savedTitle': 'Saved',
     'add.savedMessage': 'Today’s expenses total {amount}.',
     'add.savedExpense': 'Today’s expenses total {amount}.',
@@ -467,12 +488,24 @@ export const translations = {
     'search.answerUnclear':
       'I could not match that question to your data. Try something like: {examples}',
     'search.examples':
-      '“How much on delivery this month?”, “What was my salary?”, “Card spending today?”',
+      '“How much on delivery this month?”, “What was my salary?”, “Where did I spend the most?”',
     'search.labelFood': 'Food / restaurants',
     'search.periodLastMonth': 'Last month',
     'search.periodYear': 'This year',
     'search.more': 'more',
     'search.less': 'less',
+    'search.answerTop':
+      'Your biggest spend ({period}) is {label}: {amount} across {count} movements.',
+    'search.answerAverage':
+      'Average for {label} ({period}): {amount} across {count} movements.',
+    'search.answerCategoryEmpty': 'No movements for {label} in {period}.',
+    'search.answerEmptyPeriod': 'No expenses logged in {period}.',
+    'search.answerAntEmpty':
+      'No ant spends in {period}. Mark subcategories as ant in Plan first.',
+    'search.answerAntDetail': 'Ant expenses ({period}): {amount}. Top: {detail}.',
+    'search.answerBudgetOk': 'No limits exceeded in {period}.',
+    'search.answerBudgetOver':
+      '{count} limits over in {period}. Worst: {label} at {percent}%.',
   },
   es: {
     'brand.mark': 'BILLING',
@@ -589,7 +622,9 @@ export const translations = {
     'insights.searchPlaceholder': '¿Cuánto gasté en domicilio este mes?',
     'insights.searchAsk': 'Preguntar',
     'insights.searchHint':
-      'Pregunta por categoría, periodo, ingresos, ahorro, tarjeta u hormiga — responde con tus datos registrados.',
+      'Pregunta por tus conceptos, periodo, ingresos, ahorro, tarjeta, hormiga o topes — responde con tus datos.',
+    'insights.searchSuggestions': 'Prueba una de estas',
+    'insights.searchClear': 'Limpiar',
     'insights.ofBudget': 'del presupuesto',
     'insights.mostFrequent': 'Gasto más frecuente',
     'insights.overBudget': 'Superó el tope',
@@ -676,20 +711,18 @@ export const translations = {
     'plan.goDebts': 'Registrar cuota permanente (apto, carro, crédito)',
 
     'wealth.title': 'Patrimonio',
+    'wealth.subtitle':
+      'Cuentas, patrimonio neto y cuotas ligadas a tus conceptos de Créditos.',
     'wealth.accounts': 'Cuentas',
+    'wealth.accountsCollapsed': '{count} cuentas — toca para abrir',
     'wealth.assets': 'Activos',
     'wealth.liabilities': 'Pasivos',
     'wealth.net': 'Patrimonio neto',
     'wealth.debts': 'Cuotas y créditos',
-    'wealth.subs': 'Suscripciones',
-    'wealth.monthlySubs': 'Suscripciones mensuales',
-    'wealth.yearlySubs': 'Estimado anual',
-    'wealth.installment': 'Cuota {amount}',
-    'wealth.rate': 'Tasa {rate}%',
-    'wealth.next': 'Próximo {date}',
-    'wealth.capitalShare': '{percent}% de la cuota reduce capital',
+    'wealth.debtsEmptyShort': 'Sin cuotas aún',
+    'wealth.debtsCollapsed': '{count} · {amount}/mes fijos — toca para abrir',
     'wealth.debtsEmpty':
-      'Registra una cuota permanente: apto, carro o crédito. Quedará como gasto fijo y bajarás el saldo al pagar.',
+      'Registra una cuota permanente: apto, carro o crédito. Queda como subcategoría de Créditos con tope mensual.',
     'wealth.addDebt': 'Agregar cuota / deuda',
     'wealth.debtName': 'Qué estás pagando',
     'wealth.debtNamePlaceholder': 'Cuota apto, cuota carro, tarjeta…',
@@ -699,10 +732,32 @@ export const translations = {
     'wealth.debtSave': 'Guardar cuota',
     'wealth.debtDelete': 'Eliminar',
     'wealth.debtNeed': 'Nombre, saldo y cuota mensual mayores a 0.',
-    'wealth.howToPay': 'Para pagar: Agregar → “Pagué una deuda”. Baja el saldo automáticamente.',
-    'wealth.debtPermanentHint': 'Esto es un gasto permanente: cada mes pagas la cuota hasta acabar el saldo.',
+    'wealth.howToPay':
+      'Para pagar: Agregar → “Pagué una deuda”. Baja el saldo y cuenta en ese concepto/tope.',
+    'wealth.debtPermanentHint':
+      'Esto es un gasto permanente: cada mes pagas la cuota hasta acabar el saldo.',
+    'wealth.debtConceptHint':
+      'Cada cuota se guarda en Créditos y se vigila como tus otros conceptos.',
+    'wealth.debtBudgetHint':
+      'Al guardar también se crea un tope mensual igual a la cuota en esa subcategoría.',
+    'wealth.fixedMonth': 'Cuotas fijas del mes',
+    'wealth.fixedPaid': 'Pagado {paid} de {due} esperados',
+    'wealth.openPlan': 'Ver conceptos y topes en Plan',
+    'wealth.linkedConcept': 'Concepto: {concept}',
+    'wealth.unlinkedConcept': 'Aún sin concepto vinculado',
+    'wealth.balanceLeft': 'Saldo restante',
+    'wealth.monthProgress': 'Este mes: {paid} / {due}',
+    'wealth.topeLinked': 'Tope mensual: {amount}',
+    'wealth.subs': 'Suscripciones',
+    'wealth.monthlySubs': 'Suscripciones mensuales',
+    'wealth.yearlySubs': 'Estimado anual',
+    'wealth.installment': 'Cuota {amount}',
+    'wealth.rate': 'Tasa {rate}%',
+    'wealth.next': 'Próximo {date}',
+    'wealth.capitalShare': '{percent}% de la cuota reduce capital',
 
     'add.title': 'Nuevo movimiento',
+    'add.privacyHint': 'Los montos quedan ocultos. Toca el ojo para verlos.',
     'add.savedTitle': 'Listo',
     'add.savedMessage': 'Hoy vas en {amount} de gastos.',
     'add.savedExpense': 'Hoy vas en {amount} de gastos.',
@@ -943,12 +998,24 @@ export const translations = {
     'search.answerUnclear':
       'No pude relacionar esa pregunta con tus datos. Prueba algo como: {examples}',
     'search.examples':
-      '“¿Cuánto en domicilio este mes?”, “¿Cuál fue mi salario?”, “¿Gasto con tarjeta hoy?”',
+      '“¿Cuánto en domicilio este mes?”, “¿Cuál fue mi salario?”, “¿En qué gasté más?”',
     'search.labelFood': 'Comida / restaurantes',
     'search.periodLastMonth': 'Mes pasado',
     'search.periodYear': 'Este año',
     'search.more': 'más',
     'search.less': 'menos',
+    'search.answerTop':
+      'Tu mayor gasto ({period}) es {label}: {amount} en {count} movimientos.',
+    'search.answerAverage':
+      'Promedio de {label} ({period}): {amount} en {count} movimientos.',
+    'search.answerCategoryEmpty': 'Sin movimientos de {label} en {period}.',
+    'search.answerEmptyPeriod': 'No hay gastos registrados en {period}.',
+    'search.answerAntEmpty':
+      'Sin gastos hormiga en {period}. Marca subcategorías como hormiga en Plan.',
+    'search.answerAntDetail': 'Gastos hormiga ({period}): {amount}. Top: {detail}.',
+    'search.answerBudgetOk': 'Ningún tope superado en {period}.',
+    'search.answerBudgetOver':
+      '{count} topes superados en {period}. El peor: {label} al {percent}%.',
   },
 } as const;
 

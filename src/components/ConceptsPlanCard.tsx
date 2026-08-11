@@ -48,7 +48,11 @@ export function ConceptsPlanCard() {
   const spentByCategory = useMemo(() => {
     const map = new Map<string, number>();
     for (const tx of transactions) {
-      if (tx.type !== 'expense' || !tx.categoryId) continue;
+      if (
+        (tx.type !== 'expense' && tx.type !== 'debt_payment') ||
+        !tx.categoryId
+      )
+        continue;
       map.set(tx.categoryId, (map.get(tx.categoryId) ?? 0) + tx.amount);
     }
     return map;
@@ -63,8 +67,16 @@ export function ConceptsPlanCard() {
       if (created) {
         setExpanded(created.id);
         const next =
-          CONCEPT_COLOR_OPTIONS.find((c) => c !== conceptColor && !concepts.some((x) => x.color === c)) ??
-          CONCEPT_COLOR_OPTIONS[(CONCEPT_COLOR_OPTIONS.indexOf(conceptColor as typeof CONCEPT_COLOR_OPTIONS[number]) + 1) % CONCEPT_COLOR_OPTIONS.length];
+          CONCEPT_COLOR_OPTIONS.find(
+            (c) => c !== conceptColor && !concepts.some((x) => x.color === c)
+          ) ??
+          CONCEPT_COLOR_OPTIONS[
+            (CONCEPT_COLOR_OPTIONS.indexOf(
+              conceptColor as (typeof CONCEPT_COLOR_OPTIONS)[number]
+            ) +
+              1) %
+              CONCEPT_COLOR_OPTIONS.length
+          ];
         setConceptColor(next);
       }
     } finally {

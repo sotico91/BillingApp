@@ -111,6 +111,13 @@ export function sumByType(
     .reduce((sum, t) => sum + t.amount, 0);
 }
 
+/** Money out: regular expenses + debt installment payments. */
+export function sumSpendOut(transactions: Transaction[]): number {
+  return transactions
+    .filter((t) => t.type === 'expense' || t.type === 'debt_payment')
+    .reduce((sum, t) => sum + t.amount, 0);
+}
+
 export function isAntCategoryId(
   categoryId: string,
   spendConcepts: SpendConcept[] = []

@@ -40,7 +40,7 @@ const METHODS: PaymentMethod[] = ['cash', 'debit', 'credit', 'transfer'];
 
 export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
   const { t } = useLanguage();
-  const { format, parse, currency } = useMoney();
+  const { format, formatPlain, parse, currency, amountsVisible } = useMoney();
   const { settings, updateQuickTemplate } = useSettings();
   const { addTransaction, totalForPeriod, accounts, debts } = useFinance();
 
@@ -187,7 +187,7 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
         await notifyExpenseRegistered(
           t('notify.title'),
           t('notify.body', {
-            amount: format(parsed, { reveal: true }),
+            amount: formatPlain(parsed),
             category: debtLabel,
           })
         );
@@ -309,6 +309,7 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
                 placeholder="0"
                 placeholderTextColor={palette.inkSoft}
                 style={styles.amountInput}
+                secureTextEntry={!amountsVisible}
                 autoFocus
               />
             </View>
@@ -521,7 +522,7 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
             <View style={styles.summary}>
               <SummaryLine
                 label={t('flow.summaryAmount')}
-                value={format(parse(amount) ?? 0, { reveal: true })}
+                value={format(parse(amount) ?? 0)}
               />
               <SummaryLine
                 label={t('flow.summaryType')}

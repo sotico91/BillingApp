@@ -19,8 +19,23 @@ export const CONCEPT_COLOR_OPTIONS = [
   '#4361EE',
   '#E07A5F',
   '#7A8790',
+  '#2A9D8F',
+  '#E63946',
+  '#457B9D',
+  '#F77F00',
+  '#6A994E',
+  '#BC6C25',
+  '#5E60CE',
+  '#118AB2',
+  '#EF476F',
+  '#073B4C',
+  '#8E9AAF',
+  '#D4A373',
 ] as const;
 
+export type ConceptColor = (typeof CONCEPT_COLOR_OPTIONS)[number];
+
+/** Prefer an unused palette color when creating; repeats only if the palette is exhausted. */
 export function nextConceptColor(existing: SpendConcept[]): string {
   const used = new Set(existing.map((c) => c.color).filter(Boolean));
   const free = CONCEPT_COLOR_OPTIONS.find((c) => !used.has(c));

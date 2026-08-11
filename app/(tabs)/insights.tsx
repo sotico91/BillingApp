@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Pressable,
   ScrollView,
@@ -22,11 +22,16 @@ import type { TranslationKey } from '@/src/i18n/translations';
 import { palette, radii } from '@/src/theme/colors';
 import type { Period } from '@/src/types/finance';
 import { categoryLabel } from '@/src/utils/categoryLabel';
-import { buildSmartInsights, answerFinanceQuery } from '@/src/utils/smartInsights';
+import { tapFeedback } from '@/src/utils/selectFeedback';
+import {
+  answerFinanceQuery,
+  buildSearchSuggestions,
+  buildSmartInsights,
+} from '@/src/utils/smartInsights';
 import { toneFromBudgetRatio } from '@/src/utils/signalTone';
 
 export default function InsightsScreen() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { format } = useMoney();
   const { settings } = useSettings();
   const spendConcepts = settings.spendConcepts ?? [];
@@ -53,14 +58,21 @@ export default function InsightsScreen() {
       : 'neutral';
 
   const debtTotal = debts.reduce((s, d) => s + d.balance, 0);
+  const suggestions = useMemo(
+    () => buildSearchSuggestions(spendConcepts, language === 'es' ? 'es' : 'en'),
+    [spendConcepts, language]
+  );
 
-  function ask() {
+  function ask(nextQuery?: string) {
+    const q = (nextQuery ?? query).trim();
+    if (nextQuery != null) setQuery(nextQuery);
     setAnswer(
-      answerFinanceQuery(query, transactions, format, t, {
+      answerFinanceQuery(q, transactions, format, t, {
         defaultPeriod: period,
         debtsTotal: debtTotal,
         availableCash,
         spendConcepts,
+        budgetStatus,
       })
     );
   }
@@ -89,11 +101,47 @@ export default function InsightsScreen() {
             placeholderTextColor={palette.inkSoft}
             style={styles.searchInput}
             returnKeyType="search"
-            onSubmitEditing={ask}
+            onSubmitEditing={() => ask()}
           />
-          <Pressable style={styles.searchBtn} onPress={ask}>
-            <Text style={styles.searchBtnText}>{t('insights.searchAsk')}</Text>
-          </Pressable>
+          <View style={styles.searchActions}>
+            <Pressable
+              style={styles.searchBtn}
+              onPress={() => {
+                tapFeedback();
+                ask();
+              }}>
+              <Text style={styles.searchBtnText}>{t('insights.searchAsk')}</Text>
+            </Pressable>
+            {query || answer ? (
+              <Pressable
+                style={styles.clearBtn}
+                onPress={() => {
+                  tapFeedback();
+                  setQuery('');
+                  setAnswer('');
+                }}>
+                <Text style={styles.clearBtnText}>{t('insights.searchClear')}</Text>
+              </Pressable>
+            ) : null}
+          </View>
+
+          <Text style={styles.suggestLabel}>{t('insights.searchSuggestions')}</Text>
+          <View style={styles.suggestRow}>
+            {suggestions.map((prompt) => (
+              <Pressable
+                key={prompt}
+                onPress={() => {
+                  tapFeedback();
+                  ask(prompt);
+                }}
+                style={styles.suggestChip}>
+                <Text style={styles.suggestText} numberOfLines={2}>
+                  {prompt}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+
           {answer ? <Text style={styles.answer}>{answer}</Text> : null}
         </FadeInBlock>
 
@@ -230,7 +278,6 @@ const styles = StyleSheet.create({
     color: palette.ink,
   },
   searchBtn: {
-    marginTop: 8,
     alignSelf: 'flex-start',
     backgroundColor: palette.accent,
     borderRadius: 12,
@@ -240,6 +287,49 @@ const styles = StyleSheet.create({
   searchBtnText: {
     fontFamily: 'DMSans_600SemiBold',
     color: palette.white,
+  },
+  searchActions: {
+    marginTop: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  clearBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  clearBtnText: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 13,
+    color: palette.brandMuted,
+  },
+  suggestLabel: {
+    marginTop: 14,
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 12,
+    color: palette.brandMuted,
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+  },
+  suggestRow: {
+    marginTop: 8,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  suggestChip: {
+    maxWidth: '100%',
+    backgroundColor: 'rgba(255,255,255,0.16)',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.22)',
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+  },
+  suggestText: {
+    fontFamily: 'DMSans_500Medium',
+    fontSize: 13,
+    color: palette.brand,
   },
   answer: {
     marginTop: 10,

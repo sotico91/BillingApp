@@ -480,13 +480,26 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       period: Period,
       type: TransactionType = 'expense',
       scope: PersonScope = 'mine'
-    ) => sumByType(transactionsForPeriod(period, scope), type),
+    ) => {
+      const list = transactionsForPeriod(period, scope);
+      // Debt installments are real money out — count them with expenses.
+      if (type === 'expense') {
+        return list
+          .filter((t) => t.type === 'expense' || t.type === 'debt_payment')
+          .reduce((s, t) => s + t.amount, 0);
+      }
+      return sumByType(list, type);
+    },
     [transactionsForPeriod]
   );
 
   const insightsForPeriod = useCallback(
     (period: Period, kind: 'expense' | 'income' = 'expense'): CategoryInsight[] => {
-      const list = transactionsForPeriod(period, 'mine').filter((t) => t.type === kind);
+      const list = transactionsForPeriod(period, 'mine').filter((t) =>
+        kind === 'income'
+          ? t.type === 'income'
+          : t.type === 'expense' || t.type === 'debt_payment'
+      );
       const total = list.reduce((sum, e) => sum + e.amount, 0);
       const map = new Map<string, { total: number; count: number }>();
       for (const e of list) {
@@ -546,7 +559,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
 
   const budgetStatus = useMemo(() => {
     const month = transactionsForPeriod('mes', 'mine').filter(
-      (t) => t.type === 'expense'
+      (t) => t.type === 'expense' || t.type === 'debt_payment'
     );
     return budgets.map((b) => {
       const spent = month

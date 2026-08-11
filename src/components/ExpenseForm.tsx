@@ -50,7 +50,7 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export function ExpenseForm({ onSaved }: Props) {
   const { t } = useLanguage();
-  const { format, parse, currency } = useMoney();
+  const { format, formatPlain, parse, currency, amountsVisible } = useMoney();
   const { settings, updateQuickTemplate } = useSettings();
   const { addTransaction, totalForPeriod, accounts, debts } = useFinance();
   const spendConcepts = settings.spendConcepts ?? [];
@@ -138,7 +138,7 @@ export function ExpenseForm({ onSaved }: Props) {
         await notifyExpenseRegistered(
           t('notify.title'),
           t('notify.body', {
-            amount: format(parsed, { reveal: true }),
+            amount: formatPlain(parsed),
             category: categoryLabel(
               type === 'debt_payment'
                 ? selectedDebt?.categoryId ?? categoryId
@@ -178,6 +178,7 @@ export function ExpenseForm({ onSaved }: Props) {
           placeholder="0"
           placeholderTextColor={palette.inkSoft}
           style={styles.amountInput}
+          secureTextEntry={!amountsVisible}
           autoFocus
         />
       </View>
@@ -341,7 +342,7 @@ export function ExpenseForm({ onSaved }: Props) {
 
       {preview ? (
         <Text style={styles.preview}>
-          {t('add.willSave', { amount: format(preview, { reveal: true }) })}
+          {t('add.willSave', { amount: format(preview ?? 0) })}
         </Text>
       ) : (
         <Text style={styles.preview}>{t('add.hint')}</Text>
