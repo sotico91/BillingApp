@@ -16,10 +16,10 @@ import type {
 } from '@/src/types/finance';
 
 const TX_KEY = 'billing-app:transactions:v2';
-const ACCOUNTS_KEY = 'billing-app:accounts:v1';
-const BUDGETS_KEY = 'billing-app:budgets:v1';
-const DEBTS_KEY = 'billing-app:debts:v1';
-const SUBS_KEY = 'billing-app:subscriptions:v1';
+const ACCOUNTS_KEY = 'billing-app:accounts:v2';
+const BUDGETS_KEY = 'billing-app:budgets:v2';
+const DEBTS_KEY = 'billing-app:debts:v2';
+const SUBS_KEY = 'billing-app:subscriptions:v2';
 const LEGACY_EXPENSES = 'gastos-hormiga:expenses:v1';
 
 async function loadJson<T>(key: string, fallback: T): Promise<T> {
@@ -67,15 +67,8 @@ export async function saveAccounts(items: Account[]): Promise<void> {
 
 export async function loadBudgets(): Promise<Budget[]> {
   const stored = await loadJson<Budget[] | null>(BUDGETS_KEY, null);
-  if (!stored || !Array.isArray(stored) || stored.length === 0) {
-    return DEFAULT_BUDGETS;
-  }
-  const have = new Set(stored.map((b) => b.categoryId));
-  const missing = DEFAULT_BUDGETS.filter((b) => !have.has(b.categoryId));
-  if (missing.length === 0) return stored;
-  const merged = [...stored, ...missing];
-  await AsyncStorage.setItem(BUDGETS_KEY, JSON.stringify(merged));
-  return merged;
+  if (!stored || !Array.isArray(stored)) return [...DEFAULT_BUDGETS];
+  return stored;
 }
 
 export async function saveBudgets(items: Budget[]): Promise<void> {
@@ -84,8 +77,8 @@ export async function saveBudgets(items: Budget[]): Promise<void> {
 
 export async function loadDebts(): Promise<Debt[]> {
   const stored = await loadJson<Debt[] | null>(DEBTS_KEY, null);
-  const list = stored && Array.isArray(stored) && stored.length > 0 ? stored : DEFAULT_DEBTS;
-  return list.map((d) => {
+  if (!stored || !Array.isArray(stored)) return [...DEFAULT_DEBTS];
+  return stored.map((d) => {
     if (d.nameKey) return d;
     if (d.id === 'debt-card') return { ...d, nameKey: 'debt.mainCard', name: undefined };
     return d;
@@ -98,9 +91,8 @@ export async function saveDebts(items: Debt[]): Promise<void> {
 
 export async function loadSubscriptions(): Promise<Subscription[]> {
   const stored = await loadJson<Subscription[] | null>(SUBS_KEY, null);
-  const list =
-    stored && Array.isArray(stored) && stored.length > 0 ? stored : DEFAULT_SUBSCRIPTIONS;
-  return list.map((s) => {
+  if (!stored || !Array.isArray(stored)) return [...DEFAULT_SUBSCRIPTIONS];
+  return stored.map((s) => {
     if (s.nameKey) return s;
     if (s.id === 'sub-gym') return { ...s, nameKey: 'sub.gym', name: undefined };
     if (s.id === 'sub-stream') return { ...s, nameKey: 'sub.streaming', name: undefined };

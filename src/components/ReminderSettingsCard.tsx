@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   Alert,
+  FlatList,
+  Modal,
   Pressable,
   StyleSheet,
   Text,
@@ -8,140 +10,87 @@ import {
   View,
 } from 'react-native';
 
-import { CATEGORIES } from '@/src/data/categories';
-import { useFinance } from '@/src/hooks/useFinance';
+import { flattenSpendSubs } from '@/src/data/spendConcepts';
 import { useSettings } from '@/src/hooks/useSettings';
 import { useLanguage } from '@/src/i18n/LanguageContext';
-import type { TranslationKey } from '@/src/i18n/translations';
 import { palette, radii } from '@/src/theme/colors';
+import type { ReminderRule } from '@/src/types/settings';
+import { categoryLabel } from '@/src/utils/categoryLabel';
+import { tapFeedback } from '@/src/utils/selectFeedback';
 
-const HOURS = [8, 12, 18, 20, 21];
-
-function slugConcept(name: string): string {
-  return name
-    .trim()
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '')
-    .slice(0, 40);
-}
+const HOURS = [7, 8, 9, 12, 18, 19, 20, 21];
+const MINUTES = [0, 15, 30, 45];
+const MONTH_DAYS = [1, 5, 10, 15, 20, 25, 28];
 
 export function ReminderSettingsCard() {
   const { t } = useLanguage();
   const { settings, updateReminders } = useSettings();
-  const { transactions } = useFinance();
-  const [selected, setSelected] = useState<string[]>(settings.reminderCategoryIds);
-  const [customs, setCustoms] = useState<string[]>(settings.reminderCustomConcepts ?? []);
-  const [customDraft, setCustomDraft] = useState('');
-  const [hour, setHour] = useState(settings.reminderHour);
+  const spendConcepts = settings.spendConcepts ?? [];
+  const [rules, setRules] = useState<ReminderRule[]>(settings.reminderRules ?? []);
+  const [editingSubId, setEditingSubId] = useState<string | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [pickerQuery, setPickerQuery] = useState('');
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    setSelected(settings.reminderCategoryIds);
-    setCustoms(settings.reminderCustomConcepts ?? []);
-    setHour(settings.reminderHour);
-  }, [
-    settings.reminderCategoryIds,
-    settings.reminderCustomConcepts,
-    settings.reminderHour,
-  ]);
+    setRules(settings.reminderRules ?? []);
+  }, [settings.reminderRules]);
 
-  const registeredCategoryIds = useMemo(() => {
-    const ids = new Set<string>();
-    for (const tx of transactions) {
-      if (tx.type === 'expense' && tx.categoryId) ids.add(tx.categoryId);
-    }
-    for (const id of selected) ids.add(id);
-    return ids;
-  }, [transactions, selected]);
+  const allSubs = useMemo(() => flattenSpendSubs(spendConcepts), [spendConcepts]);
 
-  const choices = useMemo(
-    () =>
-      CATEGORIES.filter(
-        (c) =>
-          c.id !== 'ingresos' &&
-          settings.enabledCategoryIds.includes(c.id) &&
-          (c.id === 'otros' || registeredCategoryIds.has(c.id))
-      ),
-    [settings.enabledCategoryIds, registeredCategoryIds]
-  );
-
-  const otrosOn = selected.includes('otros');
-
-  function toggle(id: string) {
-    setSelected((prev) => {
-      if (prev.includes(id)) {
-        const next = prev.filter((x) => x !== id);
-        if (id === 'otros') setCustoms([]);
-        return next;
-      }
-      return [...prev, id];
+  const availableSubs = useMemo(() => {
+    const selected = new Set(rules.map((r) => r.subId));
+    const q = pickerQuery.trim().toLowerCase();
+    return allSubs.filter((sub) => {
+      if (selected.has(sub.id)) return false;
+      if (!q) return true;
+      const label = categoryLabel(sub.id, t, spendConcepts).toLowerCase();
+      return label.includes(q) || sub.name.toLowerCase().includes(q);
     });
+  }, [allSubs, rules, pickerQuery, t, spendConcepts]);
+
+  function addSub(subId: string) {
+    tapFeedback();
+    setRules((prev) => [
+      ...prev,
+      {
+        subId,
+        hour: settings.reminderHour ?? 20,
+        minute: settings.reminderMinute ?? 0,
+      },
+    ]);
+    setEditingSubId(subId);
+    setPickerOpen(false);
+    setPickerQuery('');
   }
 
-  function addCustom() {
-    const name = customDraft.trim();
-    if (!name) return;
-    const exists = customs.some((c) => c.toLowerCase() === name.toLowerCase());
-    if (exists) {
-      setCustomDraft('');
-      return;
-    }
-    setCustoms((prev) => [...prev, name]);
-    if (!selected.includes('otros')) {
-      setSelected((prev) => [...prev, 'otros']);
-    }
-    setCustomDraft('');
+  function removeSub(subId: string) {
+    setRules((prev) => prev.filter((r) => r.subId !== subId));
+    if (editingSubId === subId) setEditingSubId(null);
   }
 
-  function removeCustom(name: string) {
-    setCustoms((prev) => {
-      const next = prev.filter((c) => c !== name);
-      if (next.length === 0) {
-        setSelected((ids) => ids.filter((id) => id !== 'otros'));
-      }
-      return next;
-    });
+  function patchRule(subId: string, patch: Partial<ReminderRule>) {
+    setRules((prev) =>
+      prev.map((r) => (r.subId === subId ? { ...r, ...patch } : r))
+    );
   }
 
   async function save() {
-    const standardIds = selected.filter((id) => id !== 'otros');
-    if (otrosOn && customs.length === 0) {
-      Alert.alert(t('reminder.customNeedTitle'), t('reminder.customNeedBody'));
-      return;
-    }
-
     setSaving(true);
     try {
       const labels: Record<string, { title: string; body: string }> = {};
-      for (const categoryId of standardIds) {
-        labels[categoryId] = {
+      for (const rule of rules) {
+        const label = categoryLabel(rule.subId, t, spendConcepts);
+        labels[rule.subId] = {
           title: t('reminder.pushTitle'),
-          body: t('reminder.pushBody', {
-            category: t(`category.${categoryId}` as TranslationKey),
-          }),
+          body: t('reminder.pushBody', { category: label }),
         };
       }
-      for (const name of customs) {
-        const id = `custom-${slugConcept(name) || 'concepto'}`;
-        labels[id] = {
-          title: t('reminder.pushTitle'),
-          body: t('reminder.pushBody', { category: name }),
-        };
-      }
-
-      const reminderCategoryIds = [
-        ...standardIds,
-        ...(customs.length > 0 ? ['otros'] : []),
-      ];
-
       await updateReminders({
-        reminderCategoryIds,
-        reminderCustomConcepts: customs,
-        reminderHour: hour,
+        reminderRules: rules,
         reminderLabels: labels,
+        reminderHour: rules[0]?.hour ?? settings.reminderHour,
+        reminderMinute: rules[0]?.minute ?? settings.reminderMinute ?? 0,
       });
       Alert.alert(t('reminder.savedTitle'), t('reminder.savedBody'));
     } finally {
@@ -149,93 +98,225 @@ export function ReminderSettingsCard() {
     }
   }
 
-  const invalidOtros = otrosOn && customs.length === 0;
-  const canSave = !invalidOtros; // empty selection clears all reminders
-
   return (
     <View style={styles.card}>
       <Text style={styles.copy}>{t('reminder.body')}</Text>
 
-      <Text style={styles.label}>{t('reminder.pickHour')}</Text>
-      <View style={styles.row}>
-        {HOURS.map((h) => (
-          <Pressable
-            key={h}
-            onPress={() => setHour(h)}
-            style={[styles.hourChip, hour === h && styles.hourOn]}>
-            <Text style={[styles.hourText, hour === h && styles.hourTextOn]}>
-              {t('reminder.hourLabel', { hour: h })}
-            </Text>
-          </Pressable>
-        ))}
-      </View>
-
-      <Text style={styles.label}>{t('reminder.pickCategories')}</Text>
-      {choices.length === 0 ? (
-        <Text style={styles.copy}>{t('reminder.noRegistered')}</Text>
+      {allSubs.length === 0 ? (
+        <Text style={styles.copy}>{t('reminder.noConcepts')}</Text>
       ) : (
-        <View style={styles.row}>
-          {choices.map((cat) => {
-            const on = selected.includes(cat.id);
-            return (
-              <Pressable
-                key={cat.id}
-                onPress={() => toggle(cat.id)}
-                style={[
-                  styles.chip,
-                  on && { backgroundColor: cat.color, borderColor: cat.color },
-                ]}>
-                <Text style={[styles.chipText, on && styles.chipTextOn]}>
-                  {t(`category.${cat.id}` as TranslationKey)}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
+        <Pressable
+          onPress={() => {
+            tapFeedback();
+            setPickerOpen(true);
+          }}
+          style={styles.pickerBtn}>
+          <Text style={styles.pickerBtnText}>{t('reminder.addSub')}</Text>
+          <Text style={styles.chevron}>▾</Text>
+        </Pressable>
       )}
 
-      {otrosOn ? (
-        <View style={styles.customBlock}>
-          <Text style={styles.label}>{t('reminder.customLabel')}</Text>
-          <Text style={styles.hint}>{t('reminder.customHint')}</Text>
-          <View style={styles.customRow}>
-            <TextInput
-              value={customDraft}
-              onChangeText={setCustomDraft}
-              placeholder={t('reminder.customPlaceholder')}
-              placeholderTextColor={palette.inkSoft}
-              style={styles.customInput}
-              autoCapitalize="sentences"
-              returnKeyType="done"
-              onSubmitEditing={addCustom}
-            />
-            <Pressable onPress={addCustom} style={styles.addBtn}>
-              <Text style={styles.addBtnText}>{t('reminder.customAdd')}</Text>
-            </Pressable>
-          </View>
-          {customs.length > 0 ? (
-            <View style={styles.row}>
-              {customs.map((name) => (
-                <Pressable
-                  key={name}
-                  onPress={() => removeCustom(name)}
-                  style={styles.customChip}>
-                  <Text style={styles.customChipText}>{name} ×</Text>
-                </Pressable>
-              ))}
+      {rules.length === 0 ? (
+        <Text style={styles.copy}>{t('reminder.noneYet')}</Text>
+      ) : (
+        rules.map((rule) => {
+          const label = categoryLabel(rule.subId, t, spendConcepts);
+          const open = editingSubId === rule.subId;
+          return (
+            <View key={rule.subId} style={styles.ruleCard}>
+              <Pressable
+                onPress={() => {
+                  tapFeedback();
+                  setEditingSubId(open ? null : rule.subId);
+                }}
+                style={styles.ruleHeader}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.ruleTitle}>{label}</Text>
+                  <Text style={styles.ruleMeta}>
+                    {rule.dayOfMonth
+                      ? t('reminder.monthlyAt', {
+                          day: rule.dayOfMonth,
+                          time: `${String(rule.hour).padStart(2, '0')}:${String(rule.minute).padStart(2, '0')}`,
+                        })
+                      : t('reminder.dailyAt', {
+                          time: `${String(rule.hour).padStart(2, '0')}:${String(rule.minute).padStart(2, '0')}`,
+                        })}
+                  </Text>
+                </View>
+                <Text style={styles.chevron}>{open ? '▾' : '▸'}</Text>
+              </Pressable>
+
+              {open ? (
+                <View style={styles.ruleBody}>
+                  <Text style={styles.miniLabel}>{t('reminder.frequency')}</Text>
+                  <View style={styles.row}>
+                    <Pressable
+                      onPress={() => patchRule(rule.subId, { dayOfMonth: undefined })}
+                      style={[styles.chip, rule.dayOfMonth == null && styles.chipOn]}>
+                      <Text
+                        style={[
+                          styles.chipText,
+                          rule.dayOfMonth == null && styles.chipTextOn,
+                        ]}>
+                        {t('reminder.daily')}
+                      </Text>
+                    </Pressable>
+                    <Pressable
+                      onPress={() =>
+                        patchRule(rule.subId, {
+                          dayOfMonth: rule.dayOfMonth ?? 5,
+                        })
+                      }
+                      style={[styles.chip, rule.dayOfMonth != null && styles.chipOn]}>
+                      <Text
+                        style={[
+                          styles.chipText,
+                          rule.dayOfMonth != null && styles.chipTextOn,
+                        ]}>
+                        {t('reminder.monthly')}
+                      </Text>
+                    </Pressable>
+                  </View>
+
+                  {rule.dayOfMonth != null ? (
+                    <>
+                      <Text style={styles.miniLabel}>{t('reminder.pickDay')}</Text>
+                      <View style={styles.row}>
+                        {MONTH_DAYS.map((d) => (
+                          <Pressable
+                            key={d}
+                            onPress={() => patchRule(rule.subId, { dayOfMonth: d })}
+                            style={[
+                              styles.hourChip,
+                              rule.dayOfMonth === d && styles.hourOn,
+                            ]}>
+                            <Text
+                              style={[
+                                styles.hourText,
+                                rule.dayOfMonth === d && styles.hourTextOn,
+                              ]}>
+                              {t('reminder.dayLabel', { day: d })}
+                            </Text>
+                          </Pressable>
+                        ))}
+                      </View>
+                      <TextInput
+                        value={String(rule.dayOfMonth)}
+                        onChangeText={(v) => {
+                          const n = Math.min(28, Math.max(1, Number(v) || 1));
+                          patchRule(rule.subId, { dayOfMonth: n });
+                        }}
+                        keyboardType="number-pad"
+                        style={styles.dayInput}
+                        placeholder="1-28"
+                        placeholderTextColor={palette.inkSoft}
+                      />
+                    </>
+                  ) : null}
+
+                  <Text style={styles.miniLabel}>{t('reminder.pickHour')}</Text>
+                  <View style={styles.row}>
+                    {HOURS.map((h) => (
+                      <Pressable
+                        key={h}
+                        onPress={() => patchRule(rule.subId, { hour: h })}
+                        style={[styles.hourChip, rule.hour === h && styles.hourOn]}>
+                        <Text
+                          style={[
+                            styles.hourText,
+                            rule.hour === h && styles.hourTextOn,
+                          ]}>
+                          {t('reminder.hourLabel', { hour: h })}
+                        </Text>
+                      </Pressable>
+                    ))}
+                  </View>
+
+                  <Text style={styles.miniLabel}>{t('reminder.pickMinute')}</Text>
+                  <View style={styles.row}>
+                    {MINUTES.map((m) => (
+                      <Pressable
+                        key={m}
+                        onPress={() => patchRule(rule.subId, { minute: m })}
+                        style={[
+                          styles.hourChip,
+                          rule.minute === m && styles.hourOn,
+                        ]}>
+                        <Text
+                          style={[
+                            styles.hourText,
+                            rule.minute === m && styles.hourTextOn,
+                          ]}>
+                          :{String(m).padStart(2, '0')}
+                        </Text>
+                      </Pressable>
+                    ))}
+                  </View>
+
+                  <Pressable
+                    onPress={() => removeSub(rule.subId)}
+                    style={styles.removeBtn}>
+                    <Text style={styles.removeText}>{t('reminder.remove')}</Text>
+                  </Pressable>
+                </View>
+              ) : null}
             </View>
-          ) : null}
-        </View>
-      ) : null}
+          );
+        })
+      )}
 
       <Pressable
         onPress={() => void save()}
-        disabled={saving || !canSave}
-        style={[styles.saveBtn, (saving || !canSave) && { opacity: 0.7 }]}>
+        disabled={saving}
+        style={[styles.saveBtn, saving && { opacity: 0.7 }]}>
         <Text style={styles.saveText}>
           {saving ? t('add.saving') : t('reminder.save')}
         </Text>
       </Pressable>
+
+      <Modal
+        visible={pickerOpen}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setPickerOpen(false)}>
+        <Pressable style={styles.modalBackdrop} onPress={() => setPickerOpen(false)}>
+          <Pressable style={styles.modalSheet} onPress={(e) => e.stopPropagation()}>
+            <Text style={styles.modalTitle}>{t('reminder.pickSubs')}</Text>
+            <TextInput
+              value={pickerQuery}
+              onChangeText={setPickerQuery}
+              placeholder={t('reminder.searchSub')}
+              placeholderTextColor={palette.inkSoft}
+              style={styles.searchInput}
+              autoFocus
+            />
+            {availableSubs.length === 0 ? (
+              <Text style={styles.copy}>{t('reminder.noAvailable')}</Text>
+            ) : (
+              <FlatList
+                data={availableSubs}
+                keyExtractor={(item) => item.id}
+                style={{ maxHeight: 320 }}
+                keyboardShouldPersistTaps="handled"
+                renderItem={({ item }) => (
+                  <Pressable
+                    onPress={() => addSub(item.id)}
+                    style={styles.pickerRow}>
+                    <Text style={styles.pickerRowText}>
+                      {categoryLabel(item.id, t, spendConcepts)}
+                    </Text>
+                  </Pressable>
+                )}
+              />
+            )}
+            <Pressable
+              onPress={() => setPickerOpen(false)}
+              style={styles.modalClose}>
+              <Text style={styles.modalCloseText}>{t('plan.setLimitCancel')}</Text>
+            </Pressable>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -243,59 +324,53 @@ export function ReminderSettingsCard() {
 const styles = StyleSheet.create({
   card: {
     backgroundColor: palette.surfaceSolid,
-    borderRadius: radii.lg,
-    padding: 16,
+    borderRadius: radii.md,
+    padding: 14,
     borderWidth: 1,
     borderColor: palette.border,
-    gap: 10,
+    gap: 8,
   },
   copy: {
     fontFamily: 'DMSans_400Regular',
     fontSize: 13,
     color: palette.inkMuted,
-    lineHeight: 19,
+    lineHeight: 18,
   },
-  hint: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 12,
-    color: palette.inkSoft,
-    lineHeight: 17,
-    marginTop: -4,
-  },
-  label: {
-    marginTop: 4,
-    fontFamily: 'DMSans_600SemiBold',
-    fontSize: 12,
-    color: palette.inkSoft,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  row: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  hourChip: {
+  pickerBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     borderWidth: 1,
     borderColor: palette.border,
-    backgroundColor: '#F7FAFC',
-    borderRadius: 12,
+    borderRadius: radii.sm,
     paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingVertical: 12,
+    backgroundColor: '#F4F7F8',
   },
-  hourOn: {
-    backgroundColor: palette.accent,
-    borderColor: palette.accent,
-  },
-  hourText: {
-    fontFamily: 'DMSans_500Medium',
-    fontSize: 13,
+  pickerBtnText: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 14,
     color: palette.ink,
   },
-  hourTextOn: { color: palette.white },
+  chevron: { fontSize: 14, color: palette.inkMuted },
+  miniLabel: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 12,
+    color: palette.inkMuted,
+    marginTop: 6,
+  },
+  row: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: {
     borderWidth: 1,
     borderColor: palette.border,
     backgroundColor: '#F7FAFC',
     borderRadius: 14,
     paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingVertical: 9,
+  },
+  chipOn: {
+    backgroundColor: palette.accent,
+    borderColor: palette.accent,
   },
   chipText: {
     fontFamily: 'DMSans_500Medium',
@@ -303,53 +378,129 @@ const styles = StyleSheet.create({
     color: palette.ink,
   },
   chipTextOn: { color: palette.white },
-  customBlock: { gap: 8 },
-  customRow: { flexDirection: 'row', gap: 8, alignItems: 'center' },
-  customInput: {
-    flex: 1,
+  hourChip: {
     borderWidth: 1,
     borderColor: palette.border,
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
-    color: palette.ink,
     backgroundColor: '#F7FAFC',
-  },
-  addBtn: {
-    backgroundColor: palette.teal,
     borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 11,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
   },
-  addBtnText: {
-    fontFamily: 'DMSans_600SemiBold',
-    color: palette.white,
-    fontSize: 13,
+  hourOn: {
+    backgroundColor: palette.teal,
+    borderColor: palette.teal,
   },
-  customChip: {
-    backgroundColor: palette.accentSoft,
-    borderRadius: 14,
+  hourText: {
+    fontFamily: 'DMSans_500Medium',
+    fontSize: 12,
+    color: palette.ink,
+  },
+  hourTextOn: { color: palette.white },
+  dayInput: {
+    marginTop: 6,
+    borderWidth: 1,
+    borderColor: palette.border,
+    borderRadius: radii.sm,
     paddingHorizontal: 12,
     paddingVertical: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(255,107,74,0.35)',
-  },
-  customChipText: {
     fontFamily: 'DMSans_500Medium',
+    fontSize: 14,
+    color: palette.ink,
+    backgroundColor: '#F4F7F8',
+    maxWidth: 100,
+  },
+  ruleCard: {
+    borderWidth: 1,
+    borderColor: palette.border,
+    borderRadius: radii.sm,
+    overflow: 'hidden',
+    backgroundColor: '#FFF',
+  },
+  ruleHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    backgroundColor: '#F7FAFC',
+    gap: 8,
+  },
+  ruleTitle: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 14,
+    color: palette.ink,
+  },
+  ruleMeta: {
+    marginTop: 2,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 12,
+    color: palette.inkMuted,
+  },
+  ruleBody: { padding: 12, gap: 4 },
+  removeBtn: { marginTop: 8, alignSelf: 'flex-start' },
+  removeText: {
+    fontFamily: 'DMSans_600SemiBold',
     fontSize: 13,
-    color: palette.accentDeep,
+    color: palette.danger,
   },
   saveBtn: {
-    marginTop: 6,
+    marginTop: 4,
     backgroundColor: palette.accent,
     borderRadius: 14,
-    paddingVertical: 13,
+    paddingVertical: 12,
     alignItems: 'center',
   },
   saveText: {
     fontFamily: 'DMSans_600SemiBold',
+    fontSize: 15,
     color: palette.white,
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    justifyContent: 'flex-end',
+  },
+  modalSheet: {
+    backgroundColor: palette.surfaceSolid,
+    borderTopLeftRadius: 18,
+    borderTopRightRadius: 18,
+    padding: 18,
+    paddingBottom: 28,
+    gap: 10,
+    maxHeight: '75%',
+  },
+  modalTitle: {
+    fontFamily: 'Fraunces_600SemiBold',
+    fontSize: 20,
+    color: palette.brand,
+  },
+  searchInput: {
+    borderWidth: 1,
+    borderColor: palette.border,
+    borderRadius: radii.sm,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontFamily: 'DMSans_500Medium',
+    fontSize: 14,
+    color: palette.ink,
+    backgroundColor: '#F4F7F8',
+  },
+  pickerRow: {
+    paddingVertical: 14,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: palette.border,
+  },
+  pickerRowText: {
+    fontFamily: 'DMSans_500Medium',
+    fontSize: 15,
+    color: palette.ink,
+  },
+  modalClose: {
+    alignItems: 'center',
+    paddingVertical: 10,
+  },
+  modalCloseText: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 14,
+    color: palette.inkMuted,
   },
 });

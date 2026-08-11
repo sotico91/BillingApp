@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import {
   Alert,
@@ -16,7 +17,8 @@ import {
   intentToType,
   type FriendlyIntent,
 } from '@/src/data/friendlyTemplates';
-import { CATEGORIES } from '@/src/data/categories';
+import { categoriesForKind, defaultCategoryIdForKind } from '@/src/data/categories';
+import { findConceptById, findSpendSub } from '@/src/data/spendConcepts';
 import { useFinance } from '@/src/hooks/useFinance';
 import { useMoney } from '@/src/hooks/useMoney';
 import { useSettings } from '@/src/hooks/useSettings';
@@ -24,10 +26,13 @@ import { useLanguage } from '@/src/i18n/LanguageContext';
 import type { TranslationKey } from '@/src/i18n/translations';
 import { palette, radii } from '@/src/theme/colors';
 import type { PaymentMethod } from '@/src/types/finance';
+import { categoryLabel } from '@/src/utils/categoryLabel';
 import { notifyExpenseRegistered } from '@/src/utils/notifications';
+import { tapFeedback } from '@/src/utils/selectFeedback';
+import type { SavedMovement } from '@/src/components/ExpenseForm';
 
 type Props = {
-  onSaved?: (todayExpenseTotal: number) => void;
+  onSaved?: (result: SavedMovement) => void;
   onSwitchAdvanced?: () => void;
 };
 
@@ -37,49 +42,59 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
   const { t } = useLanguage();
   const { format, parse, currency } = useMoney();
   const { settings, updateQuickTemplate } = useSettings();
-  const { addTransaction, totalForPeriod, accounts } = useFinance();
+  const { addTransaction, totalForPeriod, accounts, debts } = useFinance();
+
+  const spendConcepts = settings.spendConcepts ?? [];
 
   const [step, setStep] = useState(0);
   const [intent, setIntent] = useState<FriendlyIntent>('spend');
   const [amount, setAmount] = useState('');
+  const [conceptId, setConceptId] = useState<string | null>(null);
   const [categoryId, setCategoryId] = useState('cafe');
+  const [debtId, setDebtId] = useState<string | null>(null);
   const [method, setMethod] = useState<PaymentMethod>('debit');
   const [accountId, setAccountId] = useState(accounts[0]?.id ?? 'cash');
   const [note, setNote] = useState('');
   const [saving, setSaving] = useState(false);
 
-  const enabledCategories = useMemo(
-    () => CATEGORIES.filter((c) => settings.enabledCategoryIds.includes(c.id)),
+  const incomeChoices = useMemo(
+    () => categoriesForKind('income', settings.enabledCategoryIds),
     [settings.enabledCategoryIds]
   );
 
-  const categoryChoices = useMemo(() => {
-    if (intent !== 'earn') return enabledCategories;
-    const income = CATEGORIES.find((c) => c.id === 'ingresos');
-    if (!income) return enabledCategories;
-    if (enabledCategories.some((c) => c.id === 'ingresos')) return enabledCategories;
-    return [income, ...enabledCategories];
-  }, [enabledCategories, intent]);
+  const selectedConcept = useMemo(
+    () => (conceptId ? findConceptById(spendConcepts, conceptId) : undefined),
+    [conceptId, spendConcepts]
+  );
 
   const templates = useMemo(
     () =>
       FRIENDLY_TEMPLATES.filter(
         (tpl) =>
+          tpl.intent !== 'spend' ||
           settings.enabledCategoryIds.includes(tpl.categoryId) ||
-          tpl.intent !== 'spend'
+          findSpendSub(spendConcepts, tpl.categoryId) != null
       ),
-    [settings.enabledCategoryIds]
+    [settings.enabledCategoryIds, spendConcepts]
   );
 
   const asksPaymentMethod = intent === 'spend' || intent === 'move' || intent === 'debt';
-  const totalSteps = 5;
+  const totalSteps = intent === 'spend' ? 6 : 5;
   const progress = ((step + 1) / totalSteps) * 100;
+  const paymentStep = intent === 'spend' ? 4 : 3;
+  const reviewStep = intent === 'spend' ? 5 : 4;
 
   function applyTemplate(id: string) {
     const tpl = FRIENDLY_TEMPLATES.find((x) => x.id === id);
     if (!tpl) return;
     setIntent(tpl.intent);
     setCategoryId(tpl.categoryId);
+    if (tpl.intent === 'spend') {
+      const hit = findSpendSub(spendConcepts, tpl.categoryId);
+      setConceptId(hit?.concept.id ?? null);
+    } else {
+      setConceptId(null);
+    }
     if (tpl.amountHint) setAmount(String(tpl.amountHint));
     if (tpl.intent === 'move') {
       setAccountId('bank-main');
@@ -98,6 +113,33 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
         return;
       }
     }
+    if (step === 2 && intent === 'debt') {
+      if (debts.length === 0) return;
+      if (!debtId) {
+        Alert.alert(t('flow.chooseDebt'), t('wealth.debtNeed'));
+        return;
+      }
+    }
+    if (step === 2 && intent === 'spend') {
+      if (spendConcepts.length === 0) return;
+      if (!conceptId) {
+        Alert.alert(t('flow.chooseConcept'), t('flow.noConceptsBody'));
+        return;
+      }
+      const concept = findConceptById(spendConcepts, conceptId);
+      if (concept && concept.subs.length === 1) {
+        setCategoryId(concept.subs[0].id);
+      } else if (concept && !concept.subs.some((s) => s.id === categoryId)) {
+        setCategoryId(concept.subs[0]?.id ?? categoryId);
+      }
+    }
+    if (step === 3 && intent === 'spend') {
+      const concept = conceptId ? findConceptById(spendConcepts, conceptId) : undefined;
+      if (!concept || !concept.subs.some((s) => s.id === categoryId)) {
+        Alert.alert(t('flow.chooseSub'), t('flow.noConceptsBody'));
+        return;
+      }
+    }
     setStep((s) => Math.min(s + 1, totalSteps - 1));
   }
 
@@ -111,20 +153,31 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
     setSaving(true);
     try {
       const type = intentToType(intent);
-      const before = totalForPeriod('hoy', 'expense');
+      const beforeExpense = totalForPeriod('hoy', 'expense');
+      const beforeIncome = totalForPeriod('hoy', 'income');
+      const selectedDebt = debts.find((d) => d.id === debtId);
+      const debtLabel = selectedDebt
+        ? selectedDebt.nameKey
+          ? t(selectedDebt.nameKey as TranslationKey)
+          : selectedDebt.name ?? t('debt.mainCard')
+        : categoryLabel(categoryId, t, spendConcepts);
+      const resolvedCategoryId =
+        intent === 'debt' ? selectedDebt?.categoryId ?? 'otros' : categoryId;
+
       await addTransaction({
         type,
         amount: parsed,
-        categoryId,
+        categoryId: resolvedCategoryId,
         paymentMethod: asksPaymentMethod ? method : undefined,
         accountId,
         toAccountId: intent === 'move' ? 'savings' : undefined,
-        note,
+        debtId: intent === 'debt' ? debtId ?? undefined : undefined,
+        note: intent === 'debt' ? note.trim() || debtLabel : note,
       });
 
       if (type === 'expense') {
         await updateQuickTemplate({
-          categoryId,
+          categoryId: resolvedCategoryId,
           amount: parsed,
           note: note.trim() || undefined,
         });
@@ -134,17 +187,27 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
         await notifyExpenseRegistered(
           t('notify.title'),
           t('notify.body', {
-            amount: format(parsed),
-            category: t(`category.${categoryId}` as TranslationKey),
+            amount: format(parsed, { reveal: true }),
+            category: debtLabel,
           })
         );
       }
 
-      onSaved?.(type === 'expense' ? before + parsed : before);
+      if (type === 'expense') {
+        onSaved?.({ kind: 'expense', amount: beforeExpense + parsed });
+      } else if (type === 'income') {
+        onSaved?.({ kind: 'income', amount: beforeIncome + parsed });
+      } else {
+        onSaved?.({ kind: 'other', amount: parsed });
+      }
     } finally {
       setSaving(false);
     }
   }
+
+  const hideNext =
+    (intent === 'debt' && step === 2 && debts.length === 0) ||
+    (intent === 'spend' && step === 2 && spendConcepts.length === 0);
 
   return (
     <View style={styles.wrap}>
@@ -167,18 +230,32 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
                 <Pressable
                   key={item.id}
                   onPress={() => {
+                    tapFeedback();
                     setIntent(item.id);
                     if (item.id === 'earn') {
-                      setCategoryId('ingresos');
+                      setConceptId(null);
+                      setCategoryId(
+                        defaultCategoryIdForKind('income', settings.enabledCategoryIds)
+                      );
                       setAccountId(
                         accounts.find((a) => a.type === 'bank')?.id ??
                           accounts[0]?.id ??
                           'cash'
                       );
                     }
-                    if (item.id === 'spend') setCategoryId('cafe');
-                    if (item.id === 'move') setCategoryId('otros');
-                    if (item.id === 'debt') setCategoryId('otros');
+                    if (item.id === 'spend') {
+                      setConceptId(null);
+                      setCategoryId('');
+                    }
+                    if (item.id === 'move') {
+                      setConceptId(null);
+                      setCategoryId('otros');
+                    }
+                    if (item.id === 'debt') {
+                      setConceptId(null);
+                      setCategoryId('otros');
+                      setDebtId(debts[0]?.id ?? null);
+                    }
                     goNext();
                   }}
                   style={styles.intentCard}>
@@ -240,24 +317,141 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
 
         {step === 2 ? (
           <Animated.View entering={FadeInDown.springify()} style={styles.block}>
-            <Text style={styles.title}>{t('flow.chooseCategory')}</Text>
+            {intent === 'debt' ? (
+              <>
+                <Text style={styles.title}>{t('flow.chooseDebt')}</Text>
+                {debts.length === 0 ? (
+                  <View style={styles.emptyDebt}>
+                    <Text style={styles.emptyDebtTitle}>{t('flow.noDebtsTitle')}</Text>
+                    <Text style={styles.emptyDebtBody}>{t('flow.noDebtsBody')}</Text>
+                    <Pressable
+                      onPress={() => router.replace('/(tabs)/wealth')}
+                      style={styles.wealthBtn}>
+                      <Text style={styles.wealthBtnText}>{t('flow.goToWealth')}</Text>
+                    </Pressable>
+                  </View>
+                ) : (
+                  <View style={styles.catGrid}>
+                    {debts.map((debt) => {
+                      const label = debt.nameKey
+                        ? t(debt.nameKey as TranslationKey)
+                        : debt.name ?? t('debt.mainCard');
+                      const selected = debt.id === debtId;
+                      return (
+                        <Pressable
+                          key={debt.id}
+                          onPress={() => {
+                            setDebtId(debt.id);
+                            if (debt.installment > 0) {
+                              setAmount(String(debt.installment));
+                            }
+                          }}
+                          style={[styles.catCard, selected && styles.catCardOn]}>
+                          <Text style={[styles.catText, selected && styles.catTextOn]}>
+                            {label}
+                          </Text>
+                          <Text style={[styles.catSub, selected && styles.catTextOn]}>
+                            {format(debt.balance)}
+                            {debt.installment > 0
+                              ? ` · ${t('wealth.installment', { amount: format(debt.installment) })}`
+                              : ''}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                )}
+              </>
+            ) : intent === 'spend' ? (
+              <>
+                <Text style={styles.title}>{t('flow.chooseConcept')}</Text>
+                {spendConcepts.length === 0 ? (
+                  <View style={styles.emptyDebt}>
+                    <Text style={styles.emptyDebtTitle}>{t('flow.noConceptsTitle')}</Text>
+                    <Text style={styles.emptyDebtBody}>{t('flow.noConceptsBody')}</Text>
+                    <Pressable
+                      onPress={() => router.replace('/(tabs)/plan')}
+                      style={styles.wealthBtn}>
+                      <Text style={styles.wealthBtnText}>{t('flow.goToPlan')}</Text>
+                    </Pressable>
+                  </View>
+                ) : (
+                  <View style={styles.catGrid}>
+                    {spendConcepts.map((concept) => {
+                      const selected = concept.id === conceptId;
+                      return (
+                        <Pressable
+                          key={concept.id}
+                          onPress={() => {
+                            setConceptId(concept.id);
+                            if (!concept.subs.some((s) => s.id === categoryId)) {
+                              setCategoryId(concept.subs[0]?.id ?? '');
+                            }
+                          }}
+                          style={[styles.catCard, selected && styles.catCardOn]}>
+                          <Text style={[styles.catText, selected && styles.catTextOn]}>
+                            {concept.name}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                )}
+              </>
+            ) : intent === 'earn' ? (
+              <>
+                <Text style={styles.title}>{t('flow.chooseCategory')}</Text>
+                <View style={styles.catGrid}>
+                  {incomeChoices.map((cat) => {
+                    const selected = cat.id === categoryId;
+                    return (
+                      <Pressable
+                        key={cat.id}
+                        onPress={() => {
+                          tapFeedback();
+                          setCategoryId(cat.id);
+                        }}
+                        style={[
+                          styles.catCard,
+                          selected && {
+                            backgroundColor: cat.color,
+                            borderColor: cat.color,
+                          },
+                        ]}>
+                        <Text
+                          style={[styles.catText, selected && styles.catTextOn]}>
+                          {categoryLabel(cat.id, t, spendConcepts)}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </>
+            ) : (
+              <>
+                <Text style={styles.title}>{t('flow.intent.move')}</Text>
+                <Text style={styles.intentSub}>{t('flow.intent.moveSub')}</Text>
+              </>
+            )}
+          </Animated.View>
+        ) : null}
+
+        {step === 3 && intent === 'spend' ? (
+          <Animated.View entering={FadeInDown.springify()} style={styles.block}>
+            <Text style={styles.title}>{t('flow.chooseSub')}</Text>
             <View style={styles.catGrid}>
-              {categoryChoices.map((cat) => {
-                const selected = cat.id === categoryId;
+              {(selectedConcept?.subs ?? []).map((sub) => {
+                const selected = sub.id === categoryId;
                 return (
                   <Pressable
-                    key={cat.id}
-                    onPress={() => setCategoryId(cat.id)}
-                    style={[
-                      styles.catCard,
-                      selected && {
-                        backgroundColor: cat.color,
-                        borderColor: cat.color,
-                      },
-                    ]}>
-                    <Text
-                      style={[styles.catText, selected && styles.catTextOn]}>
-                      {t(`category.${cat.id}` as TranslationKey)}
+                    key={sub.id}
+                    onPress={() => {
+                      tapFeedback();
+                      setCategoryId(sub.id);
+                    }}
+                    style={[styles.catCard, selected && styles.catCardOn]}>
+                    <Text style={[styles.catText, selected && styles.catTextOn]}>
+                      {sub.name}
                     </Text>
                   </Pressable>
                 );
@@ -266,7 +460,7 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
           </Animated.View>
         ) : null}
 
-        {step === 3 ? (
+        {step === paymentStep ? (
           <Animated.View entering={FadeInDown.springify()} style={styles.block}>
             {asksPaymentMethod ? (
               <>
@@ -275,7 +469,10 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
                   {METHODS.map((m) => (
                     <Pressable
                       key={m}
-                      onPress={() => setMethod(m)}
+                      onPress={() => {
+                        tapFeedback();
+                        setMethod(m);
+                      }}
                       style={[styles.catCard, method === m && styles.catCardOn]}>
                       <Text style={[styles.catText, method === m && styles.catTextOn]}>
                         {t(`method.${m}` as TranslationKey)}
@@ -297,7 +494,10 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
               {accounts.map((acc) => (
                 <Pressable
                   key={acc.id}
-                  onPress={() => setAccountId(acc.id)}
+                  onPress={() => {
+                    tapFeedback();
+                    setAccountId(acc.id);
+                  }}
                   style={[
                     styles.catCard,
                     accountId === acc.id && styles.catCardOn,
@@ -315,22 +515,36 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
           </Animated.View>
         ) : null}
 
-        {step === 4 ? (
+        {step === reviewStep ? (
           <Animated.View entering={FadeInDown.springify()} style={styles.block}>
             <Text style={styles.title}>{t('flow.review')}</Text>
             <View style={styles.summary}>
               <SummaryLine
                 label={t('flow.summaryAmount')}
-                value={format(parse(amount) ?? 0)}
+                value={format(parse(amount) ?? 0, { reveal: true })}
               />
               <SummaryLine
                 label={t('flow.summaryType')}
                 value={t(`type.${intentToType(intent)}` as TranslationKey)}
               />
-              <SummaryLine
-                label={t('flow.summaryCategory')}
-                value={t(`category.${categoryId}` as TranslationKey)}
-              />
+              {intent !== 'move' ? (
+                <SummaryLine
+                  label={
+                    intent === 'debt' ? t('flow.chooseDebt') : t('flow.summaryCategory')
+                  }
+                  value={
+                    intent === 'debt'
+                      ? (() => {
+                          const debt = debts.find((d) => d.id === debtId);
+                          if (!debt) return '—';
+                          return debt.nameKey
+                            ? t(debt.nameKey as TranslationKey)
+                            : debt.name ?? t('debt.mainCard');
+                        })()
+                      : categoryLabel(categoryId, t, spendConcepts)
+                  }
+                />
+              ) : null}
               {asksPaymentMethod ? (
                 <SummaryLine
                   label={t('flow.summaryMethod')}
@@ -373,13 +587,15 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
         )}
 
         {step === 0 ? null : step < totalSteps - 1 ? (
-          <Pressable onPress={goNext} style={styles.primary}>
-            <Text style={styles.primaryText}>{t('flow.next')}</Text>
-          </Pressable>
+          hideNext ? null : (
+            <Pressable onPress={goNext} style={styles.primary}>
+              <Text style={styles.primaryText}>{t('flow.next')}</Text>
+            </Pressable>
+          )
         ) : (
           <Pressable
             onPress={() => void save()}
-            disabled={saving}
+            disabled={saving || (intent === 'debt' && !debtId)}
             style={[styles.primary, saving && { opacity: 0.7 }]}>
             <Text style={styles.primaryText}>
               {saving ? t('add.saving') : t('flow.save')}
@@ -540,6 +756,44 @@ const styles = StyleSheet.create({
     color: palette.ink,
   },
   catTextOn: { color: palette.white },
+  catSub: {
+    marginTop: 4,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 12,
+    color: palette.inkMuted,
+  },
+  emptyDebt: {
+    backgroundColor: '#F7FAFC',
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: palette.border,
+    gap: 8,
+  },
+  emptyDebtTitle: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 16,
+    color: palette.ink,
+  },
+  emptyDebtBody: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
+    color: palette.inkMuted,
+    lineHeight: 20,
+  },
+  wealthBtn: {
+    marginTop: 6,
+    alignSelf: 'flex-start',
+    backgroundColor: palette.accent,
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  wealthBtnText: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 14,
+    color: palette.white,
+  },
   summary: {
     backgroundColor: '#F7FAFC',
     borderRadius: 16,

@@ -14,9 +14,13 @@ export type PaymentMethod = 'cash' | 'debit' | 'credit' | 'transfer';
 
 export type AccountType = 'bank' | 'cash' | 'credit' | 'savings' | 'investment' | 'other';
 
+export type CategoryKind = 'expense' | 'income';
+
 export type Category = {
   id: string;
   color: string;
+  /** Expense categories for spends; income categories for earnings. */
+  kind: CategoryKind;
   isAnt?: boolean;
   budgetGroup?: string;
 };
@@ -36,6 +40,8 @@ export type Transaction = {
   paymentMethod?: PaymentMethod;
   accountId?: string;
   toAccountId?: string;
+  /** Linked debt when type is debt_payment. */
+  debtId?: string;
   note?: string;
   createdAt: string;
   isRecurring?: boolean;
@@ -75,6 +81,10 @@ export type Debt = {
   paidCapital: number;
   paidInterest: number;
   otherCharges: number;
+  /** Linked spend subcategory (permanent cuota). */
+  categoryId?: string;
+  /** Monthly installment treated as permanent expense. */
+  isPermanent?: boolean;
 };
 
 export type Subscription = {

@@ -3,9 +3,11 @@ import { SymbolView } from 'expo-symbols';
 import { Tabs } from 'expo-router';
 import { Platform, StyleSheet, View } from 'react-native';
 
+import { AmountPrivacyToggle } from '@/src/components/AmountPrivacyToggle';
 import { FloatingGlanceFab } from '@/src/components/FloatingGlanceFab';
 import { useLanguage } from '@/src/i18n/LanguageContext';
 import { palette } from '@/src/theme/colors';
+import { tapFeedback } from '@/src/utils/selectFeedback';
 
 export default function TabLayout() {
   const { t } = useLanguage();
@@ -13,6 +15,11 @@ export default function TabLayout() {
   return (
     <View style={styles.root}>
       <Tabs
+        screenListeners={{
+          tabPress: () => {
+            tapFeedback();
+          },
+        }}
         screenOptions={{
           headerShown: false,
           tabBarActiveTintColor: palette.accent,
@@ -113,6 +120,7 @@ export default function TabLayout() {
           }}
         />
       </Tabs>
+      <AmountPrivacyToggle />
       <FloatingGlanceFab />
     </View>
   );

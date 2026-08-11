@@ -31,6 +31,8 @@ PODS:
     - Yoga
   - ExpoAsset (57.0.9):
     - ExpoModulesCore
+  - ExpoAudio (57.0.3):
+    - ExpoModulesCore
   - ExpoBlur (57.0.2):
     - ExpoModulesCore
   - ExpoDomWebView (57.0.1):
@@ -40,6 +42,8 @@ PODS:
   - ExpoFont (57.0.1):
     - ExpoModulesCore
   - ExpoGlassEffect (57.0.1):
+    - ExpoModulesCore
+  - ExpoHaptics (57.0.1):
     - ExpoModulesCore
   - ExpoKeepAwake (57.0.1):
     - ExpoModulesCore
@@ -2282,11 +2286,13 @@ DEPENDENCIES:
   - EXConstants (from `../node_modules/expo-constants/ios`)
   - Expo (from `../node_modules/expo`)
   - ExpoAsset (from `../node_modules/expo-asset/ios`)
+  - ExpoAudio (from `../node_modules/expo-audio/ios`)
   - ExpoBlur (from `../node_modules/expo-blur/ios`)
   - "ExpoDomWebView (from `../node_modules/@expo/dom-webview/ios`)"
   - ExpoFileSystem (from `../node_modules/expo-file-system/ios/ExpoFileSystem.podspec`)
   - ExpoFont (from `../node_modules/expo-font/ios/ExpoFont.podspec`)
   - ExpoGlassEffect (from `../node_modules/expo-glass-effect/ios`)
+  - ExpoHaptics (from `../node_modules/expo-haptics/ios`)
   - ExpoKeepAwake (from `../node_modules/expo-keep-awake/ios`)
   - ExpoLinearGradient (from `../node_modules/expo-linear-gradient/ios`)
   - ExpoLinking (from `../node_modules/expo-linking/ios`)
@@ -2394,6 +2400,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/expo"
   ExpoAsset:
     :path: "../node_modules/expo-asset/ios"
+  ExpoAudio:
+    :path: "../node_modules/expo-audio/ios"
   ExpoBlur:
     :path: "../node_modules/expo-blur/ios"
   ExpoDomWebView:
@@ -2404,6 +2412,8 @@ EXTERNAL SOURCES:
     :podspec: "../node_modules/expo-font/ios/ExpoFont.podspec"
   ExpoGlassEffect:
     :path: "../node_modules/expo-glass-effect/ios"
+  ExpoHaptics:
+    :path: "../node_modules/expo-haptics/ios"
   ExpoKeepAwake:
     :path: "../node_modules/expo-keep-awake/ios"
   ExpoLinearGradient:
@@ -2603,16 +2613,18 @@ SPEC CHECKSUMS:
   EXConstants: 28983870ee165505d8233651f986013ce07b0184
   Expo: 6bba498588721671482201071fb5906a67f104b0
   ExpoAsset: 21e4a9006373f2ede718ec1f440bbe40f95f6376
+  ExpoAudio: a275c6d3473cbccc7cfd27c3f24b572c0b1701d8
   ExpoBlur: 0f2c616d5422a2b1a31e622d2add98784eed1ceb
   ExpoDomWebView: fa9c72fe29dd4649197a7ecb07ddd870d55c4eda
   ExpoFileSystem: 5f22d602c86c37460df3b954cf1ceb00a5e5ca75
   ExpoFont: 17668fb7b4e06edf35e015183eb7bc09d83be637
   ExpoGlassEffect: 5d25ad0b43e81255ff5d41039eb2131ebf7aaa5a
+  ExpoHaptics: b382543a81889431177e929611566657a3eaf170
   ExpoKeepAwake: 20a87dafdd9d84d68673e8eaf1a1c7eed8f92659
   ExpoLinearGradient: 93e951fa19ee7b4bb1a8e2c97227bcfc4bacfa9a
   ExpoLinking: bf2536dae511c60982db438b4cd65f8a33c329eb
   ExpoLogBox: 40f17ecef6fcb296b5f5ee4d6ec85cc82ce6ba0f
-  ExpoModulesCore: d1209aa34c45d8062ceeff7d4d3e14b683e1886d
+  ExpoModulesCore: d3b7495fd2a7cc1cefaf6ad1202f55a3e2868914
   ExpoModulesJSI: 6cb6d299ace493e7dd20ba94c99e8c4799b07afd
   ExpoModulesWorklets: b9ae1e07dbb9a2de570c18bc117f293e0310ed5c
   ExpoModulesWorkletsAdapter: 07038279717b8486147e54b6f125339d6e6f1d87
@@ -2623,7 +2635,7 @@ SPEC CHECKSUMS:
   ExpoUI: 0f926fff60b1541d43691bb3eebde517dd988ee2
   ExpoWebBrowser: f93f4989f6c2a34cfaba5461ea3572c191947e0f
   FBLazyVector: 3c3be9a019176b5699455f7f66c5444b78a411c6
-  hermes-engine: ace41a8bb5ceeec9f5aa78a6dba7cef60146bbc0
+  hermes-engine: fb115ba27abbb443441c25b4ba5cae615393bc21
   RCTDeprecation: bccb6545c26db881ecddfd83a3f9ea82aba1605f
   RCTRequired: b2f74764d596fc0051f00fee94b49bf41a6f7f5a
   RCTSwiftUI: c6d6a31b849b9dfa64c33b55dc91ac15dd55774c

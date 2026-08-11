@@ -1,11 +1,13 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { getCategoryById } from '@/src/data/categories';
+import { resolveConceptColor } from '@/src/data/spendConcepts';
 import { useMoney } from '@/src/hooks/useMoney';
+import { useSettings } from '@/src/hooks/useSettings';
 import { useLanguage } from '@/src/i18n/LanguageContext';
 import type { TranslationKey } from '@/src/i18n/translations';
 import { palette, radii } from '@/src/theme/colors';
 import type { Transaction } from '@/src/types/finance';
+import { categoryLabel } from '@/src/utils/categoryLabel';
 import { formatExpenseDate } from '@/src/utils/dates';
 
 type Props = {
@@ -25,17 +27,21 @@ export function ExpenseRow({
 }: Props) {
   const { t, language } = useLanguage();
   const { format } = useMoney();
-  const category = expense.categoryId ? getCategoryById(expense.categoryId) : null;
+  const { settings } = useSettings();
+  const spendConcepts = settings.spendConcepts ?? [];
+  const color = expense.categoryId
+    ? resolveConceptColor(expense.categoryId, spendConcepts)
+    : palette.inkSoft;
 
   return (
     <View style={[styles.row, last && styles.rowLast]}>
       <View
         style={[
           styles.icon,
-          { backgroundColor: `${category?.color ?? palette.inkSoft}22` },
+          { backgroundColor: `${color}22` },
         ]}>
         <View
-          style={[styles.dot, { backgroundColor: category?.color ?? palette.inkSoft }]}
+          style={[styles.dot, { backgroundColor: color }]}
         />
       </View>
       <Pressable style={styles.content} onPress={onEdit} disabled={!onEdit}>
@@ -43,7 +49,7 @@ export function ExpenseRow({
           <Text style={styles.category}>
             {t(`type.${expense.type}` as TranslationKey)}
             {expense.categoryId
-              ? ` · ${t(`category.${expense.categoryId}` as TranslationKey)}`
+              ? ` · ${categoryLabel(expense.categoryId, t, spendConcepts)}`
               : ''}
           </Text>
           <Text style={styles.amount}>{format(expense.amount)}</Text>

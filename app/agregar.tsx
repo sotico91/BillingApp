@@ -11,7 +11,7 @@ import {
   View,
 } from 'react-native';
 
-import { ExpenseForm } from '@/src/components/ExpenseForm';
+import { ExpenseForm, type SavedMovement } from '@/src/components/ExpenseForm';
 import { FriendlyAddFlow } from '@/src/components/FriendlyAddFlow';
 import { ScreenBackground } from '@/src/components/ScreenBackground';
 import { useMoney } from '@/src/hooks/useMoney';
@@ -23,8 +23,14 @@ export default function AgregarScreen() {
   const { format } = useMoney();
   const [mode, setMode] = useState<'friendly' | 'advanced'>('friendly');
 
-  function handleSaved(todayTotal: number) {
-    Alert.alert(t('add.savedTitle'), t('add.savedMessage', { amount: format(todayTotal) }), [
+  function handleSaved(result: SavedMovement) {
+    const messageKey =
+      result.kind === 'income'
+        ? 'add.savedIncome'
+        : result.kind === 'expense'
+          ? 'add.savedExpense'
+          : 'add.savedOther';
+    Alert.alert(t('add.savedTitle'), t(messageKey, { amount: format(result.amount) }), [
       {
         text: t('add.ok'),
         onPress: () => router.back(),

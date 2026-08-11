@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { CollapsibleSection } from '@/src/components/CollapsibleSection';
 import { EditTransactionModal } from '@/src/components/EditTransactionModal';
 import { ExpenseRow } from '@/src/components/ExpenseRow';
 import { FadeInBlock } from '@/src/components/FadeInBlock';
@@ -33,6 +34,8 @@ export default function HistorialScreen() {
     monthIndex: now.getMonth(),
   });
   const [editing, setEditing] = useState<Transaction | null>(null);
+  const [summaryOpen, setSummaryOpen] = useState(false);
+  const [listOpen, setListOpen] = useState(false);
 
   const isCurrentMonth =
     monthCursor.year === now.getFullYear() &&
@@ -153,64 +156,85 @@ export default function HistorialScreen() {
         ) : null}
 
         <FadeInBlock index={2}>
-          <View style={styles.summary}>
-            <Text style={styles.summaryLabel}>
-              {t('history.total', { period: periodLabel })}
-            </Text>
-            <Text style={styles.summaryAmount}>{format(expenseTotal)}</Text>
+          <CollapsibleSection
+            title={t('history.summaryTitle')}
+            open={summaryOpen}
+            onToggle={() => setSummaryOpen((v) => !v)}
+            summary={t('history.summaryCollapsed', {
+              amount: format(expenseTotal),
+              period: periodLabel,
+            })}>
+            <View style={styles.summary}>
+              <Text style={styles.summaryLabel}>
+                {t('history.total', { period: periodLabel })}
+              </Text>
+              <Text style={styles.summaryAmount}>{format(expenseTotal)}</Text>
 
-            {period === 'mes' ? (
-              <View style={styles.monthStats}>
-                <View style={styles.stat}>
-                  <Text style={styles.statLabel}>{t('history.monthIncome')}</Text>
-                  <Text style={[styles.statValue, styles.income]}>{format(incomeTotal)}</Text>
+              {period === 'mes' ? (
+                <View style={styles.monthStats}>
+                  <View style={styles.stat}>
+                    <Text style={styles.statLabel}>{t('history.monthIncome')}</Text>
+                    <Text style={[styles.statValue, styles.income]}>
+                      {format(incomeTotal)}
+                    </Text>
+                  </View>
+                  <View style={styles.stat}>
+                    <Text style={styles.statLabel}>{t('history.monthExpenses')}</Text>
+                    <Text style={[styles.statValue, styles.expense]}>
+                      {format(expenseTotal)}
+                    </Text>
+                  </View>
+                  <View style={styles.stat}>
+                    <Text style={styles.statLabel}>{t('history.monthBalance')}</Text>
+                    <Text
+                      style={[
+                        styles.statValue,
+                        monthBalance >= 0 ? styles.income : styles.expense,
+                      ]}>
+                      {format(monthBalance)}
+                    </Text>
+                  </View>
                 </View>
-                <View style={styles.stat}>
-                  <Text style={styles.statLabel}>{t('history.monthExpenses')}</Text>
-                  <Text style={[styles.statValue, styles.expense]}>
-                    {format(expenseTotal)}
-                  </Text>
-                </View>
-                <View style={styles.stat}>
-                  <Text style={styles.statLabel}>{t('history.monthBalance')}</Text>
-                  <Text
-                    style={[
-                      styles.statValue,
-                      monthBalance >= 0 ? styles.income : styles.expense,
-                    ]}>
-                    {format(monthBalance)}
-                  </Text>
-                </View>
-              </View>
-            ) : null}
+              ) : null}
 
-            <Text style={styles.hint}>{t('history.hintEdit')}</Text>
-          </View>
+              <Text style={styles.hint}>{t('history.hintEdit')}</Text>
+            </View>
+          </CollapsibleSection>
         </FadeInBlock>
 
         <FadeInBlock index={3}>
-          {items.length === 0 ? (
-            <View style={styles.emptyWrap}>
-              <Text style={styles.emptyTitle}>{t('history.emptyTitle')}</Text>
-              <Text style={styles.empty}>{t('history.empty')}</Text>
-            </View>
-          ) : (
-            <View style={styles.list}>
-              {items.map((tx, index) => {
-                const mine = canEditTransaction(tx);
-                return (
-                  <ExpenseRow
-                    key={tx.id}
-                    expense={tx}
-                    last={index === items.length - 1}
-                    showRegistrant={personScope === 'all'}
-                    onEdit={mine ? () => openEdit(tx) : undefined}
-                    onDelete={mine ? () => confirmDelete(tx) : undefined}
-                  />
-                );
-              })}
-            </View>
-          )}
+          <CollapsibleSection
+            title={t('history.listTitle')}
+            open={listOpen}
+            onToggle={() => setListOpen((v) => !v)}
+            summary={
+              items.length === 0
+                ? t('history.emptyTitle')
+                : t('history.listCollapsed', { count: items.length })
+            }>
+            {items.length === 0 ? (
+              <View style={styles.emptyWrap}>
+                <Text style={styles.emptyTitle}>{t('history.emptyTitle')}</Text>
+                <Text style={styles.empty}>{t('history.empty')}</Text>
+              </View>
+            ) : (
+              <View style={styles.list}>
+                {items.map((tx, index) => {
+                  const mine = canEditTransaction(tx);
+                  return (
+                    <ExpenseRow
+                      key={tx.id}
+                      expense={tx}
+                      last={index === items.length - 1}
+                      showRegistrant={personScope === 'all'}
+                      onEdit={mine ? () => openEdit(tx) : undefined}
+                      onDelete={mine ? () => confirmDelete(tx) : undefined}
+                    />
+                  );
+                })}
+              </View>
+            )}
+          </CollapsibleSection>
         </FadeInBlock>
       </ScrollView>
 

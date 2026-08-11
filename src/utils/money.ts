@@ -17,6 +17,11 @@ export function formatMoney(amount: number, currency: Currency): string {
   }).format(Math.round(amount));
 }
 
+/** Mask used when amounts are hidden for privacy. */
+export function maskMoney(currency: Currency): string {
+  return currency === 'USD' ? '$*****.**' : '$*****';
+}
+
 /** @deprecated use formatMoney with currency from settings */
 export function formatCOP(amount: number): string {
   return formatMoney(amount, 'COP');

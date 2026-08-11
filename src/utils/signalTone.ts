@@ -2,7 +2,8 @@ export type SignalTone = 'neutral' | 'good' | 'warn' | 'danger';
 
 /** Budget progress → visual tone for cards and bars. */
 export function toneFromBudgetRatio(ratio: number): SignalTone {
-  if (ratio >= 1) return 'danger';
+  /** Over budget only when spent is strictly above the limit. */
+  if (ratio > 1) return 'danger';
   if (ratio >= 0.8) return 'warn';
   if (ratio > 0 && ratio <= 0.55) return 'good';
   return 'neutral';

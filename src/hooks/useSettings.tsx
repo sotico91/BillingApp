@@ -8,18 +8,31 @@ import React, {
 } from 'react';
 
 import {
-  DEFAULT_QUICK_TEMPLATES,
+  createSpendConcept,
+  createSpendSub,
+  ensureCreditSub,
+  hasDuplicateSubName,
+} from '@/src/data/spendConcepts';
+import {
+  CURRENT_CATALOG_VERSION,
   DEFAULT_SETTINGS,
   loadQuickTemplates,
   loadSettings,
   saveQuickTemplates,
   saveSettings,
 } from '@/src/data/settingsStorage';
-import type { Currency, QuickTemplate, UserSettings } from '@/src/types/settings';
+import type {
+  Currency,
+  QuickTemplate,
+  ReminderRule,
+  SpendConcept,
+  UserSettings,
+} from '@/src/types/settings';
 import {
   clearCategoryReminders,
+  cancelRemindersExcept,
   ensureNotificationPermission,
-  syncCategoryReminders,
+  syncRemindersFromRules,
 } from '@/src/utils/notifications';
 
 type ReminderLabels = Record<string, { title: string; body: string }>;
@@ -38,13 +51,30 @@ type SettingsContextValue = {
     reminderLabels?: ReminderLabels;
   }) => Promise<void>;
   updateUserName: (userName: string) => Promise<void>;
+  addSpendConcept: (name: string, color?: string) => Promise<SpendConcept | null>;
+  updateSpendConceptColor: (conceptId: string, color: string) => Promise<void>;
+  addSpendSub: (conceptId: string, name: string) => Promise<string | null>;
+  updateSpendSubAnt: (
+    conceptId: string,
+    subId: string,
+    isAnt: boolean
+  ) => Promise<void>;
+  removeSpendConcept: (conceptId: string) => Promise<void>;
+  removeSpendSub: (conceptId: string, subId: string) => Promise<void>;
+  ensureDebtCategory: (debtName: string) => Promise<string>;
   updateReminders: (input: {
-    reminderCategoryIds: string[];
-    reminderCustomConcepts?: string[];
-    reminderHour?: number;
+    reminderRules: ReminderRule[];
     reminderLabels: ReminderLabels;
+    reminderHour?: number;
+    reminderMinute?: number;
   }) => Promise<void>;
-  updateQuickTemplate: (template: Omit<QuickTemplate, 'id' | 'updatedAt'> & { id?: string }) => Promise<void>;
+  pruneRemindersToRegistered: (
+    allowedSubIds: Set<string>,
+    labels: ReminderLabels
+  ) => Promise<void>;
+  updateQuickTemplate: (
+    template: Omit<QuickTemplate, 'id' | 'updatedAt'> & { id?: string }
+  ) => Promise<void>;
   removeQuickTemplate: (id: string) => Promise<void>;
 };
 
@@ -70,11 +100,15 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         setSettings({
           ...DEFAULT_SETTINGS,
           ...storedSettings,
+          spendConcepts: storedSettings.spendConcepts ?? [],
+          customConcepts: storedSettings.customConcepts ?? [],
+          reminderRules: storedSettings.reminderRules ?? [],
           reminderCategoryIds:
             storedSettings.reminderCategoryIds ?? DEFAULT_SETTINGS.reminderCategoryIds,
           reminderCustomConcepts:
             storedSettings.reminderCustomConcepts ?? DEFAULT_SETTINGS.reminderCustomConcepts,
           reminderHour: storedSettings.reminderHour ?? DEFAULT_SETTINGS.reminderHour,
+          reminderMinute: storedSettings.reminderMinute ?? DEFAULT_SETTINGS.reminderMinute,
         });
         setQuickTemplates(templates);
         setReady(true);
@@ -83,6 +117,11 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     return () => {
       mounted = false;
     };
+  }, []);
+
+  const persist = useCallback(async (next: UserSettings) => {
+    setSettings(next);
+    await saveSettings(next);
   }, []);
 
   const completeOnboarding = useCallback(
@@ -102,86 +141,220 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       }
 
       const reminderHour = input.reminderHour ?? 20;
+      const reminderRules: ReminderRule[] = (input.reminderCategoryIds ?? []).map((subId) => ({
+        subId,
+        hour: reminderHour,
+        minute: 0,
+      }));
       const next: UserSettings = {
         onboardingDone: true,
         personId: settings.personId || createId(),
         userName: input.userName.trim(),
         currency: input.currency,
         enabledCategoryIds: input.enabledCategoryIds,
+        spendConcepts: settings.spendConcepts ?? [],
+        customConcepts: [],
+        catalogVersion: CURRENT_CATALOG_VERSION,
         notifyOnExpense: input.notifyOnExpense,
-        reminderCategoryIds: input.reminderCategoryIds,
+        reminderRules,
+        reminderCategoryIds: reminderRules.map((r) => r.subId),
         reminderCustomConcepts: [],
         reminderHour,
+        reminderMinute: 0,
       };
-      const seeded = DEFAULT_QUICK_TEMPLATES.filter((tpl) =>
-        input.enabledCategoryIds.includes(tpl.categoryId)
-      );
+      const seeded: QuickTemplate[] = [];
       setSettings(next);
       setQuickTemplates(seeded);
       await Promise.all([saveSettings(next), saveQuickTemplates(seeded)]);
 
-      if (input.reminderCategoryIds.length > 0 && input.reminderLabels) {
-        await syncCategoryReminders({
-          hour: reminderHour,
-          reminders: input.reminderCategoryIds.map((categoryId) => ({
-            categoryId,
-            title: input.reminderLabels![categoryId]?.title ?? 'BillingApp',
-            body: input.reminderLabels![categoryId]?.body ?? '',
-          })),
-        });
+      if (reminderRules.length > 0 && input.reminderLabels) {
+        await syncRemindersFromRules(reminderRules, input.reminderLabels);
       } else {
         await clearCategoryReminders();
       }
     },
-    [settings.personId]
+    [settings.personId, settings.spendConcepts]
   );
 
-  const updateUserName = useCallback(async (userName: string) => {
-    const next: UserSettings = {
-      ...settings,
-      userName: userName.trim(),
-    };
-    setSettings(next);
-    await saveSettings(next);
-  }, [settings]);
+  const updateUserName = useCallback(
+    async (userName: string) => {
+      await persist({ ...settings, userName: userName.trim() });
+    },
+    [settings, persist]
+  );
+
+  const addSpendConcept = useCallback(
+    async (name: string, color?: string) => {
+      const trimmed = name.trim();
+      if (!trimmed) return null;
+      const existing = settings.spendConcepts ?? [];
+      const concept = createSpendConcept(trimmed, { color, existing });
+      if (existing.some((c) => c.id === concept.id)) {
+        return existing.find((c) => c.id === concept.id) ?? null;
+      }
+      await persist({
+        ...settings,
+        spendConcepts: [...existing, concept],
+      });
+      return concept;
+    },
+    [settings, persist]
+  );
+
+  const updateSpendConceptColor = useCallback(
+    async (conceptId: string, color: string) => {
+      await persist({
+        ...settings,
+        spendConcepts: (settings.spendConcepts ?? []).map((c) =>
+          c.id === conceptId ? { ...c, color } : c
+        ),
+      });
+    },
+    [settings, persist]
+  );
+
+  const addSpendSub = useCallback(
+    async (conceptId: string, name: string) => {
+      const trimmed = name.trim();
+      if (!trimmed) return null;
+      const concepts = settings.spendConcepts ?? [];
+      const parent = concepts.find((c) => c.id === conceptId);
+      if (!parent) return null;
+      if (hasDuplicateSubName(concepts, conceptId, trimmed)) {
+        return null;
+      }
+      const sub = createSpendSub(conceptId, trimmed);
+      if (concepts.some((c) => c.subs.some((s) => s.id === sub.id))) {
+        return null;
+      }
+      await persist({
+        ...settings,
+        spendConcepts: concepts.map((c) =>
+          c.id === conceptId ? { ...c, subs: [...c.subs, sub] } : c
+        ),
+      });
+      return sub.id;
+    },
+    [settings, persist]
+  );
+
+  const updateSpendSubAnt = useCallback(
+    async (conceptId: string, subId: string, isAnt: boolean) => {
+      await persist({
+        ...settings,
+        spendConcepts: (settings.spendConcepts ?? []).map((c) => {
+          if (c.id !== conceptId) return c;
+          return {
+            ...c,
+            subs: c.subs.map((s) =>
+              s.id === subId ? { ...s, isAnt } : s
+            ),
+          };
+        }),
+      });
+    },
+    [settings, persist]
+  );
+
+  const removeSpendConcept = useCallback(
+    async (conceptId: string) => {
+      await persist({
+        ...settings,
+        spendConcepts: (settings.spendConcepts ?? []).filter((c) => c.id !== conceptId),
+      });
+    },
+    [settings, persist]
+  );
+
+  const removeSpendSub = useCallback(
+    async (conceptId: string, subId: string) => {
+      await persist({
+        ...settings,
+        spendConcepts: (settings.spendConcepts ?? []).map((c) => {
+          if (c.id !== conceptId) return c;
+          const nextSubs = c.subs.filter((s) => s.id !== subId);
+          return {
+            ...c,
+            subs:
+              nextSubs.length > 0
+                ? nextSubs
+                : [{ id: `${c.id}-general`, name: 'General' }],
+          };
+        }),
+      });
+    },
+    [settings, persist]
+  );
+
+  const ensureDebtCategory = useCallback(
+    async (debtName: string) => {
+      const { concepts, subId } = ensureCreditSub(settings.spendConcepts ?? [], debtName);
+      if (concepts !== settings.spendConcepts) {
+        await persist({ ...settings, spendConcepts: concepts });
+      }
+      return subId;
+    },
+    [settings, persist]
+  );
 
   const updateReminders = useCallback(
     async (input: {
-      reminderCategoryIds: string[];
-      reminderCustomConcepts?: string[];
-      reminderHour?: number;
+      reminderRules: ReminderRule[];
       reminderLabels: ReminderLabels;
+      reminderHour?: number;
+      reminderMinute?: number;
     }) => {
-      const reminderHour = input.reminderHour ?? settings.reminderHour;
-      const reminderCustomConcepts = input.reminderCustomConcepts ?? [];
-      const scheduleIds = Object.keys(input.reminderLabels);
-      if (scheduleIds.length > 0) {
+      const reminderRules = input.reminderRules;
+      if (reminderRules.length > 0) {
         await ensureNotificationPermission();
       }
       const next: UserSettings = {
         ...settings,
-        reminderCategoryIds: input.reminderCategoryIds,
-        reminderCustomConcepts,
-        reminderHour,
+        reminderRules,
+        reminderCategoryIds: reminderRules.map((r) => r.subId),
+        reminderCustomConcepts: [],
+        reminderHour: input.reminderHour ?? settings.reminderHour,
+        reminderMinute: input.reminderMinute ?? settings.reminderMinute ?? 0,
       };
       setSettings(next);
       await saveSettings(next);
 
-      if (scheduleIds.length === 0) {
+      if (reminderRules.length === 0) {
         await clearCategoryReminders();
         return;
       }
 
-      await syncCategoryReminders({
-        hour: reminderHour,
-        reminders: scheduleIds.map((categoryId) => ({
-          categoryId,
-          title: input.reminderLabels[categoryId]?.title ?? 'BillingApp',
-          body: input.reminderLabels[categoryId]?.body ?? '',
-        })),
-      });
+      await syncRemindersFromRules(reminderRules, input.reminderLabels);
     },
     [settings]
+  );
+
+  const pruneRemindersToRegistered = useCallback(
+    async (allowedSubIds: Set<string>, labels: ReminderLabels) => {
+      const rules = settings.reminderRules ?? [];
+      const nextRules = rules.filter((r) => allowedSubIds.has(r.subId));
+      const changed =
+        nextRules.length !== rules.length ||
+        nextRules.some((r, i) => r.subId !== rules[i]?.subId);
+
+      if (changed) {
+        await updateReminders({
+          reminderRules: nextRules,
+          reminderLabels: labels,
+          reminderHour: settings.reminderHour,
+          reminderMinute: settings.reminderMinute,
+        });
+        return;
+      }
+
+      const allowed = new Set(nextRules.map((r) => r.subId));
+      if (allowed.size === 0) {
+        await clearCategoryReminders();
+        return;
+      }
+      await cancelRemindersExcept(allowed);
+    },
+    [settings, updateReminders]
   );
 
   const updateQuickTemplate = useCallback(
@@ -221,7 +394,15 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       quickTemplates,
       completeOnboarding,
       updateUserName,
+      addSpendConcept,
+      updateSpendConceptColor,
+      addSpendSub,
+      updateSpendSubAnt,
+      removeSpendConcept,
+      removeSpendSub,
+      ensureDebtCategory,
       updateReminders,
+      pruneRemindersToRegistered,
       updateQuickTemplate,
       removeQuickTemplate,
     }),
@@ -231,7 +412,15 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       quickTemplates,
       completeOnboarding,
       updateUserName,
+      addSpendConcept,
+      updateSpendConceptColor,
+      addSpendSub,
+      updateSpendSubAnt,
+      removeSpendConcept,
+      removeSpendSub,
+      ensureDebtCategory,
       updateReminders,
+      pruneRemindersToRegistered,
       updateQuickTemplate,
       removeQuickTemplate,
     ]

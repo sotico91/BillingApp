@@ -11,7 +11,8 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { CATEGORIES } from '@/src/data/categories';
+import { categoriesForKind } from '@/src/data/categories';
+import { spendSubsAsCategories } from '@/src/data/spendConcepts';
 import { useFinance } from '@/src/hooks/useFinance';
 import { useMoney } from '@/src/hooks/useMoney';
 import { useSettings } from '@/src/hooks/useSettings';
@@ -19,6 +20,7 @@ import { useLanguage } from '@/src/i18n/LanguageContext';
 import type { TranslationKey } from '@/src/i18n/translations';
 import { palette, radii } from '@/src/theme/colors';
 import type { PaymentMethod, Transaction, TransactionType } from '@/src/types/finance';
+import { categoryLabel } from '@/src/utils/categoryLabel';
 
 type Props = {
   transaction: Transaction | null;
@@ -44,11 +46,6 @@ export function EditTransactionModal({ transaction, visible, onClose }: Props) {
   const { settings } = useSettings();
   const { updateTransaction, accounts } = useFinance();
 
-  const enabledCategories = useMemo(
-    () => CATEGORIES.filter((c) => settings.enabledCategoryIds.includes(c.id)),
-    [settings.enabledCategoryIds]
-  );
-
   const [amount, setAmount] = useState('');
   const [type, setType] = useState<TransactionType>('expense');
   const [categoryId, setCategoryId] = useState('otros');
@@ -58,16 +55,35 @@ export function EditTransactionModal({ transaction, visible, onClose }: Props) {
   const [note, setNote] = useState('');
   const [saving, setSaving] = useState(false);
 
+  const categoryChoices = useMemo(() => {
+    if (type === 'income') {
+      return categoriesForKind('income', settings.enabledCategoryIds);
+    }
+    return spendSubsAsCategories(settings.spendConcepts ?? []);
+  }, [type, settings.enabledCategoryIds, settings.spendConcepts]);
+
   useEffect(() => {
     if (!transaction) return;
     setAmount(String(transaction.amount));
     setType(transaction.type);
-    setCategoryId(transaction.categoryId ?? enabledCategories[0]?.id ?? 'otros');
+    setCategoryId(
+      transaction.categoryId ??
+        (settings.spendConcepts?.[0]?.subs[0]?.id ?? 'otros')
+    );
     setMethod(transaction.paymentMethod ?? 'cash');
     setAccountId(transaction.accountId ?? 'cash');
     setToAccountId(transaction.toAccountId ?? 'savings');
     setNote(transaction.note ?? '');
-  }, [transaction, enabledCategories]);
+  }, [transaction, settings.spendConcepts]);
+
+  function selectType(next: TransactionType) {
+    setType(next);
+    if (next === 'income') {
+      setCategoryId('salario');
+    } else if (next === 'expense') {
+      setCategoryId(settings.spendConcepts?.[0]?.subs[0]?.id ?? 'otros');
+    }
+  }
 
   const needsDestination = type === 'transfer' || type === 'investment';
 
@@ -117,14 +133,14 @@ export function EditTransactionModal({ transaction, visible, onClose }: Props) {
                 style={styles.amountInput}
               />
             </View>
-            <Text style={styles.hint}>{format(parse(amount) ?? 0)}</Text>
+            <Text style={styles.hint}>{format(parse(amount) ?? 0, { reveal: true })}</Text>
 
             <Text style={styles.label}>{t('add.type')}</Text>
             <View style={styles.wrap}>
               {TYPES.map((item) => (
                 <Pressable
                   key={item}
-                  onPress={() => setType(item)}
+                  onPress={() => selectType(item)}
                   style={[styles.chip, type === item && styles.chipOn]}>
                   <Text style={[styles.chipText, type === item && styles.chipTextOn]}>
                     {t(`type.${item}` as TranslationKey)}
@@ -137,7 +153,7 @@ export function EditTransactionModal({ transaction, visible, onClose }: Props) {
               <>
                 <Text style={styles.label}>{t('flow.chooseCategory')}</Text>
                 <View style={styles.wrap}>
-                  {enabledCategories.map((cat) => {
+                  {categoryChoices.map((cat) => {
                     const selected = cat.id === categoryId;
                     return (
                       <Pressable
@@ -148,7 +164,7 @@ export function EditTransactionModal({ transaction, visible, onClose }: Props) {
                           selected && { backgroundColor: cat.color, borderColor: cat.color },
                         ]}>
                         <Text style={[styles.chipText, selected && styles.chipTextOn]}>
-                          {t(`category.${cat.id}` as TranslationKey)}
+                          {categoryLabel(cat.id, t, settings.spendConcepts ?? [])}
                         </Text>
                       </Pressable>
                     );

@@ -12,12 +12,13 @@ import {
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { CATEGORIES } from '@/src/data/categories';
+import { expenseCategories } from '@/src/data/categories';
 import { useSettings } from '@/src/hooks/useSettings';
 import { useLanguage } from '@/src/i18n/LanguageContext';
 import type { TranslationKey } from '@/src/i18n/translations';
 import { palette, radii } from '@/src/theme/colors';
 import type { Currency } from '@/src/types/settings';
+import { categoryLabel } from '@/src/utils/categoryLabel';
 
 const TOTAL_STEPS = 6;
 
@@ -28,13 +29,11 @@ export function OnboardingOverlay() {
   const [step, setStep] = useState(0);
   const [userName, setUserName] = useState('');
   const [currency, setCurrency] = useState<Currency>('COP');
-  const [selected, setSelected] = useState<string[]>(CATEGORIES.map((c) => c.id));
+  const [selected, setSelected] = useState<string[]>(() =>
+    expenseCategories().map((c) => c.id)
+  );
   const [notifyOnExpense, setNotifyOnExpense] = useState(true);
-  const [reminderIds, setReminderIds] = useState<string[]>([
-    'cafe',
-    'delivery',
-    'transporte',
-  ]);
+  const [reminderIds, setReminderIds] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
 
   const visible = ready && !settings.onboardingDone;
@@ -76,7 +75,7 @@ export function OnboardingOverlay() {
           {
             title: t('reminder.pushTitle'),
             body: t('reminder.pushBody', {
-              category: t(`category.${categoryId}` as TranslationKey),
+              category: categoryLabel(categoryId, t),
             }),
           },
         ])
@@ -191,7 +190,7 @@ export function OnboardingOverlay() {
               <Text style={styles.title}>{t('onboard.categoriesTitle')}</Text>
               <Text style={styles.copy}>{t('onboard.categoriesBody')}</Text>
               <ScrollView style={styles.catScroll} contentContainerStyle={styles.catWrap}>
-                {CATEGORIES.map((category) => {
+                {expenseCategories().map((category) => {
                   const active = selected.includes(category.id);
                   return (
                     <Pressable
@@ -205,7 +204,7 @@ export function OnboardingOverlay() {
                         },
                       ]}>
                       <Text style={[styles.catText, active && styles.catTextActive]}>
-                        {t(`category.${category.id}` as TranslationKey)}
+                        {categoryLabel(category.id, t)}
                       </Text>
                     </Pressable>
                   );
@@ -236,8 +235,9 @@ export function OnboardingOverlay() {
               <Text style={styles.title}>{t('onboard.reminderTitle')}</Text>
               <Text style={styles.copy}>{t('onboard.reminderBody')}</Text>
               <ScrollView style={styles.catScroll} contentContainerStyle={styles.catWrap}>
-                {CATEGORIES.filter((c) => c.id !== 'ingresos' && selected.includes(c.id)).map(
-                  (category) => {
+                {expenseCategories()
+                  .filter((c) => selected.includes(c.id))
+                  .map((category) => {
                     const active = reminderIds.includes(category.id);
                     return (
                       <Pressable
@@ -251,12 +251,11 @@ export function OnboardingOverlay() {
                           },
                         ]}>
                         <Text style={[styles.catText, active && styles.catTextActive]}>
-                          {t(`category.${category.id}` as TranslationKey)}
+                          {categoryLabel(category.id, t)}
                         </Text>
                       </Pressable>
                     );
-                  }
-                )}
+                  })}
               </ScrollView>
               <Text style={styles.copy}>{t('onboard.reminderHint')}</Text>
             </Animated.View>

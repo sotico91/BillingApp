@@ -9,33 +9,40 @@ import {
 } from 'react-native';
 
 import { CategoryBreakdown } from '@/src/components/CategoryBreakdown';
+import { CollapsibleSection } from '@/src/components/CollapsibleSection';
 import { FadeInBlock } from '@/src/components/FadeInBlock';
 import { PeriodToggle } from '@/src/components/PeriodToggle';
 import { SavingsDecor } from '@/src/components/SavingsDecor';
 import { ScreenBackground } from '@/src/components/ScreenBackground';
 import { useFinance } from '@/src/hooks/useFinance';
 import { useMoney } from '@/src/hooks/useMoney';
+import { useSettings } from '@/src/hooks/useSettings';
 import { useLanguage } from '@/src/i18n/LanguageContext';
 import type { TranslationKey } from '@/src/i18n/translations';
 import { palette, radii } from '@/src/theme/colors';
 import type { Period } from '@/src/types/finance';
+import { categoryLabel } from '@/src/utils/categoryLabel';
 import { buildSmartInsights, answerFinanceQuery } from '@/src/utils/smartInsights';
 import { toneFromBudgetRatio } from '@/src/utils/signalTone';
 
 export default function InsightsScreen() {
   const { t } = useLanguage();
   const { format } = useMoney();
+  const { settings } = useSettings();
+  const spendConcepts = settings.spendConcepts ?? [];
   const { insightsForPeriod, totalForPeriod, transactions, budgetStatus, debts, availableCash } =
     useFinance();
   const [period, setPeriod] = useState<Period>('mes');
   const [query, setQuery] = useState('');
   const [answer, setAnswer] = useState('');
+  const [rankingOpen, setRankingOpen] = useState(false);
+  const [smartOpen, setSmartOpen] = useState(false);
 
   const insights = insightsForPeriod(period);
   const total = totalForPeriod(period, 'expense');
   const top = insights[0];
   const periodLabel = t(`period.${period}` as TranslationKey);
-  const smart = buildSmartInsights(transactions, t, format);
+  const smart = buildSmartInsights(transactions, t, format, spendConcepts);
   const topBudget = top
     ? budgetStatus.find((b) => b.categoryId === top.categoryId)
     : undefined;
@@ -53,6 +60,7 @@ export default function InsightsScreen() {
         defaultPeriod: period,
         debtsTotal: debtTotal,
         availableCash,
+        spendConcepts,
       })
     );
   }
@@ -90,25 +98,31 @@ export default function InsightsScreen() {
         </FadeInBlock>
 
         <FadeInBlock index={2}>
-          {smart.map((card) => (
-            <View
-              key={card.id}
-              style={[
-                styles.smartCard,
-                card.tone === 'warn' && styles.warn,
-                card.tone === 'good' && styles.good,
-                card.tone === 'info' && styles.info,
-              ]}>
-              <Text
+          <CollapsibleSection
+            title={t('insights.smartTitle')}
+            open={smartOpen}
+            onToggle={() => setSmartOpen((v) => !v)}
+            summary={t('insights.smartCollapsed', { count: smart.length })}>
+            {smart.map((card) => (
+              <View
+                key={card.id}
                 style={[
-                  styles.smartText,
-                  card.tone === 'warn' && styles.textWarn,
-                  card.tone === 'good' && styles.textGood,
+                  styles.smartCard,
+                  card.tone === 'warn' && styles.warn,
+                  card.tone === 'good' && styles.good,
+                  card.tone === 'info' && styles.info,
                 ]}>
-                {card.text}
-              </Text>
-            </View>
-          ))}
+                <Text
+                  style={[
+                    styles.smartText,
+                    card.tone === 'warn' && styles.textWarn,
+                    card.tone === 'good' && styles.textGood,
+                  ]}>
+                  {card.text}
+                </Text>
+              </View>
+            ))}
+          </CollapsibleSection>
         </FadeInBlock>
 
         <FadeInBlock index={3}>
@@ -141,7 +155,7 @@ export default function InsightsScreen() {
                 ]}>
                 {t('insights.topValue', {
                   amount: format(top.total),
-                  category: t(`category.${top.categoryId}` as TranslationKey),
+                  category: categoryLabel(top.categoryId, t, spendConcepts),
                 })}
               </Text>
               <Text
@@ -165,8 +179,13 @@ export default function InsightsScreen() {
         </FadeInBlock>
 
         <FadeInBlock index={4}>
-          <Text style={styles.sectionTitle}>{t('insights.ranking')}</Text>
-          <CategoryBreakdown insights={insights} budgetStatus={budgetStatus} />
+          <CollapsibleSection
+            title={t('insights.ranking')}
+            open={rankingOpen}
+            onToggle={() => setRankingOpen((v) => !v)}
+            summary={t('insights.rankingCollapsed', { count: insights.length })}>
+            <CategoryBreakdown insights={insights} budgetStatus={budgetStatus} />
+          </CollapsibleSection>
         </FadeInBlock>
       </ScrollView>
     </ScreenBackground>

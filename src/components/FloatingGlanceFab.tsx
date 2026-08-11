@@ -14,14 +14,18 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useFinance } from '@/src/hooks/useFinance';
 import { useMoney } from '@/src/hooks/useMoney';
+import { useSettings } from '@/src/hooks/useSettings';
 import { useLanguage } from '@/src/i18n/LanguageContext';
-import type { TranslationKey } from '@/src/i18n/translations';
 import { palette, radii } from '@/src/theme/colors';
+import { categoryLabel } from '@/src/utils/categoryLabel';
+import { tapFeedback } from '@/src/utils/selectFeedback';
 
 export function FloatingGlanceFab() {
   const insets = useSafeAreaInsets();
   const { t } = useLanguage();
   const { format } = useMoney();
+  const { settings } = useSettings();
+  const spendConcepts = settings.spendConcepts ?? [];
   const {
     insightsForPeriod,
     totalForPeriod,
@@ -32,13 +36,10 @@ export function FloatingGlanceFab() {
   const [open, setOpen] = useState(false);
   const [resetting, setResetting] = useState(false);
 
-  const concepts = useMemo(
-    () => insightsForPeriod('mes').slice(0, 6),
-    [insightsForPeriod]
-  );
+  const concepts = useMemo(() => insightsForPeriod('mes', 'expense'), [insightsForPeriod]);
   const expenses = totalForPeriod('mes', 'expense');
   const income = totalForPeriod('mes', 'income');
-  const alerts = budgetStatus.filter((b) => b.ratio >= 0.8).length;
+  const alerts = budgetStatus.filter((b) => b.ratio > 1 && b.spent > 0 && b.limit > 0).length;
 
   function confirmReset() {
     Alert.alert(t('fab.resetTitle'), t('fab.resetMessage'), [
@@ -47,15 +48,24 @@ export function FloatingGlanceFab() {
         text: t('fab.resetConfirm'),
         style: 'destructive',
         onPress: () => {
-          void (async () => {
-            setResetting(true);
-            try {
-              await resetFinance();
-              setOpen(false);
-            } finally {
-              setResetting(false);
-            }
-          })();
+          Alert.alert(t('fab.resetTitle2'), t('fab.resetMessage2'), [
+            { text: t('history.cancel'), style: 'cancel' },
+            {
+              text: t('fab.resetConfirm2'),
+              style: 'destructive',
+              onPress: () => {
+                void (async () => {
+                  setResetting(true);
+                  try {
+                    await resetFinance();
+                    setOpen(false);
+                  } finally {
+                    setResetting(false);
+                  }
+                })();
+              },
+            },
+          ]);
         },
       },
     ]);
@@ -67,7 +77,10 @@ export function FloatingGlanceFab() {
         entering={ZoomIn.springify()}
         style={[styles.fabWrap, { bottom: Math.max(insets.bottom, 12) + 78 }]}>
         <Pressable
-          onPress={() => setOpen(true)}
+          onPress={() => {
+            tapFeedback();
+            setOpen(true);
+          }}
           style={styles.fab}
           accessibilityLabel={t('fab.open')}>
           <Text style={styles.fabGlyph}>◎</Text>
@@ -115,8 +128,8 @@ export function FloatingGlanceFab() {
                   const budget = budgetStatus.find(
                     (b) => b.categoryId === item.categoryId
                   );
-                  const over = budget && budget.ratio >= 1;
-                  const near = budget && budget.ratio >= 0.8 && budget.ratio < 1;
+                  const over = budget && budget.ratio > 1;
+                  const near = budget && budget.ratio >= 0.8 && budget.ratio <= 1;
                   return (
                     <View
                       key={item.categoryId}
@@ -131,7 +144,7 @@ export function FloatingGlanceFab() {
                         />
                         <View style={{ flex: 1 }}>
                           <Text style={styles.conceptName}>
-                            {t(`category.${item.categoryId}` as TranslationKey)}
+                            {categoryLabel(item.categoryId, t, spendConcepts)}
                           </Text>
                           <Text style={styles.conceptMeta}>
                             {item.percent.toFixed(0)}% · {item.count}{' '}

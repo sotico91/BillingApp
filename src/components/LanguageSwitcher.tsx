@@ -1,5 +1,6 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
+import { SelectPressable } from '@/src/components/SelectPressable';
 import { useLanguage } from '@/src/i18n/LanguageContext';
 import type { Language } from '@/src/i18n/translations';
 import { palette, radii } from '@/src/theme/colors';
@@ -21,7 +22,7 @@ export function LanguageSwitcher({ variant = 'dark' }: Props) {
         {OPTIONS.map((option) => {
           const selected = option === language;
           return (
-            <Pressable
+            <SelectPressable
               key={option}
               onPress={() => setLanguage(option)}
               style={[
@@ -36,7 +37,7 @@ export function LanguageSwitcher({ variant = 'dark' }: Props) {
                 ]}>
                 {t(option === 'en' ? 'language.en' : 'language.es')}
               </Text>
-            </Pressable>
+            </SelectPressable>
           );
         })}
       </View>

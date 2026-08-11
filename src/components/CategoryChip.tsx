@@ -6,20 +6,26 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { useLanguage } from '@/src/i18n/LanguageContext';
-import type { TranslationKey } from '@/src/i18n/translations';
-import type { Category } from '@/src/types/expense';
+import { useSettings } from '@/src/hooks/useSettings';
+import type { Category } from '@/src/types/finance';
 import { palette, radii } from '@/src/theme/colors';
+import { categoryLabel } from '@/src/utils/categoryLabel';
+import { tapFeedback } from '@/src/utils/selectFeedback';
 
 type Props = {
   category: Category;
+  label?: string;
   selected?: boolean;
   onPress?: () => void;
 };
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-export function CategoryChip({ category, selected, onPress }: Props) {
+export function CategoryChip({ category, label, selected, onPress }: Props) {
   const { t } = useLanguage();
+  const { settings } = useSettings();
+  const resolved =
+    label ?? categoryLabel(category.id, t, settings.spendConcepts ?? []);
   const scale = useSharedValue(1);
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -29,6 +35,7 @@ export function CategoryChip({ category, selected, onPress }: Props) {
     <AnimatedPressable
       onPress={onPress}
       onPressIn={() => {
+        tapFeedback();
         scale.value = withSpring(0.96, { damping: 15, stiffness: 220 });
       }}
       onPressOut={() => {
@@ -53,7 +60,7 @@ export function CategoryChip({ category, selected, onPress }: Props) {
         ]}
       />
       <Text style={[styles.label, selected && styles.labelSelected]}>
-        {t(`category.${category.id}` as TranslationKey)}
+        {resolved}
       </Text>
     </AnimatedPressable>
   );

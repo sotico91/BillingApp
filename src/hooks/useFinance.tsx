@@ -9,10 +9,10 @@ import React, {
 
 import {
   DEFAULT_ACCOUNTS,
-  DEFAULT_BUDGETS,
   DEFAULT_SUBSCRIPTIONS,
   getCategoryById,
 } from '@/src/data/financeDefaults';
+import { resolveConceptColor } from '@/src/data/spendConcepts';
 import {
   loadAccounts,
   loadBudgets,
@@ -57,6 +57,7 @@ type NewTxInput = {
   paymentMethod?: PaymentMethod;
   accountId?: string;
   toAccountId?: string;
+  debtId?: string;
   note?: string;
   createdAt?: string;
   isRecurring?: boolean;
@@ -79,6 +80,15 @@ type FinanceContextValue = {
   debts: Debt[];
   subscriptions: Subscription[];
   addTransaction: (input: NewTxInput) => Promise<Transaction>;
+  addDebt: (input: {
+    name: string;
+    balance: number;
+    installment: number;
+    interestRate?: number;
+    nextPaymentDate?: string;
+    categoryId?: string;
+  }) => Promise<Debt>;
+  removeDebt: (id: string) => Promise<void>;
   updateTransaction: (
     id: string,
     patch: Partial<
@@ -99,6 +109,7 @@ type FinanceContextValue = {
   canEditTransaction: (tx: Transaction) => boolean;
   resetFinance: () => Promise<void>;
   updateBudget: (categoryId: string, limit: number) => Promise<void>;
+  removeBudget: (categoryId: string) => Promise<void>;
   transactionsForPeriod: (period: Period, scope?: PersonScope) => Transaction[];
   transactionsForMonth: (
     year: number,
@@ -110,7 +121,7 @@ type FinanceContextValue = {
     type?: TransactionType,
     scope?: PersonScope
   ) => number;
-  insightsForPeriod: (period: Period) => CategoryInsight[];
+  insightsForPeriod: (period: Period, kind?: 'expense' | 'income') => CategoryInsight[];
   antForPeriod: (period: Period) => ReturnType<typeof antExpenseBreakdown>;
   recurringTransactions: Transaction[];
   availableCash: number;
@@ -183,8 +194,10 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
   const [attributed, setAttributed] = useState(false);
 
   useEffect(() => {
+    if (!settingsReady) return;
     let mounted = true;
     (async () => {
+      setLoading(true);
       const [tx, acc, bud, deb, sub] = await Promise.all([
         loadTransactions(),
         loadAccounts(),
@@ -203,7 +216,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [settingsReady]);
 
   // Backfill ownership so legacy rows belong to this singular person.
   useEffect(() => {
@@ -245,6 +258,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
         paymentMethod: input.paymentMethod,
         accountId: input.accountId ?? 'cash',
         toAccountId: input.toAccountId,
+        debtId: input.debtId,
         note: input.note?.trim() || undefined,
         createdAt: input.createdAt ?? new Date().toISOString(),
         isRecurring: input.isRecurring,
@@ -255,12 +269,79 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
         b.createdAt.localeCompare(a.createdAt)
       );
       const nextAccounts = applyAccountDelta(accounts, tx);
+      let nextDebts = debts;
+      if (tx.type === 'debt_payment' && tx.debtId) {
+        nextDebts = debts.map((d) => {
+          if (d.id !== tx.debtId) return d;
+          const paid = Math.min(tx.amount, d.balance);
+          const nextDate = new Date();
+          nextDate.setMonth(nextDate.getMonth() + 1);
+          return {
+            ...d,
+            balance: Math.max(0, d.balance - paid),
+            paidCapital: d.paidCapital + paid,
+            nextPaymentDate: nextDate.toISOString(),
+          };
+        });
+      }
       setTransactions(nextTx);
       setAccounts(nextAccounts);
-      await Promise.all([saveTransactions(nextTx), saveAccounts(nextAccounts)]);
+      setDebts(nextDebts);
+      await Promise.all([
+        saveTransactions(nextTx),
+        saveAccounts(nextAccounts),
+        saveDebts(nextDebts),
+      ]);
       return tx;
     },
-    [transactions, accounts, settings.personId, settings.userName]
+    [transactions, accounts, debts, settings.personId, settings.userName]
+  );
+
+  const addDebt = useCallback(
+    async (input: {
+      name: string;
+      balance: number;
+      installment: number;
+      interestRate?: number;
+      nextPaymentDate?: string;
+      categoryId?: string;
+    }) => {
+      const nextDate =
+        input.nextPaymentDate ??
+        (() => {
+          const d = new Date();
+          d.setMonth(d.getMonth() + 1);
+          return d.toISOString();
+        })();
+      const debt: Debt = {
+        id: createId(),
+        name: input.name.trim(),
+        balance: input.balance,
+        installment: input.installment,
+        interestRate: input.interestRate ?? 0,
+        termMonths: 0,
+        nextPaymentDate: nextDate,
+        paidCapital: 0,
+        paidInterest: 0,
+        otherCharges: 0,
+        categoryId: input.categoryId,
+        isPermanent: true,
+      };
+      const next = [debt, ...debts];
+      setDebts(next);
+      await saveDebts(next);
+      return debt;
+    },
+    [debts]
+  );
+
+  const removeDebt = useCallback(
+    async (id: string) => {
+      const next = debts.filter((d) => d.id !== id);
+      setDebts(next);
+      await saveDebts(next);
+    },
+    [debts]
   );
 
   const canEditTransaction = useCallback(
@@ -335,7 +416,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       ...a,
       balance: 0,
     }));
-    const nextBudgets = [...DEFAULT_BUDGETS];
+    const nextBudgets: Budget[] = [];
     const nextDebts: Debt[] = [];
     const nextSubs = [...DEFAULT_SUBSCRIPTIONS];
     const nextTx: Transaction[] = [];
@@ -361,6 +442,15 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       const next = exists
         ? budgets.map((b) => (b.categoryId === categoryId ? { ...b, limit } : b))
         : [...budgets, { id: createId(), categoryId, limit }];
+      setBudgets(next);
+      await saveBudgets(next);
+    },
+    [budgets]
+  );
+
+  const removeBudget = useCallback(
+    async (categoryId: string) => {
+      const next = budgets.filter((b) => b.categoryId !== categoryId);
       setBudgets(next);
       await saveBudgets(next);
     },
@@ -395,10 +485,8 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
   );
 
   const insightsForPeriod = useCallback(
-    (period: Period): CategoryInsight[] => {
-      const list = transactionsForPeriod(period, 'mine').filter(
-        (t) => t.type === 'expense'
-      );
+    (period: Period, kind: 'expense' | 'income' = 'expense'): CategoryInsight[] => {
+      const list = transactionsForPeriod(period, 'mine').filter((t) => t.type === kind);
       const total = list.reduce((sum, e) => sum + e.amount, 0);
       const map = new Map<string, { total: number; count: number }>();
       for (const e of list) {
@@ -412,20 +500,23 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
         .map(([categoryId, stats]) => ({
           categoryId,
           name: categoryId,
-          color: getCategoryById(categoryId).color,
+          color: resolveConceptColor(categoryId, settings.spendConcepts ?? []),
           total: stats.total,
           count: stats.count,
           percent: total > 0 ? (stats.total / total) * 100 : 0,
         }))
         .sort((a, b) => b.total - a.total);
     },
-    [transactionsForPeriod]
+    [transactionsForPeriod, settings.spendConcepts]
   );
 
   const antForPeriod = useCallback(
     (period: Period) =>
-      antExpenseBreakdown(transactionsForPeriod(period, 'mine')),
-    [transactionsForPeriod]
+      antExpenseBreakdown(
+        transactionsForPeriod(period, 'mine'),
+        settings.spendConcepts ?? []
+      ),
+    [transactionsForPeriod, settings.spendConcepts]
   );
 
   const recurringTransactions = useMemo(
@@ -500,11 +591,14 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       debts,
       subscriptions,
       addTransaction,
+      addDebt,
+      removeDebt,
       updateTransaction,
       removeTransaction,
       canEditTransaction,
       resetFinance,
       updateBudget,
+      removeBudget,
       transactionsForPeriod,
       transactionsForMonth,
       totalForPeriod,
@@ -528,11 +622,14 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       debts,
       subscriptions,
       addTransaction,
+      addDebt,
+      removeDebt,
       updateTransaction,
       removeTransaction,
       canEditTransaction,
       resetFinance,
       updateBudget,
+      removeBudget,
       transactionsForPeriod,
       transactionsForMonth,
       totalForPeriod,

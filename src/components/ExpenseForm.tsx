@@ -14,7 +14,8 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { CategoryChip } from '@/src/components/CategoryChip';
-import { CATEGORIES } from '@/src/data/categories';
+import { categoriesForKind } from '@/src/data/categories';
+import { spendSubsAsCategories } from '@/src/data/spendConcepts';
 import { useFinance } from '@/src/hooks/useFinance';
 import { useMoney } from '@/src/hooks/useMoney';
 import { useSettings } from '@/src/hooks/useSettings';
@@ -22,10 +23,16 @@ import { useLanguage } from '@/src/i18n/LanguageContext';
 import type { TranslationKey } from '@/src/i18n/translations';
 import { palette, radii } from '@/src/theme/colors';
 import type { PaymentMethod, TransactionType } from '@/src/types/finance';
+import { categoryLabel } from '@/src/utils/categoryLabel';
 import { notifyExpenseRegistered } from '@/src/utils/notifications';
 
+export type SavedMovement = {
+  kind: 'expense' | 'income' | 'other';
+  amount: number;
+};
+
 type Props = {
-  onSaved?: (todayTotal: number) => void;
+  onSaved?: (result: SavedMovement) => void;
 };
 
 const TYPES: TransactionType[] = [
@@ -45,25 +52,52 @@ export function ExpenseForm({ onSaved }: Props) {
   const { t } = useLanguage();
   const { format, parse, currency } = useMoney();
   const { settings, updateQuickTemplate } = useSettings();
-  const { addTransaction, totalForPeriod, accounts } = useFinance();
-
-  const enabledCategories = useMemo(
-    () => CATEGORIES.filter((c) => settings.enabledCategoryIds.includes(c.id)),
-    [settings.enabledCategoryIds]
-  );
+  const { addTransaction, totalForPeriod, accounts, debts } = useFinance();
+  const spendConcepts = settings.spendConcepts ?? [];
 
   const [amount, setAmount] = useState('');
   const [type, setType] = useState<TransactionType>('expense');
-  const [categoryId, setCategoryId] = useState(enabledCategories[0]?.id ?? 'otros');
+  const [conceptId, setConceptId] = useState(spendConcepts[0]?.id ?? '');
+  const [categoryId, setCategoryId] = useState(
+    spendConcepts[0]?.subs[0]?.id ?? 'otros'
+  );
+  const [debtId, setDebtId] = useState<string | null>(debts[0]?.id ?? null);
   const [method, setMethod] = useState<PaymentMethod>('cash');
   const [accountId, setAccountId] = useState(accounts[0]?.id ?? 'cash');
   const [toAccountId, setToAccountId] = useState('savings');
   const [note, setNote] = useState('');
   const [saving, setSaving] = useState(false);
+
+  const categoryChoices = useMemo(() => {
+    if (type === 'income') {
+      return categoriesForKind('income', settings.enabledCategoryIds);
+    }
+    if (type === 'debt_payment') {
+      return [];
+    }
+    const concept = spendConcepts.find((c) => c.id === conceptId) ?? spendConcepts[0];
+    if (!concept) return spendSubsAsCategories(spendConcepts);
+    return spendSubsAsCategories([concept]);
+  }, [type, settings.enabledCategoryIds, spendConcepts, conceptId]);
+
   const scale = useSharedValue(1);
   const buttonStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
   }));
+
+  function selectType(next: TransactionType) {
+    setType(next);
+    if (next === 'income') {
+      setCategoryId('salario');
+    } else if (next === 'expense') {
+      const first = spendConcepts[0];
+      setConceptId(first?.id ?? '');
+      setCategoryId(first?.subs[0]?.id ?? 'otros');
+    } else if (next === 'debt_payment') {
+      setDebtId(debts[0]?.id ?? null);
+      setCategoryId(debts[0]?.categoryId ?? 'otros');
+    }
+  }
 
   async function handleSave() {
     const parsed = parse(amount);
@@ -74,15 +108,21 @@ export function ExpenseForm({ onSaved }: Props) {
 
     setSaving(true);
     try {
-      const beforeToday = totalForPeriod('hoy', 'expense');
+      const beforeTodayExpense = totalForPeriod('hoy', 'expense');
+      const beforeTodayIncome = totalForPeriod('hoy', 'income');
+      const selectedDebt = debts.find((d) => d.id === debtId);
       await addTransaction({
         type,
         amount: parsed,
-        categoryId: type === 'expense' || type === 'income' ? categoryId : categoryId,
+        categoryId:
+          type === 'debt_payment'
+            ? selectedDebt?.categoryId ?? categoryId
+            : categoryId,
         paymentMethod: type === 'income' ? undefined : method,
         accountId,
         toAccountId:
           type === 'transfer' || type === 'investment' ? toAccountId : undefined,
+        debtId: type === 'debt_payment' ? debtId ?? undefined : undefined,
         note,
       });
 
@@ -98,15 +138,27 @@ export function ExpenseForm({ onSaved }: Props) {
         await notifyExpenseRegistered(
           t('notify.title'),
           t('notify.body', {
-            amount: format(parsed),
-            category: t(`category.${categoryId}` as TranslationKey),
+            amount: format(parsed, { reveal: true }),
+            category: categoryLabel(
+              type === 'debt_payment'
+                ? selectedDebt?.categoryId ?? categoryId
+                : categoryId,
+              t,
+              spendConcepts
+            ),
           })
         );
       }
 
       setAmount('');
       setNote('');
-      onSaved?.(type === 'expense' ? beforeToday + parsed : beforeToday);
+      if (type === 'expense') {
+        onSaved?.({ kind: 'expense', amount: beforeTodayExpense + parsed });
+      } else if (type === 'income') {
+        onSaved?.({ kind: 'income', amount: beforeTodayIncome + parsed });
+      } else {
+        onSaved?.({ kind: 'other', amount: parsed });
+      }
     } finally {
       setSaving(false);
     }
@@ -135,7 +187,7 @@ export function ExpenseForm({ onSaved }: Props) {
         {TYPES.map((item) => (
           <Pressable
             key={item}
-            onPress={() => setType(item)}
+            onPress={() => selectType(item)}
             style={[styles.pill, type === item && styles.pillOn]}>
             <Text style={[styles.pillText, type === item && styles.pillTextOn]}>
               {t(`type.${item}` as TranslationKey)}
@@ -202,17 +254,66 @@ export function ExpenseForm({ onSaved }: Props) {
         </>
       )}
 
-      <Text style={styles.label}>{t('add.category')}</Text>
-      <View style={styles.chips}>
-        {enabledCategories.map((category) => (
-          <CategoryChip
-            key={category.id}
-            category={category}
-            selected={category.id === categoryId}
-            onPress={() => setCategoryId(category.id)}
-          />
-        ))}
-      </View>
+      {type === 'expense' && spendConcepts.length > 0 ? (
+        <>
+          <Text style={styles.label}>{t('flow.chooseConcept')}</Text>
+          <View style={styles.chips}>
+            {spendConcepts.map((concept) => (
+              <Pressable
+                key={concept.id}
+                onPress={() => {
+                  setConceptId(concept.id);
+                  setCategoryId(concept.subs[0]?.id ?? categoryId);
+                }}
+                style={[styles.pill, conceptId === concept.id && styles.pillOn]}>
+                <Text
+                  style={[styles.pillText, conceptId === concept.id && styles.pillTextOn]}>
+                  {concept.name}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        </>
+      ) : null}
+
+      {type === 'debt_payment' ? (
+        <>
+          <Text style={styles.label}>{t('flow.chooseDebt')}</Text>
+          <View style={styles.chips}>
+            {debts.map((debt) => (
+              <Pressable
+                key={debt.id}
+                onPress={() => {
+                  setDebtId(debt.id);
+                  if (debt.installment > 0) setAmount(String(debt.installment));
+                  setCategoryId(debt.categoryId ?? 'otros');
+                }}
+                style={[styles.pill, debtId === debt.id && styles.pillOn]}>
+                <Text style={[styles.pillText, debtId === debt.id && styles.pillTextOn]}>
+                  {debt.name ?? t('debt.mainCard')}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        </>
+      ) : (
+        <>
+          <Text style={styles.label}>
+            {type === 'expense' ? t('flow.chooseSub') : t('add.category')}
+          </Text>
+          <View style={styles.chips}>
+            {categoryChoices.map((category) => (
+              <CategoryChip
+                key={category.id}
+                category={category}
+                label={categoryLabel(category.id, t, spendConcepts)}
+                selected={category.id === categoryId}
+                onPress={() => setCategoryId(category.id)}
+              />
+            ))}
+          </View>
+        </>
+      )}
 
       <Text style={styles.label}>{t('add.note')}</Text>
       <TextInput
@@ -239,7 +340,9 @@ export function ExpenseForm({ onSaved }: Props) {
       </AnimatedPressable>
 
       {preview ? (
-        <Text style={styles.preview}>{t('add.willSave', { amount: format(preview) })}</Text>
+        <Text style={styles.preview}>
+          {t('add.willSave', { amount: format(preview, { reveal: true }) })}
+        </Text>
       ) : (
         <Text style={styles.preview}>{t('add.hint')}</Text>
       )}

@@ -1,36 +1,31 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-} from 'react-native-reanimated';
 
+import { AmountPrivacyToggle } from '@/src/components/AmountPrivacyToggle';
 import { CategoryBreakdown } from '@/src/components/CategoryBreakdown';
+import { CollapsibleSection } from '@/src/components/CollapsibleSection';
+import { ConceptGlanceSheet } from '@/src/components/ConceptGlanceSheet';
 import { EditTransactionModal } from '@/src/components/EditTransactionModal';
 import { ExpenseRow } from '@/src/components/ExpenseRow';
 import { FadeInBlock } from '@/src/components/FadeInBlock';
 import { LanguageSwitcher } from '@/src/components/LanguageSwitcher';
 import { ProfileMenuButton } from '@/src/components/ProfileMenuButton';
-import { QuickAddBar } from '@/src/components/QuickAddBar';
 import { SavingsDecor } from '@/src/components/SavingsDecor';
 import { ScreenBackground } from '@/src/components/ScreenBackground';
 import { useFinance } from '@/src/hooks/useFinance';
 import { useMoney } from '@/src/hooks/useMoney';
 import { useSettings } from '@/src/hooks/useSettings';
 import { useLanguage } from '@/src/i18n/LanguageContext';
-import type { TranslationKey } from '@/src/i18n/translations';
 import { palette, radii } from '@/src/theme/colors';
 import type { Transaction } from '@/src/types/finance';
-import { buildSmartInsights } from '@/src/utils/smartInsights';
+import { categoryLabel } from '@/src/utils/categoryLabel';
+import { tapFeedback } from '@/src/utils/selectFeedback';
 import {
   toneFromExpensePressure,
   toneFromSavings,
   type SignalTone,
 } from '@/src/utils/signalTone';
-
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export default function HomeScreen() {
   const { t } = useLanguage();
@@ -40,7 +35,6 @@ export default function HomeScreen() {
     totalForPeriod,
     insightsForPeriod,
     transactionsForPeriod,
-    transactions,
     loading,
     availableCash,
     netWorth,
@@ -51,11 +45,11 @@ export default function HomeScreen() {
     canEditTransaction,
   } = useFinance();
   const [editing, setEditing] = useState<Transaction | null>(null);
-
-  const scale = useSharedValue(1);
-  const ctaStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
+  const [glance, setGlance] = useState<'expense' | 'income' | null>(null);
+  const [attentionOpen, setAttentionOpen] = useState(false);
+  const [todayOpen, setTodayOpen] = useState(false);
+  const [antOpen, setAntOpen] = useState(false);
+  const [categoriesOpen, setCategoriesOpen] = useState(false);
 
   const displayName = settings.userName.trim();
   const greeting = displayName
@@ -72,9 +66,17 @@ export default function HomeScreen() {
   const debtTotal = debts.reduce((s, d) => s + d.balance, 0);
   const ant = antForPeriod('mes');
   const recent = transactionsForPeriod('hoy');
-  const monthInsights = insightsForPeriod('mes').slice(0, 5);
-  const smart = buildSmartInsights(transactions, t, format);
-  const alerts = budgetStatus.filter((b) => b.ratio >= 0.8);
+  const monthInsights = insightsForPeriod('mes');
+  const expenseConcepts = insightsForPeriod('mes', 'expense');
+  const incomeConcepts = insightsForPeriod('mes', 'income');
+  const spendConcepts = settings.spendConcepts ?? [];
+  /** Only strictly over limit — keep attention actionable and short. */
+  const ATTENTION_OVER_LIMIT = 3;
+  const overBudgetAlerts = [...budgetStatus]
+    .filter((b) => b.ratio > 1 && b.spent > 0 && b.limit > 0)
+    .sort((a, b) => b.ratio - a.ratio);
+  const alerts = overBudgetAlerts.slice(0, ATTENTION_OVER_LIMIT);
+  const alertsHidden = Math.max(0, overBudgetAlerts.length - alerts.length);
   const worstBudgetRatio = Math.max(0, ...budgetStatus.map((b) => b.ratio));
   const savingsTone = toneFromSavings(savings);
   const expensesTone = toneFromExpensePressure({
@@ -85,12 +87,6 @@ export default function HomeScreen() {
   const antShare = expenses > 0 ? ant.total / expenses : 0;
   const antTone: SignalTone =
     antShare >= 0.25 ? 'danger' : antShare >= 0.15 ? 'warn' : ant.total > 0 ? 'good' : 'neutral';
-
-  const mostFrequent = [...monthInsights].sort((a, b) => b.count - a.count)[0];
-  const showFrequent =
-    mostFrequent && mostFrequent.count >= 3
-      ? mostFrequent
-      : undefined;
 
   const todayHint =
     recent.length === 0
@@ -141,6 +137,7 @@ export default function HomeScreen() {
             </View>
             <View style={styles.heroAside}>
               <View style={styles.avatarRow}>
+                <AmountPrivacyToggle inline light />
                 <ProfileMenuButton />
                 <View style={styles.avatar}>
                   <Text style={styles.avatarText}>{initial}</Text>
@@ -157,11 +154,17 @@ export default function HomeScreen() {
 
         <FadeInBlock index={2}>
           <View style={styles.dashGrid}>
-            <DashTile label={t('home.income')} value={format(loading ? 0 : income)} tone="good" />
+            <DashTile
+              label={t('home.income')}
+              value={format(loading ? 0 : income)}
+              tone="good"
+              onPress={() => setGlance('income')}
+            />
             <DashTile
               label={t('home.expenses')}
               value={format(loading ? 0 : expenses)}
               tone={expensesTone}
+              onPress={() => setGlance('expense')}
             />
             <DashTile
               label={t('home.available')}
@@ -184,6 +187,7 @@ export default function HomeScreen() {
               label={t('home.debts')}
               value={format(debtTotal)}
               tone={debtTotal > 0 ? 'warn' : 'good'}
+              onPress={() => router.push('/(tabs)/wealth')}
             />
             <DashTile
               label={t('home.netWorth')}
@@ -200,133 +204,140 @@ export default function HomeScreen() {
         </FadeInBlock>
 
         <FadeInBlock index={3}>
-          <Text style={styles.sectionTitle}>{t('home.attention')}</Text>
-          {smart.slice(0, 3).map((card) => (
-            <View
-              key={card.id}
-              style={[
-                styles.attentionCard,
-                card.tone === 'warn' && styles.warn,
-                card.tone === 'good' && styles.good,
-                card.tone === 'info' && styles.info,
-              ]}>
-              <Text style={styles.attentionText}>{card.text}</Text>
-            </View>
-          ))}
-          {alerts.map((a) => (
-            <View
-              key={a.categoryId}
-              style={[
-                styles.attentionCard,
-                a.ratio >= 1 ? styles.danger : styles.warn,
-              ]}>
-              <Text
-                style={[
-                  styles.attentionText,
-                  a.ratio >= 1 && styles.attentionDangerText,
-                ]}>
-                {t(a.ratio >= 1 ? 'insights.overBudget' : 'plan.nearLimit')}:{' '}
-                {t(`category.${a.categoryId}` as TranslationKey)} (
-                {Math.round(a.ratio * 100)}%)
-              </Text>
-            </View>
-          ))}
-          {showFrequent ? (
-            <View style={[styles.attentionCard, styles.danger]}>
-              <Text style={[styles.attentionText, styles.attentionDangerText]}>
-                {t('home.frequentAlert', {
-                  category: t(`category.${showFrequent.categoryId}` as TranslationKey),
-                  count: showFrequent.count,
-                })}
-              </Text>
-            </View>
-          ) : null}
-        </FadeInBlock>
-
-        <FadeInBlock index={4}>
-          <QuickAddBar />
-        </FadeInBlock>
-
-        <FadeInBlock index={5}>
-          <AnimatedPressable
-            onPress={() => router.push('/agregar')}
-            onPressIn={() => {
-              scale.value = withSpring(0.97, { damping: 16, stiffness: 240 });
-            }}
-            onPressOut={() => {
-              scale.value = withSpring(1, { damping: 16, stiffness: 240 });
-            }}
-            style={[styles.cta, ctaStyle]}>
-            <Text style={styles.ctaPlus}>+</Text>
-            <Text style={styles.ctaText}>{t('home.addExpense')}</Text>
-          </AnimatedPressable>
+          <CollapsibleSection
+            title={t('home.attention')}
+            open={attentionOpen}
+            onToggle={() => setAttentionOpen((v) => !v)}
+            summary={
+              alerts.length === 0
+                ? t('home.attentionEmptyShort')
+                : t('home.attentionSummary', { count: alerts.length + alertsHidden })
+            }>
+            {alerts.length === 0 ? (
+              <View style={[styles.attentionCard, styles.good]}>
+                <Text style={styles.attentionText}>{t('home.attentionEmpty')}</Text>
+              </View>
+            ) : (
+              <>
+                {alerts.map((a) => (
+                  <View key={a.categoryId} style={[styles.attentionCard, styles.danger]}>
+                    <Text style={[styles.attentionText, styles.attentionDangerText]}>
+                      {t('insights.overBudget')}:{' '}
+                      {categoryLabel(a.categoryId, t, spendConcepts)} (
+                      {Math.round(a.ratio * 100)}%)
+                    </Text>
+                  </View>
+                ))}
+                {alertsHidden > 0 ? (
+                  <Pressable onPress={() => router.push('/(tabs)/plan')}>
+                    <Text style={styles.attentionMore}>
+                      {t('home.attentionMore', { count: alertsHidden })}
+                    </Text>
+                  </Pressable>
+                ) : null}
+              </>
+            )}
+          </CollapsibleSection>
         </FadeInBlock>
 
         {recent.length > 0 ? (
-          <FadeInBlock index={6}>
-            <Text style={styles.sectionTitle}>{t('home.todayList')}</Text>
-            <View style={styles.todayList}>
-              {recent.slice(0, 8).map((tx, index) => {
-                const mine = canEditTransaction(tx);
-                return (
-                  <ExpenseRow
-                    key={tx.id}
-                    expense={tx}
-                    last={index === Math.min(recent.length, 8) - 1}
-                    showRegistrant={false}
-                    onEdit={mine ? () => openEdit(tx) : undefined}
-                    onDelete={mine ? () => confirmDelete(tx) : undefined}
-                  />
-                );
-              })}
-            </View>
+          <FadeInBlock index={4}>
+            <CollapsibleSection
+              title={t('home.todayList')}
+              open={todayOpen}
+              onToggle={() => setTodayOpen((v) => !v)}
+              summary={t('home.todayListSummary', {
+                count: Math.min(recent.length, 8),
+              })}>
+              <View style={styles.todayList}>
+                {recent.slice(0, 8).map((tx, index) => {
+                  const mine = canEditTransaction(tx);
+                  return (
+                    <ExpenseRow
+                      key={tx.id}
+                      expense={tx}
+                      last={index === Math.min(recent.length, 8) - 1}
+                      showRegistrant={false}
+                      onEdit={mine ? () => openEdit(tx) : undefined}
+                      onDelete={mine ? () => confirmDelete(tx) : undefined}
+                    />
+                  );
+                })}
+              </View>
+            </CollapsibleSection>
           </FadeInBlock>
         ) : null}
 
-        <FadeInBlock index={7}>
-          <Text style={styles.sectionTitle}>{t('home.antTitle')}</Text>
-          <View
-            style={[
-              styles.antBox,
-              antTone === 'danger' && styles.boxDanger,
-              antTone === 'warn' && styles.boxWarn,
-              antTone === 'good' && styles.boxGood,
-            ]}>
-            <Text
+        <FadeInBlock index={5}>
+          <CollapsibleSection
+            title={t('home.antTitle')}
+            open={antOpen}
+            onToggle={() => setAntOpen((v) => !v)}
+            summary={`${t('home.antTotal')}: ${format(ant.total)}`}>
+            <View
               style={[
-                styles.antTotal,
-                antTone === 'danger' && styles.textDanger,
-                antTone === 'good' && styles.textGood,
+                styles.antBox,
+                antTone === 'danger' && styles.boxDanger,
+                antTone === 'warn' && styles.boxWarn,
+                antTone === 'good' && styles.boxGood,
               ]}>
-              {t('home.antTotal')}: {format(ant.total)}
-            </Text>
-            <Text
-              style={[
-                styles.antHint,
-                antTone === 'danger' && styles.textDanger,
-                antTone === 'good' && styles.textGood,
-              ]}>
-              {antTone === 'danger' || antTone === 'warn'
-                ? t('home.antAlert')
-                : t('home.antOk')}
-            </Text>
-            {ant.items.map((item) => (
-              <Text key={item.categoryId} style={styles.antLine}>
-                {t(`category.${item.categoryId}` as TranslationKey)}: {format(item.amount)}
+              <Text
+                style={[
+                  styles.antTotal,
+                  antTone === 'danger' && styles.textDanger,
+                  antTone === 'good' && styles.textGood,
+                ]}>
+                {t('home.antTotal')}: {format(ant.total)}
               </Text>
-            ))}
-          </View>
+              <Text
+                style={[
+                  styles.antHint,
+                  antTone === 'danger' && styles.textDanger,
+                  antTone === 'good' && styles.textGood,
+                ]}>
+                {antTone === 'danger' || antTone === 'warn'
+                  ? t('home.antAlert')
+                  : t('home.antOk')}
+              </Text>
+              {ant.items.length === 0 ? (
+                <Text style={styles.antHint}>{t('home.antEmpty')}</Text>
+              ) : (
+                ant.items.map((item) => (
+                  <Text key={item.categoryId} style={styles.antLine}>
+                    {categoryLabel(item.categoryId, t, spendConcepts)}: {format(item.amount)}
+                  </Text>
+                ))
+              )}
+            </View>
+          </CollapsibleSection>
         </FadeInBlock>
 
-        <FadeInBlock index={8}>
-          <Text style={styles.sectionTitle}>{t('home.todayByCategory')}</Text>
-          <CategoryBreakdown
-            insights={monthInsights}
-            emptyLabel={t('home.emptyCategory')}
-            budgetStatus={budgetStatus}
-          />
+        <FadeInBlock index={6}>
+          <CollapsibleSection
+            title={t('home.todayByCategory')}
+            open={categoriesOpen}
+            onToggle={() => setCategoriesOpen((v) => !v)}
+            summary={
+              monthInsights.length === 0
+                ? t('home.emptyCategory')
+                : t('home.categorySummary', { count: monthInsights.length })
+            }>
+            <CategoryBreakdown
+              insights={monthInsights}
+              emptyLabel={t('home.emptyCategory')}
+              budgetStatus={budgetStatus}
+            />
+          </CollapsibleSection>
         </FadeInBlock>
       </ScrollView>
+
+      <ConceptGlanceSheet
+        visible={glance != null}
+        onClose={() => setGlance(null)}
+        kind={glance ?? 'expense'}
+        items={glance === 'income' ? incomeConcepts : expenseConcepts}
+        total={glance === 'income' ? income : expenses}
+      />
 
       <EditTransactionModal
         visible={!!editing}
@@ -342,14 +353,19 @@ function DashTile({
   value,
   tone = 'neutral',
   hint,
+  onPress,
 }: {
   label: string;
   value: string;
   tone?: SignalTone;
   hint?: string;
+  onPress?: () => void;
 }) {
+  const Wrapper = onPress ? Pressable : View;
   return (
-    <View
+    <Wrapper
+      onPress={onPress}
+      onPressIn={onPress ? () => tapFeedback() : undefined}
       style={[
         styles.tile,
         tone === 'danger' && styles.boxDanger,
@@ -384,7 +400,7 @@ function DashTile({
           {hint}
         </Text>
       ) : null}
-    </View>
+    </Wrapper>
   );
 }
 
@@ -545,17 +561,13 @@ const styles = StyleSheet.create({
   attentionDangerText: {
     color: palette.danger,
   },
-  cta: {
-    backgroundColor: palette.accent,
-    borderRadius: radii.lg,
-    paddingVertical: 18,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
+  attentionMore: {
+    marginTop: 4,
+    fontFamily: 'DMSans_500Medium',
+    fontSize: 13,
+    color: palette.inkMuted,
+    textDecorationLine: 'underline',
   },
-  ctaPlus: { fontFamily: 'DMSans_600SemiBold', fontSize: 24, color: palette.white },
-  ctaText: { fontFamily: 'DMSans_600SemiBold', fontSize: 17, color: palette.white },
   antBox: {
     backgroundColor: palette.surfaceSolid,
     borderRadius: radii.lg,

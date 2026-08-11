@@ -1,5 +1,7 @@
+import { getAntCategoryIds } from '@/src/data/financeDefaults';
+import { findSpendSub, resolveConceptColor } from '@/src/data/spendConcepts';
 import type { Period, Transaction } from '@/src/types/finance';
-import { getAntCategoryIds, getCategoryById } from '@/src/data/financeDefaults';
+import type { SpendConcept } from '@/src/types/settings';
 
 function startOfDay(date: Date): Date {
   const d = new Date(date);
@@ -109,17 +111,25 @@ export function sumByType(
     .reduce((sum, t) => sum + t.amount, 0);
 }
 
-export function antExpenseBreakdown(transactions: Transaction[]) {
-  const antIds = new Set(getAntCategoryIds());
+export function isAntCategoryId(
+  categoryId: string,
+  spendConcepts: SpendConcept[] = []
+): boolean {
+  const hit = findSpendSub(spendConcepts, categoryId);
+  if (hit) return hit.sub.isAnt === true;
+  return getAntCategoryIds().includes(categoryId);
+}
+
+export function antExpenseBreakdown(
+  transactions: Transaction[],
+  spendConcepts: SpendConcept[] = []
+) {
   const map = new Map<string, number>();
   let total = 0;
 
   for (const t of transactions) {
     if (t.type !== 'expense' || !t.categoryId) continue;
-    const isAnt =
-      antIds.has(t.categoryId) ||
-      (t.amount > 0 && t.amount <= 30000 && t.categoryId !== 'vivienda');
-    if (!isAnt) continue;
+    if (!isAntCategoryId(t.categoryId, spendConcepts)) continue;
     total += t.amount;
     map.set(t.categoryId, (map.get(t.categoryId) ?? 0) + t.amount);
   }
@@ -128,7 +138,7 @@ export function antExpenseBreakdown(transactions: Transaction[]) {
     .map(([categoryId, amount]) => ({
       categoryId,
       amount,
-      color: getCategoryById(categoryId).color,
+      color: resolveConceptColor(categoryId, spendConcepts),
     }))
     .sort((a, b) => b.amount - a.amount);
 

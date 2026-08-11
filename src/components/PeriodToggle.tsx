@@ -1,5 +1,6 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
+import { SelectPressable } from '@/src/components/SelectPressable';
 import { useLanguage } from '@/src/i18n/LanguageContext';
 import type { TranslationKey } from '@/src/i18n/translations';
 import { palette, radii } from '@/src/theme/colors';
@@ -20,14 +21,14 @@ export function PeriodToggle({ value, onChange }: Props) {
       {PERIODS.map((period) => {
         const selected = period === value;
         return (
-          <Pressable
+          <SelectPressable
             key={period}
             onPress={() => onChange(period)}
             style={[styles.item, selected && styles.itemSelected]}>
             <Text style={[styles.text, selected && styles.textSelected]}>
               {t(`period.${period}` as TranslationKey)}
             </Text>
-          </Pressable>
+          </SelectPressable>
         );
       })}
     </View>

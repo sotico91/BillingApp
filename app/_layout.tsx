@@ -14,12 +14,16 @@ import { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 
+import { AmountPrivacyToggle } from '@/src/components/AmountPrivacyToggle';
 import { NamePromptOverlay } from '@/src/components/NamePromptOverlay';
 import { OnboardingOverlay } from '@/src/components/OnboardingOverlay';
+import { ReminderHygiene } from '@/src/components/ReminderHygiene';
+import { AmountPrivacyProvider } from '@/src/hooks/useAmountPrivacy';
 import { ExpensesProvider } from '@/src/hooks/useExpenses';
 import { SettingsProvider } from '@/src/hooks/useSettings';
 import { LanguageProvider, useLanguage } from '@/src/i18n/LanguageContext';
 import { palette } from '@/src/theme/colors';
+import { prepareSelectFeedback } from '@/src/utils/selectFeedback';
 
 export { ErrorBoundary } from 'expo-router';
 
@@ -45,6 +49,7 @@ export default function RootLayout() {
   useEffect(() => {
     if (loaded) {
       SplashScreen.hideAsync();
+      prepareSelectFeedback();
     }
   }, [loaded]);
 
@@ -55,12 +60,15 @@ export default function RootLayout() {
   return (
     <LanguageProvider>
       <SettingsProvider>
-        <ExpensesProvider>
-          <StatusBar style="light" />
-          <RootNavigator />
-          <OnboardingOverlay />
-          <NamePromptOverlay />
-        </ExpensesProvider>
+        <AmountPrivacyProvider>
+          <ExpensesProvider>
+            <StatusBar style="light" />
+            <RootNavigator />
+            <ReminderHygiene />
+            <OnboardingOverlay />
+            <NamePromptOverlay />
+          </ExpensesProvider>
+        </AmountPrivacyProvider>
       </SettingsProvider>
     </LanguageProvider>
   );
@@ -87,6 +95,7 @@ function RootNavigator() {
           presentation: 'modal',
           title: t('add.title'),
           headerLargeTitle: false,
+          headerRight: () => <AmountPrivacyToggle inline light />,
         }}
       />
     </Stack>

@@ -9,12 +9,13 @@ import {
 } from 'react-native';
 
 import { getCategoryById } from '@/src/data/categories';
+import { flattenSpendSubs } from '@/src/data/spendConcepts';
 import { useExpenses } from '@/src/hooks/useExpenses';
 import { useMoney } from '@/src/hooks/useMoney';
 import { useSettings } from '@/src/hooks/useSettings';
 import { useLanguage } from '@/src/i18n/LanguageContext';
-import type { TranslationKey } from '@/src/i18n/translations';
 import { palette, radii } from '@/src/theme/colors';
+import { categoryLabel } from '@/src/utils/categoryLabel';
 import { notifyExpenseRegistered } from '@/src/utils/notifications';
 
 export function QuickAddBar() {
@@ -23,10 +24,13 @@ export function QuickAddBar() {
   const { settings, quickTemplates, updateQuickTemplate } = useSettings();
   const { addExpense } = useExpenses();
   const [busyId, setBusyId] = useState<string | null>(null);
+  const spendConcepts = settings.spendConcepts ?? [];
 
-  const templates = quickTemplates.filter((item) =>
-    settings.enabledCategoryIds.includes(item.categoryId)
-  );
+  const allowedIds = new Set([
+    ...settings.enabledCategoryIds,
+    ...flattenSpendSubs(spendConcepts).map((s) => s.id),
+  ]);
+  const templates = quickTemplates.filter((item) => allowedIds.has(item.categoryId));
 
   async function handleQuickAdd(templateId: string) {
     const template = templates.find((x) => x.id === templateId);
@@ -50,7 +54,7 @@ export function QuickAddBar() {
           t('notify.title'),
           t('notify.body', {
             amount: format(template.amount),
-            category: t(`category.${template.categoryId}` as TranslationKey),
+            category: categoryLabel(template.categoryId, t, spendConcepts),
           })
         );
       }
@@ -80,7 +84,7 @@ export function QuickAddBar() {
                 <View style={[styles.dot, { backgroundColor: category.color }]} />
                 <View>
                   <Text style={styles.chipTitle}>
-                    {t(`category.${template.categoryId}` as TranslationKey)}
+                    {categoryLabel(template.categoryId, t, spendConcepts)}
                   </Text>
                   <Text style={styles.chipAmount}>{format(template.amount)}</Text>
                 </View>

@@ -1,9 +1,10 @@
 import { StyleSheet, Text, View } from 'react-native';
 
 import { useMoney } from '@/src/hooks/useMoney';
+import { useSettings } from '@/src/hooks/useSettings';
 import { useLanguage } from '@/src/i18n/LanguageContext';
-import type { TranslationKey } from '@/src/i18n/translations';
 import { palette, radii } from '@/src/theme/colors';
+import { categoryLabel } from '@/src/utils/categoryLabel';
 import {
   toneFromBudgetRatio,
   type SignalTone,
@@ -33,6 +34,8 @@ type Props = {
 export function CategoryBreakdown({ insights, emptyLabel, budgetStatus }: Props) {
   const { t } = useLanguage();
   const { format } = useMoney();
+  const { settings } = useSettings();
+  const spendConcepts = settings.spendConcepts ?? [];
 
   if (insights.length === 0) {
     return (
@@ -99,7 +102,7 @@ export function CategoryBreakdown({ insights, emptyLabel, budgetStatus }: Props)
                     tone === 'danger' && styles.textDanger,
                     tone === 'good' && styles.textGood,
                   ]}>
-                  {t(`category.${item.categoryId}` as TranslationKey)}
+                  {categoryLabel(item.categoryId, t, spendConcepts)}
                 </Text>
               </View>
               <Text
