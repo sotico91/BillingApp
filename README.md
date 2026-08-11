@@ -2,6 +2,9 @@
 
 A personal finance app to understand and control everyday money — especially **ant spends** — with a simple loop: register → classify → understand → decide.
 
+**Developed by [Sotico91](https://github.com/sotico91)**  
+© 2026 Sotico91. All rights reserved.
+
 ## Overview
 
 BillingApp helps you log income and expenses quickly, see the month clearly, and get local reminders for the concepts you choose. Every movement is attributed to the person who logged it, so if a household ledger is shared later, each expense still belongs to whoever registered it.
@@ -17,9 +20,10 @@ Built for daily use on iPhone: guided onboarding, friendly logging (coffee, deli
 - **Plan**: daily local reminders + budgets for registered concepts
 - **Other** reminders: custom concept names (receipts, parking, utilities, etc.)
 - **Understand**: category ranking and “Ask BillingApp”
-- **Wealth**: accounts, debts, and subscriptions
+- **Wealth**: accounts, debts, and credit installments
 - **i18n** English / Spanish (device language)
 - **On-device** data (AsyncStorage); no remote push server required
+- **Amount privacy** (eye toggle) so balances are not visible at a glance
 
 ## Stack
 
@@ -54,6 +58,11 @@ assets/        # Icon, splash, and fonts
 
 Movements are stored on the phone. Reminder notifications are **local** (scheduled on the device). No account or backend is required for basic use.
 
-## License
+## Copyright & License
 
-See `LICENSE`.
+Copyright © 2026 Sotico91. All rights reserved.
+
+BillingApp is **proprietary** software developed by **Sotico91**.  
+It is **not** open source. No permission is granted to copy, modify, redistribute, or use this codebase without prior written consent from Sotico91.
+
+See [`LICENSE`](./LICENSE) for the full terms.

@@ -60,6 +60,10 @@ export const translations = {
     'privacy.showAmounts': 'Show amounts',
     'privacy.hideAmounts': 'Hide amounts',
 
+    'about.developedBy': 'Developed by {name}',
+    'about.copyright': '© {year} {name}',
+    'about.allRights': 'All rights reserved.',
+
     'history.title': 'Activity',
     'history.summaryTitle': 'Period summary',
     'history.summaryCollapsed': '{amount} · {period}',
@@ -565,6 +569,10 @@ export const translations = {
 
     'privacy.showAmounts': 'Mostrar montos',
     'privacy.hideAmounts': 'Ocultar montos',
+
+    'about.developedBy': 'Desarrollado por {name}',
+    'about.copyright': '© {year} {name}',
+    'about.allRights': 'Todos los derechos reservados.',
 
     'history.title': 'Actividad',
     'history.summaryTitle': 'Resumen del periodo',

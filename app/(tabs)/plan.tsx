@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { AppCopyright } from '@/src/components/AppCopyright';
 import { CollapsibleSection } from '@/src/components/CollapsibleSection';
 import { ConceptsPlanCard } from '@/src/components/ConceptsPlanCard';
 import { FadeInBlock } from '@/src/components/FadeInBlock';
@@ -169,6 +170,10 @@ export default function PlanScreen() {
               )}
             </View>
           </CollapsibleSection>
+        </FadeInBlock>
+
+        <FadeInBlock index={5}>
+          <AppCopyright />
         </FadeInBlock>
       </ScrollView>
     </ScreenBackground>
