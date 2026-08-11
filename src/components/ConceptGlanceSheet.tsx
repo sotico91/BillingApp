@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { findSpendSub } from '@/src/data/spendConcepts';
@@ -42,18 +41,29 @@ export function ConceptGlanceSheet({ visible, onClose, kind, items, total }: Pro
   const { t } = useLanguage();
   const { format } = useMoney();
   const { settings } = useSettings();
-  const spendConcepts = settings.spendConcepts ?? [];
-  const isExpense = kind === 'expense';
   const [expandedKey, setExpandedKey] = useState<string | null>(null);
+  // Keep last open content while the Modal fade-out runs; parent clears
+  // `kind`/`items` to expense defaults the moment visible becomes false.
+  const [frozen, setFrozen] = useState({ kind, items, total });
 
   useEffect(() => {
-    if (!visible) setExpandedKey(null);
-  }, [visible, kind]);
+    if (visible) {
+      setFrozen({ kind, items, total });
+      return;
+    }
+    setExpandedKey(null);
+  }, [visible, kind, items, total]);
+
+  const spendConcepts = settings.spendConcepts ?? [];
+  const displayKind = frozen.kind;
+  const displayItems = frozen.items;
+  const displayTotal = frozen.total;
+  const isExpense = displayKind === 'expense';
 
   const groups = useMemo((): GlanceGroup[] => {
     const map = new Map<string, GlanceGroup>();
 
-    for (const item of items) {
+    for (const item of displayItems) {
       const hit = findSpendSub(spendConcepts, item.categoryId);
       const key = hit?.concept.id ?? item.categoryId;
       const name = hit?.concept.name ?? categoryLabel(item.categoryId, t, spendConcepts);
@@ -76,11 +86,11 @@ export function ConceptGlanceSheet({ visible, onClose, kind, items, total }: Pro
     return Array.from(map.values())
       .map((g) => ({
         ...g,
-        percent: total > 0 ? (g.total / total) * 100 : 0,
+        percent: displayTotal > 0 ? (g.total / displayTotal) * 100 : 0,
         subs: [...g.subs].sort((a, b) => b.total - a.total),
       }))
       .sort((a, b) => b.total - a.total);
-  }, [items, spendConcepts, t, total]);
+  }, [displayItems, spendConcepts, t, displayTotal]);
 
   function hasExpandableSubs(group: GlanceGroup) {
     return (
@@ -91,11 +101,15 @@ export function ConceptGlanceSheet({ visible, onClose, kind, items, total }: Pro
   }
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={styles.backdrop}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onRequestClose={onClose}
+      statusBarTranslucent>
+      <View style={styles.backdrop} pointerEvents={visible ? 'auto' : 'none'}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-        <Animated.View
-          entering={FadeInDown.springify()}
+        <View
           style={[styles.panel, { marginBottom: Math.max(insets.bottom, 12) + 24 }]}>
           <View style={styles.panelHeader}>
             <View style={{ flex: 1, paddingRight: 12 }}>
@@ -123,7 +137,7 @@ export function ConceptGlanceSheet({ visible, onClose, kind, items, total }: Pro
                 styles.totalValue,
                 isExpense ? styles.textDanger : styles.textGood,
               ]}>
-              {format(total)}
+              {format(displayTotal)}
             </Text>
           </View>
 
@@ -203,7 +217,7 @@ export function ConceptGlanceSheet({ visible, onClose, kind, items, total }: Pro
               })
             )}
           </ScrollView>
-        </Animated.View>
+        </View>
       </View>
     </Modal>
   );

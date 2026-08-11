@@ -42,7 +42,9 @@ import {
   detectRecurring,
   filterByCalendarMonth,
   filterByPeriod,
+  predictMonthlySpends,
   sumByType,
+  type PredictedSpend,
 } from '@/src/utils/financeMath';
 import {
   filterByPersonScope,
@@ -88,6 +90,12 @@ type FinanceContextValue = {
     nextPaymentDate?: string;
     categoryId?: string;
   }) => Promise<Debt>;
+  updateDebt: (
+    id: string,
+    patch: Partial<
+      Pick<Debt, 'name' | 'balance' | 'installment' | 'interestRate' | 'nextPaymentDate' | 'categoryId'>
+    >
+  ) => Promise<Debt | null>;
   removeDebt: (id: string) => Promise<void>;
   updateTransaction: (
     id: string,
@@ -124,6 +132,7 @@ type FinanceContextValue = {
   insightsForPeriod: (period: Period, kind?: 'expense' | 'income') => CategoryInsight[];
   antForPeriod: (period: Period) => ReturnType<typeof antExpenseBreakdown>;
   recurringTransactions: Transaction[];
+  predictedThisMonth: PredictedSpend[];
   availableCash: number;
   netWorth: { assets: number; liabilities: number; net: number };
   budgetStatus: Array<{
@@ -335,6 +344,31 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
     [debts]
   );
 
+  const updateDebt = useCallback(
+    async (
+      id: string,
+      patch: Partial<
+        Pick<
+          Debt,
+          'name' | 'balance' | 'installment' | 'interestRate' | 'nextPaymentDate' | 'categoryId'
+        >
+      >
+    ) => {
+      const existing = debts.find((d) => d.id === id);
+      if (!existing) return null;
+      const updated: Debt = {
+        ...existing,
+        ...patch,
+        name: patch.name !== undefined ? patch.name.trim() : existing.name,
+      };
+      const next = debts.map((d) => (d.id === id ? updated : d));
+      setDebts(next);
+      await saveDebts(next);
+      return updated;
+    },
+    [debts]
+  );
+
   const removeDebt = useCallback(
     async (id: string) => {
       const next = debts.filter((d) => d.id !== id);
@@ -537,6 +571,11 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
     [transactions]
   );
 
+  const predictedThisMonth = useMemo(() => {
+    const mine = filterByPersonScope(transactions, 'mine', settings.personId);
+    return predictMonthlySpends(mine, debts, now);
+  }, [transactions, debts, now, monthKey, settings.personId]);
+
   const availableCash = useMemo(
     () =>
       accounts
@@ -605,6 +644,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       subscriptions,
       addTransaction,
       addDebt,
+      updateDebt,
       removeDebt,
       updateTransaction,
       removeTransaction,
@@ -618,6 +658,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       insightsForPeriod,
       antForPeriod,
       recurringTransactions,
+      predictedThisMonth,
       availableCash,
       netWorth,
       budgetStatus,
@@ -636,6 +677,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       subscriptions,
       addTransaction,
       addDebt,
+      updateDebt,
       removeDebt,
       updateTransaction,
       removeTransaction,
@@ -649,6 +691,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       insightsForPeriod,
       antForPeriod,
       recurringTransactions,
+      predictedThisMonth,
       availableCash,
       netWorth,
       budgetStatus,

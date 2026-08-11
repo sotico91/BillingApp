@@ -1,6 +1,6 @@
 import { getAntCategoryIds } from '@/src/data/financeDefaults';
 import { findSpendSub, resolveConceptColor } from '@/src/data/spendConcepts';
-import type { Period, Transaction } from '@/src/types/finance';
+import type { Debt, Period, Transaction } from '@/src/types/finance';
 import type { SpendConcept } from '@/src/types/settings';
 
 function startOfDay(date: Date): Date {
@@ -172,3 +172,137 @@ export function detectRecurring(transactions: Transaction[]): Transaction[] {
 
   return expenses.filter((t) => recurringIds.has(t.id));
 }
+
+export type PredictedSpendStatus = 'pending' | 'paid';
+export type PredictedSpendSource = 'history' | 'debt';
+
+export type PredictedSpend = {
+  id: string;
+  categoryId: string;
+  amount: number;
+  typicalDay: number;
+  status: PredictedSpendStatus;
+  source: PredictedSpendSource;
+  debtId?: string;
+  /** Display name when category tree / i18n is not enough (e.g. debt label). */
+  label?: string;
+};
+
+function isSpendOut(t: Transaction): boolean {
+  return t.type === 'expense' || t.type === 'debt_payment';
+}
+
+function median(values: number[]): number {
+  if (values.length === 0) return 0;
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  if (sorted.length % 2 === 1) return sorted[mid];
+  return Math.round((sorted[mid - 1] + sorted[mid]) / 2);
+}
+
+/**
+ * Simple monthly prediction from history + fixed installments.
+ * Pattern window: prior 3 calendar months; current month only for paid/pending.
+ */
+export function predictMonthlySpends(
+  transactions: Transaction[],
+  debts: Debt[],
+  now = new Date()
+): PredictedSpend[] {
+  const year = now.getFullYear();
+  const monthIndex = now.getMonth();
+
+  const lookback: Array<{ year: number; monthIndex: number }> = [];
+  for (let i = 1; i <= 3; i += 1) {
+    lookback.push(shiftMonth(year, monthIndex, -i));
+  }
+
+  type Agg = {
+    amounts: number[];
+    days: number[];
+    monthsPresent: Set<string>;
+  };
+  const byCategory = new Map<string, Agg>();
+
+  for (const m of lookback) {
+    const monthKey = `${m.year}-${m.monthIndex}`;
+    const monthTxs = filterByCalendarMonth(transactions, m.year, m.monthIndex).filter(
+      (t) => isSpendOut(t) && !!t.categoryId
+    );
+    const seen = new Set<string>();
+    for (const t of monthTxs) {
+      const categoryId = t.categoryId!;
+      seen.add(categoryId);
+      const agg = byCategory.get(categoryId) ?? {
+        amounts: [],
+        days: [],
+        monthsPresent: new Set<string>(),
+      };
+      agg.amounts.push(t.amount);
+      agg.days.push(new Date(t.createdAt).getDate());
+      byCategory.set(categoryId, agg);
+    }
+    for (const categoryId of seen) {
+      byCategory.get(categoryId)?.monthsPresent.add(monthKey);
+    }
+  }
+
+  const thisMonth = filterByCalendarMonth(transactions, year, monthIndex).filter(isSpendOut);
+  const paidCategoryIds = new Set(
+    thisMonth.map((t) => t.categoryId).filter((id): id is string => !!id)
+  );
+  const paidDebtIds = new Set(
+    thisMonth
+      .filter((t) => t.type === 'debt_payment' && !!t.debtId)
+      .map((t) => t.debtId!)
+  );
+
+  const results: PredictedSpend[] = [];
+  const coveredCategories = new Set<string>();
+
+  for (const debt of debts) {
+    if (!(debt.installment > 0)) continue;
+    const categoryId = debt.categoryId ?? `debt-${debt.id}`;
+    const paid =
+      paidDebtIds.has(debt.id) ||
+      (!!debt.categoryId && paidCategoryIds.has(debt.categoryId));
+    let typicalDay = 1;
+    if (debt.nextPaymentDate) {
+      const d = new Date(debt.nextPaymentDate).getDate();
+      if (!Number.isNaN(d)) typicalDay = d;
+    }
+    results.push({
+      id: `debt-${debt.id}`,
+      categoryId,
+      amount: debt.installment,
+      typicalDay,
+      status: paid ? 'paid' : 'pending',
+      source: 'debt',
+      debtId: debt.id,
+      label: debt.name?.trim() || undefined,
+    });
+    if (debt.categoryId) coveredCategories.add(debt.categoryId);
+  }
+
+  for (const [categoryId, agg] of byCategory) {
+    if (agg.monthsPresent.size < 2) continue;
+    if (coveredCategories.has(categoryId)) continue;
+    results.push({
+      id: `hist-${categoryId}`,
+      categoryId,
+      amount: median(agg.amounts),
+      typicalDay: Math.min(28, Math.max(1, median(agg.days))),
+      status: paidCategoryIds.has(categoryId) ? 'paid' : 'pending',
+      source: 'history',
+    });
+  }
+
+  results.sort((a, b) => {
+    if (a.status !== b.status) return a.status === 'pending' ? -1 : 1;
+    if (a.typicalDay !== b.typicalDay) return a.typicalDay - b.typicalDay;
+    return a.amount - b.amount;
+  });
+
+  return results;
+}
+

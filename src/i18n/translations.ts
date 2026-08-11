@@ -50,6 +50,13 @@ export const translations = {
     'home.antTotal': 'Ant total',
     'home.antEmpty':
       'Mark subcategories as ant (café, gas, football…) in Plan to track them here.',
+    'home.predictTitle': 'Usually due this month',
+    'home.predictSummary': '{pending} pending · {amount}',
+    'home.predictSummaryClear': 'All caught up · {amount}',
+    'home.predictEmpty':
+      'After 2+ months of the same spends, likely bills show up here automatically.',
+    'home.predictDay': 'Around day {day}',
+    'home.predictPaid': 'Paid',
 
     'tabs.home': 'Home',
     'tabs.history': 'Activity',
@@ -226,7 +233,12 @@ export const translations = {
     'wealth.debtBalance': 'Remaining balance',
     'wealth.debtInstallment': 'Monthly installment',
     'wealth.debtRate': 'Annual rate % (optional)',
+    'wealth.debtPayDay': 'Payment day of month (1–28)',
+    'wealth.debtPayDayNeed': 'Payment day must be between 1 and 28.',
     'wealth.debtSave': 'Save installment',
+    'wealth.debtEdit': 'Edit',
+    'wealth.debtUpdate': 'Save changes',
+    'wealth.debtEditing': 'Editing installment',
     'wealth.debtDelete': 'Remove',
     'wealth.debtNeed': 'Name, balance and monthly installment must be greater than 0.',
     'wealth.howToPay':
@@ -560,6 +572,13 @@ export const translations = {
     'home.antTotal': 'Total hormiga',
     'home.antEmpty':
       'Marca subcategorías como hormiga (café, gasolina, fútbol…) en Plan para verlas aquí.',
+    'home.predictTitle': 'Suele llegar este mes',
+    'home.predictSummary': '{pending} pendientes · {amount}',
+    'home.predictSummaryClear': 'Al día · {amount}',
+    'home.predictEmpty':
+      'Con 2+ meses del mismo gasto, aquí aparecen solos los que suelen llegar.',
+    'home.predictDay': 'Hacia el día {day}',
+    'home.predictPaid': 'Ya pagado',
 
     'tabs.home': 'Inicio',
     'tabs.history': 'Actividad',
@@ -737,7 +756,12 @@ export const translations = {
     'wealth.debtBalance': 'Saldo que aún debes',
     'wealth.debtInstallment': 'Cuota mensual',
     'wealth.debtRate': 'Tasa anual % (opcional)',
+    'wealth.debtPayDay': 'Día de pago del mes (1–28)',
+    'wealth.debtPayDayNeed': 'El día de pago debe estar entre 1 y 28.',
     'wealth.debtSave': 'Guardar cuota',
+    'wealth.debtEdit': 'Editar',
+    'wealth.debtUpdate': 'Guardar cambios',
+    'wealth.debtEditing': 'Editando cuota',
     'wealth.debtDelete': 'Eliminar',
     'wealth.debtNeed': 'Nombre, saldo y cuota mensual mayores a 0.',
     'wealth.howToPay':

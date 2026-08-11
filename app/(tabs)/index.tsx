@@ -10,6 +10,7 @@ import { EditTransactionModal } from '@/src/components/EditTransactionModal';
 import { ExpenseRow } from '@/src/components/ExpenseRow';
 import { FadeInBlock } from '@/src/components/FadeInBlock';
 import { LanguageSwitcher } from '@/src/components/LanguageSwitcher';
+import { PredictedSpendsCard } from '@/src/components/PredictedSpendsCard';
 import { ProfileMenuButton } from '@/src/components/ProfileMenuButton';
 import { SavingsDecor } from '@/src/components/SavingsDecor';
 import { ScreenBackground } from '@/src/components/ScreenBackground';
@@ -43,10 +44,12 @@ export default function HomeScreen() {
     budgetStatus,
     removeTransaction,
     canEditTransaction,
+    predictedThisMonth,
   } = useFinance();
   const [editing, setEditing] = useState<Transaction | null>(null);
   const [glance, setGlance] = useState<'expense' | 'income' | null>(null);
   const [attentionOpen, setAttentionOpen] = useState(false);
+  const [predictOpen, setPredictOpen] = useState(false);
   const [todayOpen, setTodayOpen] = useState(false);
   const [antOpen, setAntOpen] = useState(false);
   const [categoriesOpen, setCategoriesOpen] = useState(false);
@@ -77,6 +80,8 @@ export default function HomeScreen() {
     .sort((a, b) => b.ratio - a.ratio);
   const alerts = overBudgetAlerts.slice(0, ATTENTION_OVER_LIMIT);
   const alertsHidden = Math.max(0, overBudgetAlerts.length - alerts.length);
+  const predictPending = predictedThisMonth.filter((p) => p.status === 'pending');
+  const predictTotal = predictedThisMonth.reduce((s, p) => s + p.amount, 0);
   const worstBudgetRatio = Math.max(0, ...budgetStatus.map((b) => b.ratio));
   const savingsTone = toneFromSavings(savings);
   const expensesTone = toneFromExpensePressure({
@@ -240,8 +245,25 @@ export default function HomeScreen() {
           </CollapsibleSection>
         </FadeInBlock>
 
+        <FadeInBlock index={4}>
+          <CollapsibleSection
+            title={t('home.predictTitle')}
+            open={predictOpen}
+            onToggle={() => setPredictOpen((v) => !v)}
+            summary={
+              predictPending.length === 0
+                ? t('home.predictSummaryClear', { amount: format(predictTotal) })
+                : t('home.predictSummary', {
+                    pending: predictPending.length,
+                    amount: format(predictTotal),
+                  })
+            }>
+            <PredictedSpendsCard items={predictedThisMonth} />
+          </CollapsibleSection>
+        </FadeInBlock>
+
         {recent.length > 0 ? (
-          <FadeInBlock index={4}>
+          <FadeInBlock index={5}>
             <CollapsibleSection
               title={t('home.todayList')}
               open={todayOpen}
@@ -268,7 +290,7 @@ export default function HomeScreen() {
           </FadeInBlock>
         ) : null}
 
-        <FadeInBlock index={5}>
+        <FadeInBlock index={6}>
           <CollapsibleSection
             title={t('home.antTitle')}
             open={antOpen}
@@ -312,7 +334,7 @@ export default function HomeScreen() {
           </CollapsibleSection>
         </FadeInBlock>
 
-        <FadeInBlock index={6}>
+        <FadeInBlock index={7}>
           <CollapsibleSection
             title={t('home.todayByCategory')}
             open={categoriesOpen}

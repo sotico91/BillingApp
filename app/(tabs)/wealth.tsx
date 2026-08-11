@@ -20,8 +20,24 @@ import { useSettings } from '@/src/hooks/useSettings';
 import { useLanguage } from '@/src/i18n/LanguageContext';
 import type { TranslationKey } from '@/src/i18n/translations';
 import { palette, radii } from '@/src/theme/colors';
+import type { Debt } from '@/src/types/finance';
 import { categoryLabel } from '@/src/utils/categoryLabel';
 import { tapFeedback } from '@/src/utils/selectFeedback';
+
+function clampPayDay(raw: number): number | null {
+  if (!Number.isFinite(raw)) return null;
+  const day = Math.round(raw);
+  if (day < 1 || day > 28) return null;
+  return day;
+}
+
+function nextPaymentIsoFromDay(day: number, from = new Date()): string {
+  const d = new Date(from.getFullYear(), from.getMonth(), day, 12, 0, 0, 0);
+  if (d.getTime() < from.getTime()) {
+    d.setMonth(d.getMonth() + 1);
+  }
+  return d.toISOString();
+}
 
 export default function WealthScreen() {
   const { t, language } = useLanguage();
@@ -33,6 +49,7 @@ export default function WealthScreen() {
     debts,
     netWorth,
     addDebt,
+    updateDebt,
     removeDebt,
     updateBudget,
     transactionsForPeriod,
@@ -40,12 +57,14 @@ export default function WealthScreen() {
   } = useFinance();
 
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [accountsOpen, setAccountsOpen] = useState(false);
   const [debtsOpen, setDebtsOpen] = useState(true);
   const [name, setName] = useState('');
   const [balance, setBalance] = useState('');
   const [installment, setInstallment] = useState('');
   const [rate, setRate] = useState('');
+  const [payDay, setPayDay] = useState('1');
   const [saving, setSaving] = useState(false);
 
   const monthTx = transactionsForPeriod('mes', 'mine');
@@ -66,6 +85,46 @@ export default function WealthScreen() {
     return sum + (paidByCategory.get(debt.categoryId) ?? 0);
   }, 0);
 
+  function resetForm() {
+    setName('');
+    setBalance('');
+    setInstallment('');
+    setRate('');
+    setPayDay('1');
+    setEditingId(null);
+    setShowForm(false);
+  }
+
+  function startCreate() {
+    tapFeedback();
+    if (showForm && !editingId) {
+      resetForm();
+      return;
+    }
+    setEditingId(null);
+    setName('');
+    setBalance('');
+    setInstallment('');
+    setRate('');
+    setPayDay('1');
+    setShowForm(true);
+  }
+
+  function startEdit(debt: Debt) {
+    tapFeedback();
+    const label = debt.nameKey
+      ? t(debt.nameKey as TranslationKey)
+      : debt.name ?? '';
+    const day = new Date(debt.nextPaymentDate).getDate();
+    setEditingId(debt.id);
+    setName(label);
+    setBalance(String(debt.balance || ''));
+    setInstallment(String(debt.installment || ''));
+    setRate(debt.interestRate > 0 ? String(debt.interestRate) : '');
+    setPayDay(String(Number.isNaN(day) ? 1 : Math.min(28, Math.max(1, day))));
+    setShowForm(true);
+  }
+
   async function handleSaveDebt() {
     const parsedBalance = parse(balance);
     const parsedInstallment = parse(installment);
@@ -74,24 +133,41 @@ export default function WealthScreen() {
       return;
     }
     const parsedRate = Number(rate.replace(',', '.')) || 0;
+    const day = clampPayDay(Number(payDay.replace(',', '.')));
+    if (!day) {
+      Alert.alert(t('wealth.addDebt'), t('wealth.debtPayDayNeed'));
+      return;
+    }
+    const nextPaymentDate = nextPaymentIsoFromDay(day);
 
     setSaving(true);
     try {
-      const categoryId = await ensureDebtCategory(name.trim());
-      await addDebt({
-        name: name.trim(),
-        balance: parsedBalance,
-        installment: parsedInstallment,
-        interestRate: parsedRate,
-        categoryId,
-      });
-      // Track installment as monthly tope on that Créditos subcategory.
-      await updateBudget(categoryId, parsedInstallment);
-      setName('');
-      setBalance('');
-      setInstallment('');
-      setRate('');
-      setShowForm(false);
+      if (editingId) {
+        const existing = debts.find((d) => d.id === editingId);
+        const categoryId =
+          existing?.categoryId ?? (await ensureDebtCategory(name.trim()));
+        await updateDebt(editingId, {
+          name: name.trim(),
+          balance: parsedBalance,
+          installment: parsedInstallment,
+          interestRate: parsedRate,
+          nextPaymentDate,
+          categoryId,
+        });
+        await updateBudget(categoryId, parsedInstallment);
+      } else {
+        const categoryId = await ensureDebtCategory(name.trim());
+        await addDebt({
+          name: name.trim(),
+          balance: parsedBalance,
+          installment: parsedInstallment,
+          interestRate: parsedRate,
+          nextPaymentDate,
+          categoryId,
+        });
+        await updateBudget(categoryId, parsedInstallment);
+      }
+      resetForm();
     } finally {
       setSaving(false);
     }
@@ -103,7 +179,10 @@ export default function WealthScreen() {
       {
         text: t('wealth.debtDelete'),
         style: 'destructive',
-        onPress: () => void removeDebt(id),
+        onPress: () => {
+          if (editingId === id) resetForm();
+          void removeDebt(id);
+        },
       },
     ]);
   }
@@ -159,14 +238,9 @@ export default function WealthScreen() {
             }>
             <View style={styles.sectionRow}>
               <Text style={styles.copyHintFlex}>{t('wealth.debtConceptHint')}</Text>
-              <Pressable
-                onPress={() => {
-                  tapFeedback();
-                  setShowForm((v) => !v);
-                }}
-                style={styles.addBtn}>
+              <Pressable onPress={startCreate} style={styles.addBtn}>
                 <Text style={styles.addBtnText}>
-                  {showForm ? t('onboard.back') : t('wealth.addDebt')}
+                  {showForm && !editingId ? t('onboard.back') : t('wealth.addDebt')}
                 </Text>
               </Pressable>
             </View>
@@ -193,7 +267,11 @@ export default function WealthScreen() {
 
             {showForm ? (
               <View style={styles.form}>
-                <Text style={styles.copyHint}>{t('wealth.debtPermanentHint')}</Text>
+                {editingId ? (
+                  <Text style={styles.formTitle}>{t('wealth.debtEditing')}</Text>
+                ) : (
+                  <Text style={styles.copyHint}>{t('wealth.debtPermanentHint')}</Text>
+                )}
                 <Text style={styles.label}>{t('wealth.debtName')}</Text>
                 <TextInput
                   value={name}
@@ -220,6 +298,15 @@ export default function WealthScreen() {
                   placeholderTextColor={palette.inkSoft}
                   style={styles.input}
                 />
+                <Text style={styles.label}>{t('wealth.debtPayDay')}</Text>
+                <TextInput
+                  value={payDay}
+                  onChangeText={setPayDay}
+                  keyboardType="number-pad"
+                  placeholder="1"
+                  placeholderTextColor={palette.inkSoft}
+                  style={styles.input}
+                />
                 <Text style={styles.label}>{t('wealth.debtRate')}</Text>
                 <TextInput
                   value={rate}
@@ -230,14 +317,30 @@ export default function WealthScreen() {
                   style={styles.input}
                 />
                 <Text style={styles.copyHint}>{t('wealth.debtBudgetHint')}</Text>
-                <Pressable
-                  onPress={() => void handleSaveDebt()}
-                  disabled={saving}
-                  style={styles.saveBtn}>
-                  <Text style={styles.saveBtnText}>
-                    {saving ? t('add.saving') : t('wealth.debtSave')}
-                  </Text>
-                </Pressable>
+                <View style={styles.formActions}>
+                  {editingId ? (
+                    <Pressable
+                      onPress={() => {
+                        tapFeedback();
+                        resetForm();
+                      }}
+                      style={styles.secondaryBtn}>
+                      <Text style={styles.secondaryBtnText}>{t('onboard.back')}</Text>
+                    </Pressable>
+                  ) : null}
+                  <Pressable
+                    onPress={() => void handleSaveDebt()}
+                    disabled={saving}
+                    style={[styles.saveBtn, editingId && styles.saveBtnFlex]}>
+                    <Text style={styles.saveBtnText}>
+                      {saving
+                        ? t('add.saving')
+                        : editingId
+                          ? t('wealth.debtUpdate')
+                          : t('wealth.debtSave')}
+                    </Text>
+                  </Pressable>
+                </View>
               </View>
             ) : null}
 
@@ -267,9 +370,12 @@ export default function WealthScreen() {
               const due = debt.installment || 0;
               const ratio = due > 0 ? paid / due : 0;
               const over = due > 0 && paid > due;
+              const isEditing = editingId === debt.id;
 
               return (
-                <View key={debt.id} style={styles.card}>
+                <View
+                  key={debt.id}
+                  style={[styles.card, isEditing && styles.cardEditing]}>
                   <View style={styles.sectionRow}>
                     <View style={{ flex: 1 }}>
                       <Text style={styles.cardTitle}>{label}</Text>
@@ -279,9 +385,14 @@ export default function WealthScreen() {
                           : t('wealth.unlinkedConcept')}
                       </Text>
                     </View>
-                    <Pressable onPress={() => confirmRemove(debt.id, label)}>
-                      <Text style={styles.deleteText}>{t('wealth.debtDelete')}</Text>
-                    </Pressable>
+                    <View style={styles.cardActions}>
+                      <Pressable onPress={() => startEdit(debt)}>
+                        <Text style={styles.editText}>{t('wealth.debtEdit')}</Text>
+                      </Pressable>
+                      <Pressable onPress={() => confirmRemove(debt.id, label)}>
+                        <Text style={styles.deleteText}>{t('wealth.debtDelete')}</Text>
+                      </Pressable>
+                    </View>
                   </View>
                   <Text style={styles.amount}>{format(debt.balance)}</Text>
                   <Text style={styles.meta}>{t('wealth.balanceLeft')}</Text>
@@ -355,38 +466,36 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     marginTop: 6,
-    marginBottom: 4,
     fontFamily: 'DMSans_400Regular',
     fontSize: 14,
     color: palette.brandMuted,
     lineHeight: 20,
   },
   netBox: {
-    marginTop: 10,
+    marginTop: 14,
     backgroundColor: palette.surfaceSolid,
-    borderRadius: radii.lg,
-    padding: 18,
+    borderRadius: radii.md,
+    padding: 16,
     borderWidth: 1,
     borderColor: palette.border,
   },
   netLabel: {
-    fontFamily: 'DMSans_600SemiBold',
-    fontSize: 12,
+    fontFamily: 'DMSans_500Medium',
+    fontSize: 13,
     color: palette.inkMuted,
-    textTransform: 'uppercase',
   },
   netValue: {
+    marginTop: 4,
     fontFamily: 'Fraunces_700Bold',
-    fontSize: 34,
+    fontSize: 32,
     color: palette.ink,
-    marginVertical: 4,
   },
   sectionRow: {
-    marginTop: 4,
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
-    gap: 12,
+    gap: 10,
+    marginBottom: 10,
   },
   copyHintFlex: {
     flex: 1,
@@ -395,11 +504,24 @@ const styles = StyleSheet.create({
     color: palette.inkMuted,
     lineHeight: 18,
   },
+  copyHint: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
+    color: palette.inkMuted,
+    lineHeight: 18,
+    marginBottom: 8,
+  },
+  formTitle: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 15,
+    color: palette.ink,
+    marginBottom: 6,
+  },
   addBtn: {
     paddingHorizontal: 12,
     paddingVertical: 8,
-    borderRadius: radii.md,
-    backgroundColor: palette.brand,
+    borderRadius: radii.sm,
+    backgroundColor: palette.teal,
   },
   addBtnText: {
     fontFamily: 'DMSans_600SemiBold',
@@ -412,19 +534,12 @@ const styles = StyleSheet.create({
     padding: 14,
     borderWidth: 1,
     borderColor: palette.border,
-    marginTop: 8,
+    marginBottom: 10,
   },
   summaryTitle: {
     fontFamily: 'DMSans_600SemiBold',
-    fontSize: 13,
-    color: palette.inkMuted,
-    textTransform: 'uppercase',
-  },
-  link: {
-    marginTop: 8,
-    fontFamily: 'DMSans_600SemiBold',
-    fontSize: 13,
-    color: palette.accentDeep,
+    fontSize: 14,
+    color: palette.ink,
   },
   form: {
     backgroundColor: palette.surfaceSolid,
@@ -432,44 +547,60 @@ const styles = StyleSheet.create({
     padding: 14,
     borderWidth: 1,
     borderColor: palette.border,
-    marginTop: 8,
+    marginBottom: 10,
     gap: 6,
   },
-  copyHint: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
-    color: palette.inkMuted,
-    lineHeight: 18,
-    marginBottom: 4,
+  formActions: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 6,
   },
   label: {
-    fontFamily: 'DMSans_600SemiBold',
-    fontSize: 12,
+    marginTop: 6,
+    fontFamily: 'DMSans_500Medium',
+    fontSize: 13,
     color: palette.inkMuted,
-    marginTop: 4,
   },
   input: {
-    fontFamily: 'DMSans_500Medium',
-    fontSize: 16,
-    color: palette.ink,
     borderWidth: 1,
     borderColor: palette.border,
     borderRadius: radii.sm,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    backgroundColor: '#F4F7F8',
+    fontFamily: 'DMSans_500Medium',
+    fontSize: 16,
+    color: palette.ink,
+    backgroundColor: '#fff',
   },
   saveBtn: {
-    marginTop: 10,
-    backgroundColor: palette.brand,
-    borderRadius: radii.md,
+    marginTop: 4,
+    backgroundColor: palette.teal,
+    borderRadius: radii.sm,
     paddingVertical: 12,
     alignItems: 'center',
+    flex: 1,
   },
+  saveBtnFlex: { flex: 1 },
   saveBtnText: {
     fontFamily: 'DMSans_600SemiBold',
     fontSize: 15,
     color: palette.white,
+  },
+  secondaryBtn: {
+    marginTop: 4,
+    borderRadius: radii.sm,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: palette.border,
+    backgroundColor: '#fff',
+  },
+  secondaryBtnText: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 14,
+    color: palette.inkMuted,
   },
   card: {
     backgroundColor: palette.surfaceSolid,
@@ -477,24 +608,37 @@ const styles = StyleSheet.create({
     padding: 14,
     borderWidth: 1,
     borderColor: palette.border,
-    marginTop: 8,
+    marginBottom: 10,
+  },
+  cardEditing: {
+    borderColor: palette.teal,
+  },
+  cardActions: {
+    alignItems: 'flex-end',
+    gap: 8,
   },
   cardTitle: {
     fontFamily: 'DMSans_600SemiBold',
-    fontSize: 15,
+    fontSize: 16,
     color: palette.ink,
   },
   conceptChip: {
-    marginTop: 4,
-    fontFamily: 'DMSans_600SemiBold',
+    marginTop: 2,
+    fontFamily: 'DMSans_400Regular',
     fontSize: 12,
-    color: palette.accentDeep,
+    color: palette.inkMuted,
   },
   amount: {
+    marginTop: 8,
     fontFamily: 'Fraunces_600SemiBold',
-    fontSize: 20,
+    fontSize: 24,
     color: palette.ink,
+  },
+  meta: {
     marginTop: 4,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
+    color: palette.inkMuted,
   },
   track: {
     marginTop: 8,
@@ -504,11 +648,21 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   fill: { height: '100%', borderRadius: 999 },
-  meta: {
-    fontFamily: 'DMSans_400Regular',
+  editText: {
+    fontFamily: 'DMSans_600SemiBold',
     fontSize: 13,
-    color: palette.inkMuted,
-    marginTop: 2,
+    color: palette.teal,
+  },
+  deleteText: {
+    fontFamily: 'DMSans_500Medium',
+    fontSize: 13,
+    color: palette.danger,
+  },
+  link: {
+    marginTop: 8,
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 13,
+    color: palette.teal,
   },
   empty: {
     fontFamily: 'DMSans_400Regular',
@@ -517,14 +671,10 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   hint: {
+    marginTop: 4,
     fontFamily: 'DMSans_400Regular',
     fontSize: 13,
     color: palette.inkMuted,
-    marginTop: 8,
-  },
-  deleteText: {
-    fontFamily: 'DMSans_600SemiBold',
-    fontSize: 13,
-    color: palette.danger,
+    lineHeight: 18,
   },
 });

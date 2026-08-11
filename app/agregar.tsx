@@ -1,5 +1,5 @@
-import { router, useFocusEffect } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { router } from 'expo-router';
+import { useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -15,7 +15,6 @@ import { AmountPrivacyToggle } from '@/src/components/AmountPrivacyToggle';
 import { ExpenseForm, type SavedMovement } from '@/src/components/ExpenseForm';
 import { FriendlyAddFlow } from '@/src/components/FriendlyAddFlow';
 import { ScreenBackground } from '@/src/components/ScreenBackground';
-import { useAmountPrivacy } from '@/src/hooks/useAmountPrivacy';
 import { useMoney } from '@/src/hooks/useMoney';
 import { useLanguage } from '@/src/i18n/LanguageContext';
 import { palette, radii } from '@/src/theme/colors';
@@ -23,15 +22,7 @@ import { palette, radii } from '@/src/theme/colors';
 export default function AgregarScreen() {
   const { t } = useLanguage();
   const { format } = useMoney();
-  const { setAmountsVisible } = useAmountPrivacy();
   const [mode, setMode] = useState<'friendly' | 'advanced'>('friendly');
-
-  // Always start hidden so values are not visible at a glance.
-  useFocusEffect(
-    useCallback(() => {
-      setAmountsVisible(false);
-    }, [setAmountsVisible])
-  );
 
   function handleSaved(result: SavedMovement) {
     const messageKey =
