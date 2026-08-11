@@ -144,16 +144,28 @@ export function buildSmartInsights(
   transactions: Transaction[],
   t: TFn,
   format: (n: number) => string,
-  spendConcepts: SpendConcept[] = []
+  spendConcepts: SpendConcept[] = [],
+  period: Period = 'mes'
 ): InsightCard[] {
-  const thisMonth = filterByPeriod(transactions, 'mes');
-  const { from, to } = previousMonthRange();
-  const lastMonth = filterBetween(transactions, from, to);
+  const periodLabel = t(`period.${period}` as TranslationKey);
+  const compareLabel =
+    period === 'hoy'
+      ? t('smart.compareYesterday')
+      : period === 'semana'
+        ? t('smart.compareLastWeek')
+        : t('smart.compareLastMonth');
 
-  const spendNow = sumSpendOut(thisMonth);
-  const spendPrev = sumSpendOut(lastMonth);
-  const incomeNow = sumByType(thisMonth, 'income');
-  const ant = antExpenseBreakdown(thisMonth, spendConcepts);
+  const current = filterByPeriod(transactions, period);
+  const { from, to } =
+    period === 'mes'
+      ? previousMonthRange()
+      : previousAnalogRange(period);
+  const previous = filterBetween(transactions, from, to);
+
+  const spendNow = sumSpendOut(current);
+  const spendPrev = sumSpendOut(previous);
+  const incomeNow = sumByType(current, 'income');
+  const ant = antExpenseBreakdown(current, spendConcepts);
   const cards: InsightCard[] = [];
 
   if (spendPrev > 0) {
@@ -164,19 +176,26 @@ export function buildSmartInsights(
         tone: delta > 0 ? 'warn' : 'good',
         text:
           delta > 0
-            ? t('smart.spentMore', { percent: Math.round(delta) })
-            : t('smart.spentLess', { percent: Math.round(Math.abs(delta)) }),
+            ? t('smart.spentMore', {
+                percent: Math.round(delta),
+                compare: compareLabel,
+              })
+            : t('smart.spentLess', {
+                percent: Math.round(Math.abs(delta)),
+                compare: compareLabel,
+              }),
       });
     }
   }
 
-  const rising = topRisingExpenseCategory(thisMonth, lastMonth);
+  const rising = topRisingExpenseCategory(current, previous);
   if (rising) {
     cards.push({
       id: `rise-${rising.categoryId}`,
       tone: 'warn',
       text: t('smart.categoryUp', {
         category: resolveCategoryLabel(rising.categoryId, t, spendConcepts),
+        compare: compareLabel,
       }),
     });
   }
@@ -186,7 +205,10 @@ export function buildSmartInsights(
     cards.push({
       id: 'saved',
       tone: 'good',
-      text: t('smart.savedMore', { amount: format(saved) }),
+      text: t('smart.savedMore', {
+        amount: format(saved),
+        period: periodLabel,
+      }),
     });
   }
 
@@ -194,7 +216,10 @@ export function buildSmartInsights(
     cards.push({
       id: 'ant',
       tone: 'info',
-      text: t('smart.antTotal', { amount: format(ant.total) }),
+      text: t('smart.antTotal', {
+        amount: format(ant.total),
+        period: periodLabel,
+      }),
     });
   }
 
@@ -207,6 +232,25 @@ export function buildSmartInsights(
   }
 
   return cards.slice(0, 5);
+}
+
+/** Prior day / prior week window ending at the start of the current period. */
+function previousAnalogRange(period: 'hoy' | 'semana', now = new Date()) {
+  if (period === 'hoy') {
+    const to = new Date(now);
+    to.setHours(0, 0, 0, 0);
+    const from = new Date(to);
+    from.setDate(from.getDate() - 1);
+    return { from, to };
+  }
+  const to = new Date(now);
+  to.setHours(0, 0, 0, 0);
+  const day = to.getDay();
+  const diff = day === 0 ? 6 : day - 1;
+  to.setDate(to.getDate() - diff);
+  const from = new Date(to);
+  from.setDate(from.getDate() - 7);
+  return { from, to };
 }
 
 function resolvePeriod(
@@ -540,34 +584,56 @@ export type SearchSuggestion = {
   prompt: string;
 };
 
-/** Quick prompts tailored to the user's concepts when possible. */
+/** Quick prompts tailored to the user's concepts and selected period. */
 export function buildSearchSuggestions(
   spendConcepts: SpendConcept[],
-  language: 'en' | 'es'
+  language: 'en' | 'es',
+  period: Period = 'mes'
 ): string[] {
   const prompts: string[] = [];
   const subs = flattenSpendSubs(spendConcepts).slice(0, 4);
+  const when =
+    language === 'es'
+      ? period === 'hoy'
+        ? 'hoy'
+        : period === 'semana'
+          ? 'esta semana'
+          : 'este mes'
+      : period === 'hoy'
+        ? 'today'
+        : period === 'semana'
+          ? 'this week'
+          : 'this month';
+
   if (language === 'es') {
-    prompts.push('¿Cuánto gasté este mes?');
-    prompts.push('¿Cuánto ahorré este mes?');
-    prompts.push('¿Cuáles son mis gastos hormiga?');
+    prompts.push(`¿Cuánto gasté ${when}?`);
+    prompts.push(`¿Cuánto ahorré ${when}?`);
+    prompts.push(
+      period === 'mes'
+        ? '¿Cuáles son mis gastos hormiga?'
+        : `¿Cuáles son mis gastos hormiga ${when}?`
+    );
     for (const sub of subs) {
       const hit = findSpendSub(spendConcepts, sub.id);
       const name = hit ? `${hit.concept.name}/${sub.name}` : sub.name;
-      prompts.push(`¿Cuánto gasté en ${name} este mes?`);
+      prompts.push(`¿Cuánto gasté en ${name} ${when}?`);
     }
-    prompts.push('¿En qué gasté más este mes?');
+    prompts.push(`¿En qué gasté más ${when}?`);
     prompts.push('¿Cuánto tengo disponible?');
   } else {
-    prompts.push('How much did I spend this month?');
-    prompts.push('How much did I save this month?');
-    prompts.push('What are my ant expenses?');
+    prompts.push(`How much did I spend ${when}?`);
+    prompts.push(`How much did I save ${when}?`);
+    prompts.push(
+      period === 'mes'
+        ? 'What are my ant expenses?'
+        : `What are my ant expenses ${when}?`
+    );
     for (const sub of subs) {
       const hit = findSpendSub(spendConcepts, sub.id);
       const name = hit ? `${hit.concept.name}/${sub.name}` : sub.name;
-      prompts.push(`How much on ${name} this month?`);
+      prompts.push(`How much on ${name} ${when}?`);
     }
-    prompts.push('Where did I spend the most this month?');
+    prompts.push(`Where did I spend the most ${when}?`);
     prompts.push('How much available cash do I have?');
   }
   return prompts.slice(0, 8);

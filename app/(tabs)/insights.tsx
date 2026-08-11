@@ -47,7 +47,7 @@ export default function InsightsScreen() {
   const total = totalForPeriod(period, 'expense');
   const top = insights[0];
   const periodLabel = t(`period.${period}` as TranslationKey);
-  const smart = buildSmartInsights(transactions, t, format, spendConcepts);
+  const smart = buildSmartInsights(transactions, t, format, spendConcepts, period);
   const topBudget = top
     ? budgetStatus.find((b) => b.categoryId === top.categoryId)
     : undefined;
@@ -59,8 +59,13 @@ export default function InsightsScreen() {
 
   const debtTotal = debts.reduce((s, d) => s + d.balance, 0);
   const suggestions = useMemo(
-    () => buildSearchSuggestions(spendConcepts, language === 'es' ? 'es' : 'en'),
-    [spendConcepts, language]
+    () =>
+      buildSearchSuggestions(
+        spendConcepts,
+        language === 'es' ? 'es' : 'en',
+        period
+      ),
+    [spendConcepts, language, period]
   );
 
   function ask(nextQuery?: string) {
