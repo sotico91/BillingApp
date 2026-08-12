@@ -117,6 +117,13 @@ type FinanceContextValue = {
   removeTransaction: (id: string) => Promise<void>;
   canEditTransaction: (tx: Transaction) => boolean;
   resetFinance: () => Promise<void>;
+  restoreFromBackup: (backup: {
+    transactions: Transaction[];
+    accounts: Account[];
+    budgets: Budget[];
+    debts: Debt[];
+    subscriptions: Subscription[];
+  }) => Promise<void>;
   updateBudget: (categoryId: string, limit: number) => Promise<void>;
   removeBudget: (categoryId: string) => Promise<void>;
   transactionsForPeriod: (period: Period, scope?: PersonScope) => Transaction[];
@@ -471,6 +478,34 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
     ]);
   }, []);
 
+  const restoreFromBackup = useCallback(
+    async (backup: {
+      transactions: Transaction[];
+      accounts: Account[];
+      budgets: Budget[];
+      debts: Debt[];
+      subscriptions: Subscription[];
+    }) => {
+      const nextTx = [...backup.transactions].sort((a, b) =>
+        b.createdAt.localeCompare(a.createdAt)
+      );
+      setTransactions(nextTx);
+      setAccounts(backup.accounts);
+      setBudgets(backup.budgets);
+      setDebts(backup.debts);
+      setSubscriptions(backup.subscriptions);
+      setAttributed(true);
+      await Promise.all([
+        saveTransactions(nextTx),
+        saveAccounts(backup.accounts),
+        saveBudgets(backup.budgets),
+        saveDebts(backup.debts),
+        saveSubscriptions(backup.subscriptions),
+      ]);
+    },
+    []
+  );
+
   const updateBudget = useCallback(
     async (categoryId: string, limit: number) => {
       const exists = budgets.find((b) => b.categoryId === categoryId);
@@ -652,6 +687,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       removeTransaction,
       canEditTransaction,
       resetFinance,
+      restoreFromBackup,
       updateBudget,
       removeBudget,
       transactionsForPeriod,
@@ -685,6 +721,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       removeTransaction,
       canEditTransaction,
       resetFinance,
+      restoreFromBackup,
       updateBudget,
       removeBudget,
       transactionsForPeriod,

@@ -1,42 +1,93 @@
 import * as Notifications from 'expo-notifications';
-import { Platform } from 'react-native';
+import { AppState, Platform } from 'react-native';
 
 import type { ReminderRule } from '@/src/types/settings';
 
 Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowBanner: true,
-    shouldShowList: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-  }),
+  handleNotification: async (notification) => {
+    const isReminder = notification.request.content.data?.type === 'expense-reminder';
+    return {
+      shouldShowBanner: true,
+      shouldShowList: true,
+      shouldPlaySound: true,
+      // Only reminder alerts bump the home-screen icon badge.
+      shouldSetBadge: isReminder,
+    };
+  },
 });
 
 const ANDROID_CHANNEL_ID = 'billing-alerts';
+/** Dedicated channel so badge + importance apply on devices that already had the old channel. */
+const ANDROID_REMINDER_CHANNEL_ID = 'billing-reminders';
 
-async function ensureAndroidChannel(): Promise<void> {
+async function ensureAndroidChannels(): Promise<void> {
   if (Platform.OS !== 'android') return;
   // Omit `sound` so Android uses the system default.
   // Passing sound: 'default' is treated as a custom file name and LogBox-errors.
-  // Channel id bumped so devices that already created the old channel pick this up.
   await Notifications.setNotificationChannelAsync(ANDROID_CHANNEL_ID, {
     name: 'BillingApp',
     importance: Notifications.AndroidImportance.DEFAULT,
     vibrationPattern: [0, 250, 250, 250],
     lightColor: '#1B3A4B',
+    showBadge: true,
+  });
+  await Notifications.setNotificationChannelAsync(ANDROID_REMINDER_CHANNEL_ID, {
+    name: 'BillingApp reminders',
+    importance: Notifications.AndroidImportance.HIGH,
+    vibrationPattern: [0, 250, 250, 250],
+    lightColor: '#1B3A4B',
+    showBadge: true,
   });
 }
 
 export async function ensureNotificationPermission(): Promise<boolean> {
   if (Platform.OS === 'web') return false;
 
-  await ensureAndroidChannel();
+  await ensureAndroidChannels();
 
   const current = await Notifications.getPermissionsAsync();
   if (current.granted) return true;
 
-  const requested = await Notifications.requestPermissionsAsync();
+  const requested = await Notifications.requestPermissionsAsync({
+    ios: {
+      allowAlert: true,
+      allowBadge: true,
+      allowSound: true,
+    },
+  });
   return requested.granted;
+}
+
+/** Clears the app-icon badge (iOS number / Android launcher badge when supported). */
+export async function clearAppBadge(): Promise<void> {
+  if (Platform.OS === 'web') return;
+  try {
+    await Notifications.setBadgeCountAsync(0);
+  } catch {
+    /* launcher may not support badges */
+  }
+}
+
+/**
+ * Call once from root layout: clear badge when the user opens or returns to the app.
+ */
+export function startBadgeClearOnActive(): () => void {
+  if (Platform.OS === 'web') return () => undefined;
+
+  void clearAppBadge();
+
+  const sub = AppState.addEventListener('change', (state) => {
+    if (state === 'active') void clearAppBadge();
+  });
+
+  const responseSub = Notifications.addNotificationResponseReceivedListener(() => {
+    void clearAppBadge();
+  });
+
+  return () => {
+    sub.remove();
+    responseSub.remove();
+  };
 }
 
 export async function notifyExpenseRegistered(title: string, body: string): Promise<void> {
@@ -69,6 +120,7 @@ export type ReminderCopy = {
  * Local reminders (not remote push).
  * Safe for free Apple Personal Team — no aps-environment entitlement.
  * Supports daily or monthly (day-of-month) schedules per subcategory.
+ * Sets app-icon badge when the reminder fires (cleared when the app is opened).
  */
 export async function syncCategoryReminders(opts: {
   reminders: ReminderCopy[];
@@ -108,6 +160,8 @@ export async function syncCategoryReminders(opts: {
       content: {
         title: item.title,
         body: item.body,
+        // Show “1” (or refresh) on the home-screen icon when the reminder fires.
+        badge: 1,
         data: {
           categoryId: item.categoryId,
           type: 'expense-reminder',
@@ -115,7 +169,7 @@ export async function syncCategoryReminders(opts: {
         },
         // iOS: system default sound. Android: channel controls sound (no custom file).
         ...(Platform.OS === 'ios' ? { sound: true } : null),
-        ...(Platform.OS === 'android' ? { channelId: ANDROID_CHANNEL_ID } : null),
+        ...(Platform.OS === 'android' ? { channelId: ANDROID_REMINDER_CHANNEL_ID } : null),
       },
       trigger,
     });

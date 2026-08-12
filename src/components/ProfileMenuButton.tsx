@@ -10,9 +10,16 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useFinance } from '@/src/hooks/useFinance';
 import { useSettings } from '@/src/hooks/useSettings';
 import { useLanguage } from '@/src/i18n/LanguageContext';
 import { palette, radii } from '@/src/theme/colors';
+import {
+  pickAndReadBackupFile,
+  shareBackupJson,
+  shareTransactionsCsv,
+} from '@/src/utils/backup';
+import { tapFeedback } from '@/src/utils/selectFeedback';
 
 type Props = {
   light?: boolean;
@@ -20,12 +27,22 @@ type Props = {
 
 export function ProfileMenuButton({ light = true }: Props) {
   const insets = useSafeAreaInsets();
-  const { t } = useLanguage();
-  const { settings, updateUserName } = useSettings();
+  const { t, language } = useLanguage();
+  const { settings, quickTemplates, updateUserName, restoreSettingsFromBackup } =
+    useSettings();
+  const {
+    transactions,
+    accounts,
+    budgets,
+    debts,
+    subscriptions,
+    restoreFromBackup,
+  } = useFinance();
   const [menuOpen, setMenuOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [name, setName] = useState(settings.userName);
   const [saving, setSaving] = useState(false);
+  const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     if (editOpen) setName(settings.userName);
@@ -51,13 +68,92 @@ export function ProfileMenuButton({ light = true }: Props) {
     }
   }
 
+  async function exportBackup() {
+    setMenuOpen(false);
+    setBusy(true);
+    try {
+      await shareBackupJson({
+        transactions,
+        accounts,
+        budgets,
+        debts,
+        subscriptions,
+        settings,
+        quickTemplates,
+      });
+    } catch {
+      Alert.alert(t('backup.errorTitle'), t('backup.exportError'));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function exportCsv() {
+    setMenuOpen(false);
+    setBusy(true);
+    try {
+      await shareTransactionsCsv(transactions, {
+        language,
+        t,
+        accounts,
+        debts,
+        spendConcepts: settings.spendConcepts ?? [],
+      });
+    } catch {
+      Alert.alert(t('backup.errorTitle'), t('backup.exportError'));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function confirmRestore() {
+    setMenuOpen(false);
+    Alert.alert(t('backup.restoreTitle'), t('backup.restoreMessage'), [
+      { text: t('history.cancel'), style: 'cancel' },
+      {
+        text: t('backup.restoreConfirm'),
+        style: 'destructive',
+        onPress: () => {
+          void (async () => {
+            setBusy(true);
+            try {
+              const backup = await pickAndReadBackupFile();
+              await restoreSettingsFromBackup({
+                settings: backup.settings,
+                quickTemplates: backup.quickTemplates,
+              });
+              await restoreFromBackup({
+                transactions: backup.transactions,
+                accounts: backup.accounts,
+                budgets: backup.budgets,
+                debts: backup.debts,
+                subscriptions: backup.subscriptions,
+              });
+              Alert.alert(t('backup.restoreDoneTitle'), t('backup.restoreDoneBody'));
+            } catch (err) {
+              const code = err instanceof Error ? err.message : '';
+              if (code === 'CANCELLED') return;
+              Alert.alert(t('backup.errorTitle'), t('backup.restoreError'));
+            } finally {
+              setBusy(false);
+            }
+          })();
+        },
+      },
+    ]);
+  }
+
   return (
     <>
       <Pressable
-        onPress={() => setMenuOpen(true)}
+        onPress={() => {
+          tapFeedback();
+          setMenuOpen(true);
+        }}
         hitSlop={10}
         style={[styles.dotsBtn, light && styles.dotsBtnLight]}
-        accessibilityLabel={t('home.profileMenu')}>
+        accessibilityLabel={t('home.profileMenu')}
+        disabled={busy}>
         <Text style={[styles.dots, light && styles.dotsLight]}>⋯</Text>
       </Pressable>
 
@@ -68,8 +164,39 @@ export function ProfileMenuButton({ light = true }: Props) {
         onRequestClose={() => setMenuOpen(false)}>
         <Pressable style={styles.menuBackdrop} onPress={() => setMenuOpen(false)}>
           <View style={[styles.menuSheet, { marginTop: insets.top + 56 }]}>
-            <Pressable onPress={openEditName} style={styles.menuItem}>
+            <Pressable
+              onPress={() => {
+                tapFeedback();
+                openEditName();
+              }}
+              style={styles.menuItem}>
               <Text style={styles.menuItemText}>{t('home.editName')}</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => {
+                tapFeedback();
+                void exportBackup();
+              }}
+              style={styles.menuItem}>
+              <Text style={styles.menuItemText}>{t('backup.exportJson')}</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => {
+                tapFeedback();
+                void exportCsv();
+              }}
+              style={styles.menuItem}>
+              <Text style={styles.menuItemText}>{t('backup.exportCsv')}</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => {
+                tapFeedback();
+                confirmRestore();
+              }}
+              style={styles.menuItem}>
+              <Text style={[styles.menuItemText, styles.menuDanger]}>
+                {t('backup.restore')}
+              </Text>
             </Pressable>
             <Pressable onPress={() => setMenuOpen(false)} style={styles.menuCancel}>
               <Text style={styles.menuCancelText}>{t('history.cancel')}</Text>
@@ -152,7 +279,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
   },
   menuSheet: {
-    minWidth: 200,
+    minWidth: 220,
     backgroundColor: palette.surfaceSolid,
     borderRadius: radii.md,
     overflow: 'hidden',
@@ -169,6 +296,9 @@ const styles = StyleSheet.create({
     fontFamily: 'DMSans_600SemiBold',
     fontSize: 15,
     color: palette.ink,
+  },
+  menuDanger: {
+    color: palette.danger,
   },
   menuCancel: {
     borderTopWidth: StyleSheet.hairlineWidth,

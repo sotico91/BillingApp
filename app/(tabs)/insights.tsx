@@ -41,6 +41,7 @@ export default function InsightsScreen() {
   const [period, setPeriod] = useState<Period>('mes');
   const [query, setQuery] = useState('');
   const [answer, setAnswer] = useState('');
+  const [activeSuggestion, setActiveSuggestion] = useState<string | null>(null);
   const [rankingOpen, setRankingOpen] = useState(false);
   const [smartOpen, setSmartOpen] = useState(false);
 
@@ -84,7 +85,12 @@ export default function InsightsScreen() {
 
   function ask(nextQuery?: string) {
     const q = (nextQuery ?? query).trim();
-    if (nextQuery != null) setQuery(nextQuery);
+    if (nextQuery != null) {
+      setQuery(nextQuery);
+      setActiveSuggestion(nextQuery);
+    } else {
+      setActiveSuggestion(suggestions.includes(q) ? q : null);
+    }
     setAnswer(
       answerFinanceQuery(q, transactions, format, t, {
         defaultPeriod: period,
@@ -94,6 +100,12 @@ export default function InsightsScreen() {
         budgetStatus,
       })
     );
+  }
+
+  function clearAsk() {
+    setQuery('');
+    setAnswer('');
+    setActiveSuggestion(null);
   }
 
   return (
@@ -115,7 +127,12 @@ export default function InsightsScreen() {
           <Text style={styles.searchHint}>{t('insights.searchHint')}</Text>
           <TextInput
             value={query}
-            onChangeText={setQuery}
+            onChangeText={(text) => {
+              setQuery(text);
+              if (activeSuggestion && text !== activeSuggestion) {
+                setActiveSuggestion(null);
+              }
+            }}
             placeholder={searchPlaceholder}
             placeholderTextColor={palette.inkSoft}
             style={styles.searchInput}
@@ -136,32 +153,55 @@ export default function InsightsScreen() {
                 style={styles.clearBtn}
                 onPress={() => {
                   tapFeedback();
-                  setQuery('');
-                  setAnswer('');
+                  clearAsk();
                 }}>
                 <Text style={styles.clearBtnText}>{t('insights.searchClear')}</Text>
               </Pressable>
             ) : null}
           </View>
 
-          <Text style={styles.suggestLabel}>{t('insights.searchSuggestions')}</Text>
-          <View style={styles.suggestRow}>
-            {suggestions.map((prompt) => (
-              <Pressable
-                key={prompt}
-                onPress={() => {
-                  tapFeedback();
-                  ask(prompt);
-                }}
-                style={styles.suggestChip}>
-                <Text style={styles.suggestText} numberOfLines={2}>
-                  {prompt}
+          {answer ? (
+            <View style={styles.answerCard}>
+              <Text style={styles.answerEyebrow}>{t('insights.searchAnswer')}</Text>
+              {query.trim() ? (
+                <Text style={styles.answerQuestion} numberOfLines={3}>
+                  {query.trim()}
                 </Text>
-              </Pressable>
-            ))}
-          </View>
+              ) : null}
+              <Text style={styles.answerBody}>{answer}</Text>
+            </View>
+          ) : null}
 
-          {answer ? <Text style={styles.answer}>{answer}</Text> : null}
+          <Text style={[styles.suggestLabel, answer ? styles.suggestLabelDim : null]}>
+            {t('insights.searchSuggestions')}
+          </Text>
+          <View style={styles.suggestRow}>
+            {suggestions.map((prompt) => {
+              const selected = activeSuggestion === prompt;
+              return (
+                <Pressable
+                  key={prompt}
+                  onPress={() => {
+                    tapFeedback();
+                    ask(prompt);
+                  }}
+                  style={[
+                    styles.suggestChip,
+                    answer && !selected ? styles.suggestChipDim : null,
+                    selected ? styles.suggestChipActive : null,
+                  ]}>
+                  <Text
+                    style={[
+                      styles.suggestText,
+                      selected ? styles.suggestTextActive : null,
+                    ]}
+                    numberOfLines={2}>
+                    {prompt}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
         </FadeInBlock>
 
         <FadeInBlock index={2}>
@@ -322,6 +362,40 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: palette.brandMuted,
   },
+  answerCard: {
+    marginTop: 14,
+    backgroundColor: palette.surfaceSolid,
+    borderRadius: radii.lg,
+    padding: 16,
+    borderWidth: 2,
+    borderColor: palette.accent,
+    shadowColor: '#1B3A4B',
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 3,
+  },
+  answerEyebrow: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 11,
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+    color: palette.accentDeep,
+  },
+  answerQuestion: {
+    marginTop: 8,
+    fontFamily: 'DMSans_500Medium',
+    fontSize: 13,
+    color: palette.inkMuted,
+    lineHeight: 18,
+  },
+  answerBody: {
+    marginTop: 10,
+    fontFamily: 'Fraunces_600SemiBold',
+    fontSize: 20,
+    color: palette.ink,
+    lineHeight: 28,
+  },
   suggestLabel: {
     marginTop: 14,
     fontFamily: 'DMSans_600SemiBold',
@@ -329,6 +403,9 @@ const styles = StyleSheet.create({
     color: palette.brandMuted,
     textTransform: 'uppercase',
     letterSpacing: 0.4,
+  },
+  suggestLabelDim: {
+    opacity: 0.75,
   },
   suggestRow: {
     marginTop: 8,
@@ -345,19 +422,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 9,
   },
+  suggestChipDim: {
+    opacity: 0.55,
+  },
+  suggestChipActive: {
+    opacity: 1,
+    backgroundColor: palette.accentSoft,
+    borderColor: palette.accent,
+    borderWidth: 1.5,
+  },
   suggestText: {
     fontFamily: 'DMSans_500Medium',
     fontSize: 13,
     color: palette.brand,
   },
-  answer: {
-    marginTop: 10,
-    fontFamily: 'DMSans_500Medium',
-    fontSize: 15,
-    color: palette.brand,
-    backgroundColor: 'rgba(255,255,255,0.16)',
-    padding: 12,
-    borderRadius: 12,
+  suggestTextActive: {
+    color: palette.accentDeep,
+    fontFamily: 'DMSans_600SemiBold',
   },
   smartCard: {
     backgroundColor: palette.surfaceSolid,
@@ -432,12 +513,6 @@ const styles = StyleSheet.create({
     fontFamily: 'DMSans_500Medium',
     fontSize: 13,
     color: palette.inkMuted,
-  },
-  sectionTitle: {
-    fontFamily: 'Fraunces_600SemiBold',
-    fontSize: 22,
-    color: palette.brand,
-    marginBottom: 8,
   },
   empty: {
     fontFamily: 'DMSans_400Regular',

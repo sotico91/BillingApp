@@ -30,7 +30,6 @@ import type {
 } from '@/src/types/settings';
 import {
   clearCategoryReminders,
-  cancelRemindersExcept,
   ensureNotificationPermission,
   syncRemindersFromRules,
 } from '@/src/utils/notifications';
@@ -75,7 +74,10 @@ type SettingsContextValue = {
   updateQuickTemplate: (
     template: Omit<QuickTemplate, 'id' | 'updatedAt'> & { id?: string }
   ) => Promise<void>;
-  removeQuickTemplate: (id: string) => Promise<void>;
+  restoreSettingsFromBackup: (input: {
+    settings: UserSettings;
+    quickTemplates: QuickTemplate[];
+  }) => Promise<void>;
 };
 
 const SettingsContext = createContext<SettingsContextValue | null>(null);
@@ -347,12 +349,13 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      const allowed = new Set(nextRules.map((r) => r.subId));
-      if (allowed.size === 0) {
+      if (nextRules.length === 0) {
         await clearCategoryReminders();
         return;
       }
-      await cancelRemindersExcept(allowed);
+
+      // Re-schedule so channel / badge / copy stay in sync after app updates.
+      await syncRemindersFromRules(nextRules, labels);
     },
     [settings, updateReminders]
   );
@@ -387,6 +390,24 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     [quickTemplates]
   );
 
+  const restoreSettingsFromBackup = useCallback(
+    async (input: { settings: UserSettings; quickTemplates: QuickTemplate[] }) => {
+      const nextSettings: UserSettings = {
+        ...DEFAULT_SETTINGS,
+        ...input.settings,
+        onboardingDone: true,
+        personId: input.settings.personId || settings.personId || DEFAULT_SETTINGS.personId,
+      };
+      setSettings(nextSettings);
+      setQuickTemplates(input.quickTemplates ?? []);
+      await Promise.all([
+        saveSettings(nextSettings),
+        saveQuickTemplates(input.quickTemplates ?? []),
+      ]);
+    },
+    [settings.personId]
+  );
+
   const value = useMemo(
     () => ({
       settings,
@@ -405,6 +426,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       pruneRemindersToRegistered,
       updateQuickTemplate,
       removeQuickTemplate,
+      restoreSettingsFromBackup,
     }),
     [
       settings,
@@ -423,6 +445,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       pruneRemindersToRegistered,
       updateQuickTemplate,
       removeQuickTemplate,
+      restoreSettingsFromBackup,
     ]
   );
 

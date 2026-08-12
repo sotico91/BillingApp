@@ -22,6 +22,7 @@ import { ExpensesProvider } from '@/src/hooks/useExpenses';
 import { SettingsProvider } from '@/src/hooks/useSettings';
 import { LanguageProvider, useLanguage } from '@/src/i18n/LanguageContext';
 import { palette } from '@/src/theme/colors';
+import { startBadgeClearOnActive } from '@/src/utils/notifications';
 import { prepareSelectFeedback } from '@/src/utils/selectFeedback';
 
 export { ErrorBoundary } from 'expo-router';
@@ -50,6 +51,11 @@ export default function RootLayout() {
       SplashScreen.hideAsync();
       prepareSelectFeedback();
     }
+  }, [loaded]);
+
+  useEffect(() => {
+    if (!loaded) return;
+    return startBadgeClearOnActive();
   }, [loaded]);
 
   if (!loaded) {
