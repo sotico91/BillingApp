@@ -2,7 +2,6 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { CategoryBreakdown } from '@/src/components/CategoryBreakdown';
 import { CollapsibleSection } from '@/src/components/CollapsibleSection';
 import { ConceptGlanceSheet } from '@/src/components/ConceptGlanceSheet';
 import { EditTransactionModal } from '@/src/components/EditTransactionModal';
@@ -51,7 +50,6 @@ export default function HomeScreen() {
   const [predictOpen, setPredictOpen] = useState(false);
   const [todayOpen, setTodayOpen] = useState(false);
   const [antOpen, setAntOpen] = useState(false);
-  const [categoriesOpen, setCategoriesOpen] = useState(false);
 
   const displayName = settings.userName.trim();
   const greeting = displayName
@@ -68,7 +66,6 @@ export default function HomeScreen() {
   const debtTotal = debts.reduce((s, d) => s + d.balance, 0);
   const ant = antForPeriod('mes');
   const recent = transactionsForPeriod('hoy');
-  const monthInsights = insightsForPeriod('mes');
   const expenseConcepts = insightsForPeriod('mes', 'expense');
   const incomeConcepts = insightsForPeriod('mes', 'income');
   const spendConcepts = settings.spendConcepts ?? [];
@@ -329,24 +326,6 @@ export default function HomeScreen() {
                 ))
               )}
             </View>
-          </CollapsibleSection>
-        </FadeInBlock>
-
-        <FadeInBlock index={7}>
-          <CollapsibleSection
-            title={t('home.todayByCategory')}
-            open={categoriesOpen}
-            onToggle={() => setCategoriesOpen((v) => !v)}
-            summary={
-              monthInsights.length === 0
-                ? t('home.emptyCategory')
-                : t('home.categorySummary', { count: monthInsights.length })
-            }>
-            <CategoryBreakdown
-              insights={monthInsights}
-              emptyLabel={t('home.emptyCategory')}
-              budgetStatus={budgetStatus}
-            />
           </CollapsibleSection>
         </FadeInBlock>
       </ScrollView>
