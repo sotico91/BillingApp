@@ -42,6 +42,7 @@ import {
   detectRecurring,
   filterByCalendarMonth,
   filterByPeriod,
+  percentOfBase,
   predictMonthlySpends,
   sumByType,
   type PredictedSpend,
@@ -535,6 +536,10 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
           : t.type === 'expense' || t.type === 'debt_payment'
       );
       const total = list.reduce((sum, e) => sum + e.amount, 0);
+      const incomeBase =
+        kind === 'expense'
+          ? sumByType(transactionsForPeriod(period, 'mine'), 'income')
+          : total;
       const map = new Map<string, { total: number; count: number }>();
       for (const e of list) {
         if (!e.categoryId) continue;
@@ -550,7 +555,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
           color: resolveConceptColor(categoryId, settings.spendConcepts ?? []),
           total: stats.total,
           count: stats.count,
-          percent: total > 0 ? (stats.total / total) * 100 : 0,
+          percent: percentOfBase(stats.total, incomeBase),
         }))
         .sort((a, b) => b.total - a.total);
     },

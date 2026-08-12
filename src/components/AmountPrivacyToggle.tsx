@@ -53,12 +53,13 @@ export function AmountPrivacyToggle({ inline = false, light = false }: Props) {
 
   if (inline) return button;
 
+  // Left side so it never fights the glance FAB on the right — visible on every tab.
   return (
     <View
       pointerEvents="box-none"
       style={[
         styles.floatWrap,
-        { bottom: Math.max(insets.bottom, 12) + 78, right: 16 },
+        { bottom: Math.max(insets.bottom, 12) + 78, left: 16 },
       ]}>
       {button}
     </View>

@@ -102,6 +102,12 @@ export function formatExpenseDate(iso: string, language: 'en' | 'es' = 'en'): st
   });
 }
 
+/** Share of a reference amount (e.g. category spend vs income). */
+export function percentOfBase(amount: number, base: number): number {
+  if (!Number.isFinite(amount) || !Number.isFinite(base) || base <= 0) return 0;
+  return (amount / base) * 100;
+}
+
 export function sumByType(
   transactions: Transaction[],
   type: Transaction['type']

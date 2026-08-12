@@ -107,6 +107,9 @@ export const translations = {
     'insights.topCategory': 'Top category',
     'insights.topValue': '{amount} in {category}',
     'insights.percentOfTotal': '{percent}% of your total spend',
+    'insights.percentOfIncome': '{percent}% of your income',
+    'insights.percentOfIncomeShort': '{percent}% of income',
+    'insights.topeMeta': 'cap {spent}/{limit}',
     'insights.empty': 'Log movements to unlock smart explanations.',
     'insights.ranking': 'Category ranking',
     'insights.rankingCollapsed': '{count} categories — tap to open',
@@ -124,10 +127,10 @@ export const translations = {
     'decor.totalsHint': 'Tap outside or ✕ to close. Your screen stays in place.',
     'decor.overlayHint': 'Quick glance — layout stays put',
     'insights.searchTitle': 'Ask BillingApp',
-    'insights.searchPlaceholder': 'How much did I spend on delivery this month?',
+    'insights.searchPlaceholder': 'How much did I spend on delivery {when}?',
     'insights.searchAsk': 'Ask',
     'insights.searchHint':
-      'Ask about your concepts, period, income, savings, card, ants or topes — answers use your data.',
+      'Ask about concepts, income %, savings, card, ants or limits — answers use your data.',
     'insights.searchSuggestions': 'Try one of these',
     'insights.searchClear': 'Clear',
     'insights.ofBudget': 'of budget',
@@ -476,6 +479,9 @@ export const translations = {
     'smart.deliveryUp': 'Delivery is up versus last month.',
     'smart.categoryUp': '{category} is up versus {compare}.',
     'smart.savedMore': '{period}: you are ahead by {amount} (income − expenses).',
+    'smart.topIncomeShare':
+      '{category} is your largest share of income ({period}): {percent}% of what you earned.',
+    'smart.spendIncomeShare': 'You spent {percent}% of your income {period}.',
     'smart.antTotal': 'Ant expenses ({period}): {amount}.',
     'smart.empty': 'Keep logging — BillingApp will explain your money story.',
     'smart.compareYesterday': 'yesterday',
@@ -508,7 +514,23 @@ export const translations = {
     'search.answerUnclear':
       'I could not match that question to your data. Try something like: {examples}',
     'search.examples':
-      '“How much on delivery this month?”, “What was my salary?”, “Where did I spend the most?”',
+      '“What % of my income did I spend?”, “Which category uses most of my salary?”, “How much on delivery?”',
+    'search.answerTopWithIncome':
+      'Your biggest spend ({period}) is {label}: {amount} ({percent}% of income {income}) across {count} movements.',
+    'search.answerNoIncome':
+      'No income logged in {period}. Register salary or income first to calculate percentages.',
+    'search.answerTopPercentIncome':
+      'Highest share of your income ({period}): {label} at {percent}% ({amount} of {income}, {count} movements).',
+    'search.answerSpendPercentIncome':
+      'You spent {percent}% of your income {period}: {amount} of {income}.',
+    'search.answerSavingsPercentIncome':
+      'Savings signal {period}: {percent}% of income ({amount} of {income}).',
+    'search.answerCategoryPercentIncome':
+      '{label} {period}: {percent}% of your income ({amount} of {income}).',
+    'search.answerAntPercentIncome':
+      'Ant expenses {period}: {percent}% of income ({amount} of {income}).',
+    'search.answerRankingPercentIncome':
+      'Share of income by category ({period}, base {income}): {detail}.',
     'search.labelFood': 'Food / restaurants',
     'search.periodLastMonth': 'Last month',
     'search.periodYear': 'This year',
@@ -633,6 +655,9 @@ export const translations = {
     'insights.topCategory': 'Mayor categoría',
     'insights.topValue': '{amount} en {category}',
     'insights.percentOfTotal': '{percent}% del total gastado',
+    'insights.percentOfIncome': '{percent}% de tu ingreso',
+    'insights.percentOfIncomeShort': '{percent}% del ingreso',
+    'insights.topeMeta': 'tope {spent}/{limit}',
     'insights.empty': 'Registra movimientos para ver explicaciones inteligentes.',
     'insights.ranking': 'Ranking de categorías',
     'insights.rankingCollapsed': '{count} categorías — toca para abrir',
@@ -650,10 +675,10 @@ export const translations = {
     'decor.totalsHint': 'Toca afuera o ✕ para cerrar. La pantalla no se mueve.',
     'decor.overlayHint': 'Vista rápida — sin mover el contenido',
     'insights.searchTitle': 'Pregúntale a BillingApp',
-    'insights.searchPlaceholder': '¿Cuánto gasté en domicilio este mes?',
+    'insights.searchPlaceholder': '¿Cuánto gasté en domicilio {when}?',
     'insights.searchAsk': 'Preguntar',
     'insights.searchHint':
-      'Pregunta por tus conceptos, periodo, ingresos, ahorro, tarjeta, hormiga o topes — responde con tus datos.',
+      'Pregunta por conceptos, % del ingreso, ahorro, tarjeta, hormigas o topes — usa tus datos.',
     'insights.searchSuggestions': 'Prueba una de estas',
     'insights.searchClear': 'Limpiar',
     'insights.ofBudget': 'del presupuesto',
@@ -1005,6 +1030,9 @@ export const translations = {
     'smart.deliveryUp': 'Tus domicilios subieron frente al mes pasado.',
     'smart.categoryUp': 'Tus gastos de {category} subieron frente a {compare}.',
     'smart.savedMore': '{period}: vas {amount} adelante (ingresos − gastos).',
+    'smart.topIncomeShare':
+      '{category} es lo que más pesa sobre tu ingreso ({period}): {percent}% de lo que ganaste.',
+    'smart.spendIncomeShare': 'Gastaste el {percent}% de tu ingreso {period}.',
     'smart.antTotal': 'Gastos hormiga ({period}): {amount}.',
     'smart.empty': 'Sigue registrando: BillingApp te explicará la historia de tu dinero.',
     'smart.compareYesterday': 'ayer',
@@ -1038,7 +1066,23 @@ export const translations = {
     'search.answerUnclear':
       'No pude relacionar esa pregunta con tus datos. Prueba algo como: {examples}',
     'search.examples':
-      '“¿Cuánto en domicilio este mes?”, “¿Cuál fue mi salario?”, “¿En qué gasté más?”',
+      '“¿Qué % de mi ingreso gasté?”, “¿Qué categoría consume más de mi salario?”, “¿Cuánto en domicilio?”',
+    'search.answerTopWithIncome':
+      'Tu mayor gasto ({period}) es {label}: {amount} ({percent}% del ingreso {income}) en {count} movimientos.',
+    'search.answerNoIncome':
+      'No hay ingresos registrados en {period}. Registra salario o ingresos para calcular porcentajes.',
+    'search.answerTopPercentIncome':
+      'Mayor peso sobre tu ingreso ({period}): {label} con {percent}% ({amount} de {income}, {count} movimientos).',
+    'search.answerSpendPercentIncome':
+      'Gastaste el {percent}% de tu ingreso {period}: {amount} de {income}.',
+    'search.answerSavingsPercentIncome':
+      'Señal de ahorro {period}: {percent}% del ingreso ({amount} de {income}).',
+    'search.answerCategoryPercentIncome':
+      '{label} {period}: {percent}% de tu ingreso ({amount} de {income}).',
+    'search.answerAntPercentIncome':
+      'Gastos hormiga {period}: {percent}% del ingreso ({amount} de {income}).',
+    'search.answerRankingPercentIncome':
+      'Peso sobre el ingreso por categoría ({period}, base {income}): {detail}.',
     'search.labelFood': 'Comida / restaurantes',
     'search.periodLastMonth': 'Mes pasado',
     'search.periodYear': 'Este año',

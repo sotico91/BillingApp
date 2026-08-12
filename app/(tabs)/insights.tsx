@@ -47,6 +47,19 @@ export default function InsightsScreen() {
   const total = totalForPeriod(period, 'expense');
   const top = insights[0];
   const periodLabel = t(`period.${period}` as TranslationKey);
+  const searchWhen =
+    language === 'es'
+      ? period === 'hoy'
+        ? 'hoy'
+        : period === 'semana'
+          ? 'esta semana'
+          : 'este mes'
+      : period === 'hoy'
+        ? 'today'
+        : period === 'semana'
+          ? 'this week'
+          : 'this month';
+  const searchPlaceholder = t('insights.searchPlaceholder', { when: searchWhen });
   const smart = buildSmartInsights(transactions, t, format, spendConcepts, period);
   const topBudget = top
     ? budgetStatus.find((b) => b.categoryId === top.categoryId)
@@ -102,7 +115,7 @@ export default function InsightsScreen() {
           <TextInput
             value={query}
             onChangeText={setQuery}
-            placeholder={t('insights.searchPlaceholder')}
+            placeholder={searchPlaceholder}
             placeholderTextColor={palette.inkSoft}
             style={styles.searchInput}
             returnKeyType="search"
@@ -221,7 +234,7 @@ export default function InsightsScreen() {
                   ? t('insights.topAlert')
                   : topTone === 'good'
                     ? t('insights.topGood')
-                    : t('insights.percentOfTotal', {
+                    : t('insights.percentOfIncome', {
                         percent: top.percent.toFixed(0),
                       })}
               </Text>

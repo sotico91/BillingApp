@@ -11,7 +11,6 @@ import {
   View,
 } from 'react-native';
 
-import { AmountPrivacyToggle } from '@/src/components/AmountPrivacyToggle';
 import { ExpenseForm, type SavedMovement } from '@/src/components/ExpenseForm';
 import { FriendlyAddFlow } from '@/src/components/FriendlyAddFlow';
 import { ScreenBackground } from '@/src/components/ScreenBackground';
@@ -58,11 +57,7 @@ export default function AgregarScreen() {
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <View style={styles.content}>
-          <View style={styles.titleRow}>
-            <Text style={styles.title}>{t('add.title')}</Text>
-            <AmountPrivacyToggle inline light />
-          </View>
-          <Text style={styles.privacyHint}>{t('add.privacyHint')}</Text>
+          <Text style={styles.title}>{t('add.title')}</Text>
 
           <View style={styles.modeSwitch}>
             <Pressable
@@ -108,25 +103,11 @@ const styles = StyleSheet.create({
     paddingBottom: 28,
     gap: 12,
   },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 12,
-  },
   title: {
-    flex: 1,
     fontFamily: 'Fraunces_700Bold',
     fontSize: 32,
     color: palette.brand,
     letterSpacing: -0.8,
-  },
-  privacyHint: {
-    marginTop: -4,
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
-    color: palette.brandMuted,
-    lineHeight: 18,
   },
   modeSwitch: {
     flexDirection: 'row',

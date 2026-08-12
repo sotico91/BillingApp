@@ -14,7 +14,6 @@ import { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 
-import { AmountPrivacyToggle } from '@/src/components/AmountPrivacyToggle';
 import { NamePromptOverlay } from '@/src/components/NamePromptOverlay';
 import { OnboardingOverlay } from '@/src/components/OnboardingOverlay';
 import { ReminderHygiene } from '@/src/components/ReminderHygiene';
@@ -95,7 +94,6 @@ function RootNavigator() {
           presentation: 'modal',
           title: t('add.title'),
           headerLargeTitle: false,
-          headerRight: () => <AmountPrivacyToggle inline light />,
         }}
       />
     </Stack>

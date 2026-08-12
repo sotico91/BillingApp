@@ -19,8 +19,9 @@ export default function PlanScreen() {
   const { t } = useLanguage();
   const { format } = useMoney();
   const { settings } = useSettings();
-  const { budgetStatus, antForPeriod } = useFinance();
+  const { budgetStatus, antForPeriod, totalForPeriod } = useFinance();
   const ant = antForPeriod('mes');
+  const monthIncome = totalForPeriod('mes', 'income');
   const spendConcepts = settings.spendConcepts ?? [];
   const [conceptsOpen, setConceptsOpen] = useState(false);
   const [remindersOpen, setRemindersOpen] = useState(false);
@@ -72,7 +73,10 @@ export default function PlanScreen() {
                 {activeBudgets.map((b, index) => {
                   const tone = toneFromBudgetRatio(b.ratio);
                   const over = b.remaining < 0;
-                  const pct = Math.min(Math.round(b.ratio * 100), 999);
+                  const incomePct =
+                    monthIncome > 0
+                      ? Math.min(Math.round((b.spent / monthIncome) * 100), 999)
+                      : 0;
                   return (
                     <View
                       key={b.categoryId}
@@ -91,7 +95,9 @@ export default function PlanScreen() {
                             tone === 'warn' && styles.textWarn,
                             tone === 'good' && styles.textGood,
                           ]}>
-                          {pct}%
+                          {monthIncome > 0
+                            ? t('insights.percentOfIncomeShort', { percent: incomePct })
+                            : format(b.spent)}
                         </Text>
                       </View>
                       <View style={styles.track}>

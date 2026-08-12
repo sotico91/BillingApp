@@ -23,6 +23,8 @@ type BudgetHint = {
   categoryId: string;
   ratio: number;
   remaining: number;
+  limit?: number;
+  spent?: number;
 };
 
 type Props = {
@@ -133,10 +135,15 @@ export function CategoryBreakdown({ insights, emptyLabel, budgetStatus }: Props)
               />
             </View>
             <Text style={styles.meta}>
-              {item.percent.toFixed(0)}% · {item.count}{' '}
+              {t('insights.percentOfIncomeShort', { percent: item.percent.toFixed(0) })}
+              {' · '}
+              {item.count}{' '}
               {item.count === 1 ? t('insights.expense') : t('insights.expenses')}
               {budget
-                ? ` · ${Math.round(budget.ratio * 100)}% ${t('insights.ofBudget')}`
+                ? ` · ${t('insights.topeMeta', {
+                    spent: format(budget.spent ?? item.total),
+                    limit: format(budget.limit),
+                  })}`
                 : ''}
             </Text>
             {isMostFrequent ? (

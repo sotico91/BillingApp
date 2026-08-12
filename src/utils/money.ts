@@ -1,20 +1,31 @@
 import type { Currency } from '@/src/types/settings';
 
+/** Prevent RN from wrapping minus / symbol / amount onto separate lines in narrow tiles. */
+function keepMoneyOnOneLine(formatted: string): string {
+  return formatted
+    .replace(/^([\-\u2212])(?=\S)/u, '$1\u2060')
+    .replace(/([\$\u00A2\u20AC\u00A3])([\s\u00A0])/u, '$1\u2060$2');
+}
+
 export function formatMoney(amount: number, currency: Currency): string {
   if (currency === 'USD') {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(amount);
+    return keepMoneyOnOneLine(
+      new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }).format(amount)
+    );
   }
 
-  return new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    maximumFractionDigits: 0,
-  }).format(Math.round(amount));
+  return keepMoneyOnOneLine(
+    new Intl.NumberFormat('es-CO', {
+      style: 'currency',
+      currency: 'COP',
+      maximumFractionDigits: 0,
+    }).format(Math.round(amount))
+  );
 }
 
 /** Mask used when amounts are hidden for privacy. */

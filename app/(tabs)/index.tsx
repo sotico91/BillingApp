@@ -2,7 +2,6 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { AmountPrivacyToggle } from '@/src/components/AmountPrivacyToggle';
 import { CategoryBreakdown } from '@/src/components/CategoryBreakdown';
 import { CollapsibleSection } from '@/src/components/CollapsibleSection';
 import { ConceptGlanceSheet } from '@/src/components/ConceptGlanceSheet';
@@ -142,7 +141,6 @@ export default function HomeScreen() {
             </View>
             <View style={styles.heroAside}>
               <View style={styles.avatarRow}>
-                <AmountPrivacyToggle inline light />
                 <ProfileMenuButton />
                 <View style={styles.avatar}>
                   <Text style={styles.avatarText}>{initial}</Text>
@@ -404,6 +402,9 @@ function DashTile({
         {label}
       </Text>
       <Text
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        minimumFontScale={0.75}
         style={[
           styles.tileValue,
           tone === 'danger' && styles.textDanger,
