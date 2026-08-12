@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { MoneyText } from '@/src/components/MoneyText';
 import { findSpendSub } from '@/src/data/spendConcepts';
 import { useMoney } from '@/src/hooks/useMoney';
 import { useSettings } from '@/src/hooks/useSettings';
@@ -132,13 +133,13 @@ export function ConceptGlanceSheet({ visible, onClose, kind, items, total }: Pro
             <Text style={styles.totalLabel}>
               {t(isExpense ? 'home.expenses' : 'home.income')}
             </Text>
-            <Text
+            <MoneyText
               style={[
                 styles.totalValue,
                 isExpense ? styles.textDanger : styles.textGood,
               ]}>
               {format(displayTotal)}
-            </Text>
+            </MoneyText>
           </View>
 
           <Text style={styles.section}>
@@ -171,7 +172,7 @@ export function ConceptGlanceSheet({ visible, onClose, kind, items, total }: Pro
                         <View style={{ flex: 1 }}>
                           <Text style={styles.conceptName}>{group.name}</Text>
                           <Text style={styles.conceptMeta}>
-                            {group.percent.toFixed(0)}% · {group.count}{' '}
+                            {group.count}{' '}
                             {isExpense
                               ? group.count === 1
                                 ? t('insights.expense')
@@ -183,13 +184,13 @@ export function ConceptGlanceSheet({ visible, onClose, kind, items, total }: Pro
                         </View>
                       </View>
                       <View style={styles.conceptRight}>
-                        <Text
+                        <MoneyText
                           style={[
                             styles.conceptAmount,
                             isExpense ? styles.textDanger : styles.textGood,
                           ]}>
                           {format(group.total)}
-                        </Text>
+                        </MoneyText>
                         {expandable ? (
                           <Text style={styles.rowChevron}>{open ? '▾' : '▸'}</Text>
                         ) : null}
@@ -206,7 +207,7 @@ export function ConceptGlanceSheet({ visible, onClose, kind, items, total }: Pro
                           return (
                             <View key={sub.categoryId} style={styles.subRow}>
                               <Text style={styles.subName}>{subName}</Text>
-                              <Text style={styles.subAmount}>{format(sub.total)}</Text>
+                              <MoneyText style={styles.subAmount}>{format(sub.total)}</MoneyText>
                             </View>
                           );
                         })}

@@ -12,6 +12,7 @@ import { router } from 'expo-router';
 
 import { CollapsibleSection } from '@/src/components/CollapsibleSection';
 import { FadeInBlock } from '@/src/components/FadeInBlock';
+import { MoneyText } from '@/src/components/MoneyText';
 import { ScreenBackground } from '@/src/components/ScreenBackground';
 import { findSpendSub } from '@/src/data/spendConcepts';
 import { useFinance } from '@/src/hooks/useFinance';
@@ -198,7 +199,7 @@ export default function WealthScreen() {
           <Text style={styles.subtitle}>{t('wealth.subtitle')}</Text>
           <View style={styles.netBox}>
             <Text style={styles.netLabel}>{t('wealth.net')}</Text>
-            <Text style={styles.netValue}>{format(netWorth.net)}</Text>
+            <MoneyText style={styles.netValue}>{format(netWorth.net)}</MoneyText>
             <Text style={styles.meta}>
               {t('wealth.assets')}: {format(netWorth.assets)}
             </Text>
@@ -217,7 +218,7 @@ export default function WealthScreen() {
             {accounts.map((acc) => (
               <View key={acc.id} style={styles.card}>
                 <Text style={styles.cardTitle}>{t(acc.nameKey as TranslationKey)}</Text>
-                <Text style={styles.amount}>{format(acc.balance)}</Text>
+                <MoneyText style={styles.amount}>{format(acc.balance)}</MoneyText>
               </View>
             ))}
           </CollapsibleSection>
@@ -248,7 +249,7 @@ export default function WealthScreen() {
             {debts.length > 0 ? (
               <View style={styles.summaryCard}>
                 <Text style={styles.summaryTitle}>{t('wealth.fixedMonth')}</Text>
-                <Text style={styles.amount}>{format(monthlyInstallments)}</Text>
+                <MoneyText style={styles.amount}>{format(monthlyInstallments)}</MoneyText>
                 <Text style={styles.meta}>
                   {t('wealth.fixedPaid', {
                     paid: format(paidInstallmentsThisMonth),
@@ -394,7 +395,7 @@ export default function WealthScreen() {
                       </Pressable>
                     </View>
                   </View>
-                  <Text style={styles.amount}>{format(debt.balance)}</Text>
+                  <MoneyText style={styles.amount}>{format(debt.balance)}</MoneyText>
                   <Text style={styles.meta}>{t('wealth.balanceLeft')}</Text>
                   {due > 0 ? (
                     <>

@@ -11,6 +11,7 @@ import {
 import { CategoryBreakdown } from '@/src/components/CategoryBreakdown';
 import { CollapsibleSection } from '@/src/components/CollapsibleSection';
 import { FadeInBlock } from '@/src/components/FadeInBlock';
+import { MoneyText } from '@/src/components/MoneyText';
 import { PeriodToggle } from '@/src/components/PeriodToggle';
 import { SavingsDecor } from '@/src/components/SavingsDecor';
 import { ScreenBackground } from '@/src/components/ScreenBackground';
@@ -195,7 +196,7 @@ export default function InsightsScreen() {
           <Text style={styles.headline}>
             {periodLabel}
             {'\n'}
-            <Text style={styles.headlineAmount}>{format(total)}</Text>
+            <MoneyText style={styles.headlineAmount}>{format(total)}</MoneyText>
           </Text>
           {top ? (
             <View
@@ -234,7 +235,7 @@ export default function InsightsScreen() {
                   ? t('insights.topAlert')
                   : topTone === 'good'
                     ? t('insights.topGood')
-                    : t('insights.percentOfIncome', {
+                    : t('insights.percentOfTotal', {
                         percent: top.percent.toFixed(0),
                       })}
               </Text>

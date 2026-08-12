@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { MoneyText } from '@/src/components/MoneyText';
 import { resolveConceptColor } from '@/src/data/spendConcepts';
 import { useMoney } from '@/src/hooks/useMoney';
 import { useSettings } from '@/src/hooks/useSettings';
@@ -23,7 +24,7 @@ export function ExpenseRow({
   onDelete,
   onEdit,
   last,
-  showRegistrant = true,
+  showRegistrant = false,
 }: Props) {
   const { t, language } = useLanguage();
   const { format } = useMoney();
@@ -52,7 +53,7 @@ export function ExpenseRow({
               ? ` · ${categoryLabel(expense.categoryId, t, spendConcepts)}`
               : ''}
           </Text>
-          <Text style={styles.amount}>{format(expense.amount)}</Text>
+          <MoneyText style={styles.amount}>{format(expense.amount)}</MoneyText>
         </View>
         <Text style={styles.meta} numberOfLines={2}>
           {formatExpenseDate(expense.createdAt, language)}

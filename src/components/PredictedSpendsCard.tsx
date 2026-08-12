@@ -1,5 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 
+import { MoneyText } from '@/src/components/MoneyText';
 import { useMoney } from '@/src/hooks/useMoney';
 import { useSettings } from '@/src/hooks/useSettings';
 import { useLanguage } from '@/src/i18n/LanguageContext';
@@ -50,9 +51,9 @@ export function PredictedSpendsCard({ items }: Props) {
                   : t('home.predictPaid')}
               </Text>
             </View>
-            <Text style={[styles.amount, !pending && styles.amountPaid]}>
+            <MoneyText style={[styles.amount, !pending && styles.amountPaid]}>
               {format(item.amount)}
-            </Text>
+            </MoneyText>
           </View>
         );
       })}

@@ -1,10 +1,11 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { CollapsibleSection } from '@/src/components/CollapsibleSection';
 import { EditTransactionModal } from '@/src/components/EditTransactionModal';
 import { ExpenseRow } from '@/src/components/ExpenseRow';
 import { FadeInBlock } from '@/src/components/FadeInBlock';
+import { MoneyText } from '@/src/components/MoneyText';
 import { PeriodToggle } from '@/src/components/PeriodToggle';
 import { ScreenBackground } from '@/src/components/ScreenBackground';
 import { useFinance } from '@/src/hooks/useFinance';
@@ -12,8 +13,11 @@ import { useMoney } from '@/src/hooks/useMoney';
 import { useLanguage } from '@/src/i18n/LanguageContext';
 import type { TranslationKey } from '@/src/i18n/translations';
 import { palette, radii } from '@/src/theme/colors';
-import type { Period, PersonScope, Transaction } from '@/src/types/finance';
+import type { Period, Transaction } from '@/src/types/finance';
 import { shiftMonth, sumByType } from '@/src/utils/financeMath';
+import { tapFeedback } from '@/src/utils/selectFeedback';
+
+const PAGE_SIZE = 20;
 
 export default function HistorialScreen() {
   const { t, language } = useLanguage();
@@ -28,7 +32,6 @@ export default function HistorialScreen() {
 
   const now = new Date();
   const [period, setPeriod] = useState<Period>('mes');
-  const [personScope, setPersonScope] = useState<PersonScope>('mine');
   const [monthCursor, setMonthCursor] = useState({
     year: now.getFullYear(),
     monthIndex: now.getMonth(),
@@ -36,6 +39,7 @@ export default function HistorialScreen() {
   const [editing, setEditing] = useState<Transaction | null>(null);
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [listOpen, setListOpen] = useState(false);
+  const [page, setPage] = useState(0);
 
   const isCurrentMonth =
     monthCursor.year === now.getFullYear() &&
@@ -46,16 +50,31 @@ export default function HistorialScreen() {
       return transactionsForMonth(
         monthCursor.year,
         monthCursor.monthIndex,
-        personScope
+        'mine'
       );
     }
-    return transactionsForPeriod(period, personScope);
-  }, [period, personScope, monthCursor, transactionsForMonth, transactionsForPeriod]);
+    return transactionsForPeriod(period, 'mine');
+  }, [period, monthCursor, transactionsForMonth, transactionsForPeriod]);
+
+  const totalPages = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages - 1);
+  const pageStart = items.length === 0 ? 0 : safePage * PAGE_SIZE;
+  const pageItems = items.slice(pageStart, pageStart + PAGE_SIZE);
+  const rangeFrom = items.length === 0 ? 0 : pageStart + 1;
+  const rangeTo = Math.min(pageStart + PAGE_SIZE, items.length);
+
+  useEffect(() => {
+    setPage(0);
+  }, [period, monthCursor.year, monthCursor.monthIndex]);
+
+  useEffect(() => {
+    if (page > totalPages - 1) setPage(Math.max(0, totalPages - 1));
+  }, [page, totalPages]);
 
   const expenseTotal =
     period === 'mes'
       ? sumByType(items, 'expense')
-      : totalForPeriod(period, 'expense', personScope);
+      : totalForPeriod(period, 'expense', 'mine');
   const incomeTotal = sumByType(items, 'income');
   const monthBalance = incomeTotal - expenseTotal;
 
@@ -118,22 +137,6 @@ export default function HistorialScreen() {
               }
             }}
           />
-          <View style={styles.scopeRow}>
-            {(['mine', 'all'] as PersonScope[]).map((scope) => {
-              const active = personScope === scope;
-              return (
-                <Pressable
-                  key={scope}
-                  onPress={() => setPersonScope(scope)}
-                  style={[styles.scopeChip, active && styles.scopeChipActive]}>
-                  <Text style={[styles.scopeText, active && styles.scopeTextActive]}>
-                    {scope === 'mine' ? t('history.scopeMine') : t('history.scopeAll')}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-          <Text style={styles.scopeHint}>{t('history.personHint')}</Text>
         </FadeInBlock>
 
         {period === 'mes' ? (
@@ -168,31 +171,31 @@ export default function HistorialScreen() {
               <Text style={styles.summaryLabel}>
                 {t('history.total', { period: periodLabel })}
               </Text>
-              <Text style={styles.summaryAmount}>{format(expenseTotal)}</Text>
+              <MoneyText style={styles.summaryAmount}>{format(expenseTotal)}</MoneyText>
 
               {period === 'mes' ? (
                 <View style={styles.monthStats}>
                   <View style={styles.stat}>
                     <Text style={styles.statLabel}>{t('history.monthIncome')}</Text>
-                    <Text style={[styles.statValue, styles.income]}>
+                    <MoneyText style={[styles.statValue, styles.income]}>
                       {format(incomeTotal)}
-                    </Text>
+                    </MoneyText>
                   </View>
                   <View style={styles.stat}>
                     <Text style={styles.statLabel}>{t('history.monthExpenses')}</Text>
-                    <Text style={[styles.statValue, styles.expense]}>
+                    <MoneyText style={[styles.statValue, styles.expense]}>
                       {format(expenseTotal)}
-                    </Text>
+                    </MoneyText>
                   </View>
                   <View style={styles.stat}>
                     <Text style={styles.statLabel}>{t('history.monthBalance')}</Text>
-                    <Text
+                    <MoneyText
                       style={[
                         styles.statValue,
                         monthBalance >= 0 ? styles.income : styles.expense,
                       ]}>
                       {format(monthBalance)}
-                    </Text>
+                    </MoneyText>
                   </View>
                 </View>
               ) : null}
@@ -218,20 +221,76 @@ export default function HistorialScreen() {
                 <Text style={styles.empty}>{t('history.empty')}</Text>
               </View>
             ) : (
-              <View style={styles.list}>
-                {items.map((tx, index) => {
-                  const mine = canEditTransaction(tx);
-                  return (
-                    <ExpenseRow
-                      key={tx.id}
-                      expense={tx}
-                      last={index === items.length - 1}
-                      showRegistrant={personScope === 'all'}
-                      onEdit={mine ? () => openEdit(tx) : undefined}
-                      onDelete={mine ? () => confirmDelete(tx) : undefined}
-                    />
-                  );
-                })}
+              <View style={styles.listBlock}>
+                <View style={styles.list}>
+                  {pageItems.map((tx, index) => {
+                    const mine = canEditTransaction(tx);
+                    return (
+                      <ExpenseRow
+                        key={tx.id}
+                        expense={tx}
+                        last={index === pageItems.length - 1}
+                        showRegistrant={false}
+                        onEdit={mine ? () => openEdit(tx) : undefined}
+                        onDelete={mine ? () => confirmDelete(tx) : undefined}
+                      />
+                    );
+                  })}
+                </View>
+                {items.length > PAGE_SIZE ? (
+                  <View style={styles.pager}>
+                    <Text style={styles.pagerRange}>
+                      {t('history.showingRange', {
+                        from: rangeFrom,
+                        to: rangeTo,
+                        total: items.length,
+                      })}
+                    </Text>
+                    <View style={styles.pagerRow}>
+                      <Pressable
+                        onPress={() => {
+                          if (safePage <= 0) return;
+                          tapFeedback();
+                          setPage((p) => Math.max(0, p - 1));
+                        }}
+                        disabled={safePage <= 0}
+                        style={[styles.pagerBtn, safePage <= 0 && styles.navDisabled]}>
+                        <Text
+                          style={[
+                            styles.pagerBtnText,
+                            safePage <= 0 && styles.navTextDisabled,
+                          ]}>
+                          ‹ {t('history.prevPage')}
+                        </Text>
+                      </Pressable>
+                      <Text style={styles.pagerPage}>
+                        {t('history.pageOf', {
+                          page: safePage + 1,
+                          pages: totalPages,
+                        })}
+                      </Text>
+                      <Pressable
+                        onPress={() => {
+                          if (safePage >= totalPages - 1) return;
+                          tapFeedback();
+                          setPage((p) => Math.min(totalPages - 1, p + 1));
+                        }}
+                        disabled={safePage >= totalPages - 1}
+                        style={[
+                          styles.pagerBtn,
+                          safePage >= totalPages - 1 && styles.navDisabled,
+                        ]}>
+                        <Text
+                          style={[
+                            styles.pagerBtnText,
+                            safePage >= totalPages - 1 && styles.navTextDisabled,
+                          ]}>
+                          {t('history.nextPage')} ›
+                        </Text>
+                      </Pressable>
+                    </View>
+                  </View>
+                ) : null}
               </View>
             )}
           </CollapsibleSection>
@@ -254,38 +313,6 @@ const styles = StyleSheet.create({
     fontSize: 34,
     color: palette.brand,
     marginBottom: 12,
-  },
-  scopeRow: {
-    flexDirection: 'row',
-    gap: 8,
-    marginTop: 12,
-  },
-  scopeChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 999,
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.25)',
-  },
-  scopeChipActive: {
-    backgroundColor: palette.brand,
-    borderColor: palette.brand,
-  },
-  scopeText: {
-    fontFamily: 'DMSans_600SemiBold',
-    fontSize: 13,
-    color: palette.brand,
-  },
-  scopeTextActive: {
-    color: palette.white,
-  },
-  scopeHint: {
-    marginTop: 8,
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 12,
-    color: palette.brandMuted,
-    lineHeight: 17,
   },
   monthNav: {
     flexDirection: 'row',
@@ -368,12 +395,53 @@ const styles = StyleSheet.create({
     color: palette.inkSoft,
     lineHeight: 17,
   },
+  listBlock: {
+    gap: 10,
+  },
   list: {
     backgroundColor: palette.surfaceSolid,
     borderRadius: radii.lg,
     borderWidth: 1,
     borderColor: palette.border,
     paddingHorizontal: 16,
+  },
+  pager: {
+    backgroundColor: palette.surfaceSolid,
+    borderRadius: radii.md,
+    borderWidth: 1,
+    borderColor: palette.border,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    gap: 8,
+  },
+  pagerRange: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 12,
+    color: palette.inkMuted,
+    textAlign: 'center',
+  },
+  pagerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  pagerBtn: {
+    paddingVertical: 6,
+    paddingHorizontal: 4,
+    minWidth: 88,
+  },
+  pagerBtnText: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 13,
+    color: palette.ink,
+  },
+  pagerPage: {
+    flex: 1,
+    textAlign: 'center',
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 13,
+    color: palette.inkMuted,
   },
   emptyWrap: {
     backgroundColor: palette.surfaceSolid,

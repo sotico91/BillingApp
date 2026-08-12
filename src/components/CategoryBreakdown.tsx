@@ -1,5 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 
+import { MoneyText } from '@/src/components/MoneyText';
 import { useMoney } from '@/src/hooks/useMoney';
 import { useSettings } from '@/src/hooks/useSettings';
 import { useLanguage } from '@/src/i18n/LanguageContext';
@@ -107,14 +108,14 @@ export function CategoryBreakdown({ insights, emptyLabel, budgetStatus }: Props)
                   {categoryLabel(item.categoryId, t, spendConcepts)}
                 </Text>
               </View>
-              <Text
+              <MoneyText
                 style={[
                   styles.total,
                   tone === 'danger' && styles.textDanger,
                   tone === 'good' && styles.textGood,
                 ]}>
                 {format(item.total)}
-              </Text>
+              </MoneyText>
             </View>
             <View style={styles.track}>
               <View
@@ -135,7 +136,7 @@ export function CategoryBreakdown({ insights, emptyLabel, budgetStatus }: Props)
               />
             </View>
             <Text style={styles.meta}>
-              {t('insights.percentOfIncomeShort', { percent: item.percent.toFixed(0) })}
+              {t('insights.percentOfTotalShort', { percent: item.percent.toFixed(0) })}
               {' · '}
               {item.count}{' '}
               {item.count === 1 ? t('insights.expense') : t('insights.expenses')}

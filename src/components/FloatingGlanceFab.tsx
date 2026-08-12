@@ -130,13 +130,15 @@ export function FloatingGlanceFab() {
                   );
                   const over = budget && budget.ratio > 1;
                   const near = budget && budget.ratio >= 0.8 && budget.ratio <= 1;
+                  // High share of this month's spending also deserves attention.
+                  const heavyShare = item.percent >= 30;
                   return (
                     <View
                       key={item.categoryId}
                       style={[
                         styles.conceptRow,
                         over && styles.conceptDanger,
-                        near && styles.conceptWarn,
+                        !over && (near || heavyShare) && styles.conceptWarn,
                       ]}>
                       <View style={styles.conceptLeft}>
                         <View
@@ -147,11 +149,24 @@ export function FloatingGlanceFab() {
                             {categoryLabel(item.categoryId, t, spendConcepts)}
                           </Text>
                           <Text style={styles.conceptMeta}>
-                            {item.percent.toFixed(0)}% · {item.count}{' '}
+                            {item.count}{' '}
                             {item.count === 1
                               ? t('insights.expense')
                               : t('insights.expenses')}
                           </Text>
+                          {over ? (
+                            <Text style={styles.attentionBadge}>
+                              {t('insights.overBudget')}
+                            </Text>
+                          ) : heavyShare ? (
+                            <Text style={styles.attentionBadgeWarn}>
+                              {t('fab.heavyShare')}
+                            </Text>
+                          ) : near ? (
+                            <Text style={styles.attentionBadgeWarn}>
+                              {t('insights.nearBudget')}
+                            </Text>
+                          ) : null}
                         </View>
                       </View>
                       <Text
@@ -211,6 +226,9 @@ function Kpi({
       ]}>
       <Text style={styles.kpiLabel}>{label}</Text>
       <Text
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        minimumFontScale={0.7}
         style={[
           styles.kpiValue,
           tone === 'good' && styles.textGood,
@@ -329,6 +347,13 @@ const styles = StyleSheet.create({
     fontFamily: 'DMSans_600SemiBold',
     fontSize: 13,
     color: palette.inkMuted,
+    marginBottom: 4,
+  },
+  sectionHint: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 11,
+    color: palette.inkSoft,
+    lineHeight: 15,
     marginBottom: 8,
   },
   list: {
@@ -378,6 +403,22 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: palette.inkSoft,
     marginTop: 2,
+  },
+  attentionBadge: {
+    marginTop: 4,
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 10,
+    color: palette.danger,
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
+  },
+  attentionBadgeWarn: {
+    marginTop: 4,
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 10,
+    color: palette.accentDeep,
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
   },
   conceptAmount: {
     fontFamily: 'Fraunces_600SemiBold',

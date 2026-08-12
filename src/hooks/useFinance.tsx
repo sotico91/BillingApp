@@ -536,10 +536,6 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
           : t.type === 'expense' || t.type === 'debt_payment'
       );
       const total = list.reduce((sum, e) => sum + e.amount, 0);
-      const incomeBase =
-        kind === 'expense'
-          ? sumByType(transactionsForPeriod(period, 'mine'), 'income')
-          : total;
       const map = new Map<string, { total: number; count: number }>();
       for (const e of list) {
         if (!e.categoryId) continue;
@@ -555,7 +551,8 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
           color: resolveConceptColor(categoryId, settings.spendConcepts ?? []),
           total: stats.total,
           count: stats.count,
-          percent: percentOfBase(stats.total, incomeBase),
+          // Share of period spend (not income). Income % lives in Entender Q&A.
+          percent: percentOfBase(stats.total, total),
         }))
         .sort((a, b) => b.total - a.total);
     },

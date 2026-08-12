@@ -5,6 +5,7 @@ import { AppCopyright } from '@/src/components/AppCopyright';
 import { CollapsibleSection } from '@/src/components/CollapsibleSection';
 import { ConceptsPlanCard } from '@/src/components/ConceptsPlanCard';
 import { FadeInBlock } from '@/src/components/FadeInBlock';
+import { MoneyText } from '@/src/components/MoneyText';
 import { ReminderSettingsCard } from '@/src/components/ReminderSettingsCard';
 import { ScreenBackground } from '@/src/components/ScreenBackground';
 import { useFinance } from '@/src/hooks/useFinance';
@@ -19,9 +20,8 @@ export default function PlanScreen() {
   const { t } = useLanguage();
   const { format } = useMoney();
   const { settings } = useSettings();
-  const { budgetStatus, antForPeriod, totalForPeriod } = useFinance();
+  const { budgetStatus, antForPeriod } = useFinance();
   const ant = antForPeriod('mes');
-  const monthIncome = totalForPeriod('mes', 'income');
   const spendConcepts = settings.spendConcepts ?? [];
   const [conceptsOpen, setConceptsOpen] = useState(false);
   const [remindersOpen, setRemindersOpen] = useState(false);
@@ -73,10 +73,7 @@ export default function PlanScreen() {
                 {activeBudgets.map((b, index) => {
                   const tone = toneFromBudgetRatio(b.ratio);
                   const over = b.remaining < 0;
-                  const incomePct =
-                    monthIncome > 0
-                      ? Math.min(Math.round((b.spent / monthIncome) * 100), 999)
-                      : 0;
+                  const pct = Math.min(Math.round(b.ratio * 100), 999);
                   return (
                     <View
                       key={b.categoryId}
@@ -95,9 +92,7 @@ export default function PlanScreen() {
                             tone === 'warn' && styles.textWarn,
                             tone === 'good' && styles.textGood,
                           ]}>
-                          {monthIncome > 0
-                            ? t('insights.percentOfIncomeShort', { percent: incomePct })
-                            : format(b.spent)}
+                          {pct}%
                         </Text>
                       </View>
                       <View style={styles.track}>
@@ -155,7 +150,7 @@ export default function PlanScreen() {
               )}
               <View style={styles.antHeader}>
                 <Text style={styles.rowTitle}>{t('home.antTotal')}</Text>
-                <Text style={styles.antTotal}>{format(ant.total)}</Text>
+                <MoneyText style={styles.antTotal}>{format(ant.total)}</MoneyText>
               </View>
               {ant.items.length === 0 ? (
                 <Text style={styles.empty}>{t('plan.antEmpty')}</Text>
@@ -170,7 +165,7 @@ export default function PlanScreen() {
                     <Text style={styles.rowMeta}>
                       {categoryLabel(item.categoryId, t, spendConcepts)}
                     </Text>
-                    <Text style={styles.antAmount}>{format(item.amount)}</Text>
+                    <MoneyText style={styles.antAmount}>{format(item.amount)}</MoneyText>
                   </View>
                 ))
               )}

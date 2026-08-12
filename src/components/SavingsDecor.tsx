@@ -200,6 +200,9 @@ function PanelStat({
     <View style={styles.stat}>
       <Text style={styles.statLabel}>{label}</Text>
       <Text
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        minimumFontScale={0.7}
         style={[
           styles.statValue,
           tone === 'good' && styles.good,

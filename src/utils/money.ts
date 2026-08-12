@@ -1,10 +1,14 @@
 import type { Currency } from '@/src/types/settings';
 
-/** Prevent RN from wrapping minus / symbol / amount onto separate lines in narrow tiles. */
+/**
+ * Keep currency symbol, sign and digits on one visual line.
+ * RN Text often wraps after `$` even with NBSP; drop that gap and glue the sign.
+ */
 function keepMoneyOnOneLine(formatted: string): string {
   return formatted
-    .replace(/^([\-\u2212])(?=\S)/u, '$1\u2060')
-    .replace(/([\$\u00A2\u20AC\u00A3])([\s\u00A0])/u, '$1\u2060$2');
+    .replace(/([\-\u2212])[\s\u00A0]*/u, '$1\u2060')
+    .replace(/([\$\u00A2\u20AC\u00A3\u20B1])[\s\u00A0]+/u, '$1')
+    .replace(/[\s\u00A0]+/g, '\u00A0');
 }
 
 export function formatMoney(amount: number, currency: Currency): string {

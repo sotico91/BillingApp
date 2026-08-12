@@ -1,5 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 
+import { MoneyText } from '@/src/components/MoneyText';
 import { useMoney } from '@/src/hooks/useMoney';
 import { palette, radii } from '@/src/theme/colors';
 
@@ -16,7 +17,9 @@ export function SummaryCard({ label, amount, hint, large }: Props) {
   return (
     <View style={[styles.wrap, large && styles.wrapLarge]}>
       <Text style={styles.label}>{label}</Text>
-      <Text style={[styles.amount, large && styles.amountLarge]}>{format(amount)}</Text>
+      <MoneyText style={[styles.amount, large && styles.amountLarge]}>
+        {format(amount)}
+      </MoneyText>
       {hint ? <Text style={styles.hint}>{hint}</Text> : null}
     </View>
   );
