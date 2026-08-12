@@ -166,7 +166,7 @@ export default function HomeScreen() {
             <DashTile
               label={t('home.expenses')}
               value={format(loading ? 0 : expenses)}
-              tone={expensesTone}
+              tone={expensesTone === 'neutral' ? 'danger' : expensesTone}
               onPress={() => setGlance('expense')}
             />
             <DashTile
@@ -189,7 +189,7 @@ export default function HomeScreen() {
             <DashTile
               label={t('home.debts')}
               value={format(debtTotal)}
-              tone={debtTotal > 0 ? 'warn' : 'good'}
+              tone={debtTotal > 0 ? 'warn' : 'neutral'}
               onPress={() => router.push('/(tabs)/wealth')}
             />
             <DashTile

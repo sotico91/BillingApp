@@ -20,14 +20,12 @@ export function toneFromExpensePressure(opts: {
   income: number;
   worstBudgetRatio: number;
 }): SignalTone {
+  // Expenses must never look "good"/green — that color is reserved for income/savings.
   if (opts.worstBudgetRatio >= 1 || (opts.income > 0 && opts.expenses > opts.income)) {
     return 'danger';
   }
   if (opts.worstBudgetRatio >= 0.8 || (opts.income > 0 && opts.expenses / opts.income >= 0.85)) {
     return 'warn';
-  }
-  if (opts.income > 0 && opts.expenses / opts.income <= 0.6) {
-    return 'good';
   }
   return 'neutral';
 }
