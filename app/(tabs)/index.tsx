@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CollapsibleSection } from '@/src/components/CollapsibleSection';
 import { ConceptGlanceSheet } from '@/src/components/ConceptGlanceSheet';
@@ -16,6 +17,7 @@ import { useFinance } from '@/src/hooks/useFinance';
 import { useMoney } from '@/src/hooks/useMoney';
 import { useSettings } from '@/src/hooks/useSettings';
 import { useLanguage } from '@/src/i18n/LanguageContext';
+import type { TranslationKey } from '@/src/i18n/translations';
 import { palette, radii } from '@/src/theme/colors';
 import type { Transaction } from '@/src/types/finance';
 import { categoryLabel } from '@/src/utils/categoryLabel';
@@ -26,7 +28,10 @@ import {
   type SignalTone,
 } from '@/src/utils/signalTone';
 
+type MoneyInfoKind = 'available' | 'savings';
+
 export default function HomeScreen() {
+  const insets = useSafeAreaInsets();
   const { t } = useLanguage();
   const { format } = useMoney();
   const { settings } = useSettings();
@@ -46,6 +51,7 @@ export default function HomeScreen() {
   } = useFinance();
   const [editing, setEditing] = useState<Transaction | null>(null);
   const [glance, setGlance] = useState<'expense' | 'income' | null>(null);
+  const [moneyInfo, setMoneyInfo] = useState<MoneyInfoKind | null>(null);
   const [attentionOpen, setAttentionOpen] = useState(false);
   const [predictOpen, setPredictOpen] = useState(false);
   const [todayOpen, setTodayOpen] = useState(false);
@@ -170,7 +176,7 @@ export default function HomeScreen() {
               label={t('home.available')}
               value={format(availableCash)}
               tone={availableCash < expenses * 0.2 && expenses > 0 ? 'warn' : 'neutral'}
-              hint={t('home.availableCaption')}
+              onPress={() => setMoneyInfo('available')}
             />
             <DashTile
               label={t('home.savings')}
@@ -178,11 +184,12 @@ export default function HomeScreen() {
               tone={savingsTone}
               hint={
                 savingsTone === 'good'
-                  ? `${t('home.savingsCaption')} · ${t('home.savingsGood')}`
+                  ? t('home.savingsGood')
                   : savingsTone === 'danger'
-                    ? `${t('home.savingsCaption')} · ${t('home.savingsBad')}`
-                    : t('home.savingsCaption')
+                    ? t('home.savingsBad')
+                    : undefined
               }
+              onPress={() => setMoneyInfo('savings')}
             />
             <DashTile
               label={t('home.debts')}
@@ -196,7 +203,6 @@ export default function HomeScreen() {
               tone={toneFromSavings(netWorth.net)}
             />
           </View>
-          <Text style={styles.moneyLegend}>{t('home.moneyLegend')}</Text>
           {!loading && expenses === 0 ? (
             <Text style={styles.monthFresh}>
               {t('home.monthFresh', { amount: format(0) })}
@@ -345,6 +351,52 @@ export default function HomeScreen() {
         transaction={editing}
         onClose={() => setEditing(null)}
       />
+
+      <Modal
+        visible={moneyInfo != null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setMoneyInfo(null)}>
+        <View style={styles.infoRoot}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => setMoneyInfo(null)} />
+          <View
+            style={[
+              styles.infoCard,
+              { marginBottom: Math.max(insets.bottom, 16) + 24 },
+            ]}>
+            <Text style={styles.infoEyebrow}>{t('home.moneyInfoEyebrow')}</Text>
+            <Text style={styles.infoTitle}>
+              {t(
+                (moneyInfo === 'available'
+                  ? 'home.available'
+                  : 'home.savings') as TranslationKey
+              )}
+            </Text>
+            <Text style={styles.infoBody}>
+              {t(
+                (moneyInfo === 'available'
+                  ? 'home.availableInfoBody'
+                  : 'home.savingsInfoBody') as TranslationKey
+              )}
+            </Text>
+            <Text style={styles.infoCompare}>
+              {t(
+                (moneyInfo === 'available'
+                  ? 'home.availableInfoCompare'
+                  : 'home.savingsInfoCompare') as TranslationKey
+              )}
+            </Text>
+            <Pressable
+              onPress={() => {
+                tapFeedback();
+                setMoneyInfo(null);
+              }}
+              style={styles.infoBtn}>
+              <Text style={styles.infoBtnText}>{t('home.moneyInfoGotIt')}</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
     </ScreenBackground>
   );
 }
@@ -512,12 +564,58 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: palette.brandMuted,
   },
-  moneyLegend: {
+  infoRoot: {
+    flex: 1,
+    backgroundColor: 'rgba(8,20,28,0.55)',
+    justifyContent: 'flex-end',
+    paddingHorizontal: 18,
+  },
+  infoCard: {
+    backgroundColor: palette.surfaceSolid,
+    borderRadius: radii.xl,
+    padding: 22,
+    borderWidth: 1,
+    borderColor: palette.border,
+  },
+  infoEyebrow: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 11,
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+    color: palette.inkSoft,
+  },
+  infoTitle: {
+    marginTop: 6,
+    fontFamily: 'Fraunces_700Bold',
+    fontSize: 26,
+    color: palette.ink,
+    letterSpacing: -0.3,
+  },
+  infoBody: {
     marginTop: 10,
     fontFamily: 'DMSans_400Regular',
-    fontSize: 12,
-    lineHeight: 17,
-    color: palette.brandMuted,
+    fontSize: 15,
+    lineHeight: 22,
+    color: palette.inkMuted,
+  },
+  infoCompare: {
+    marginTop: 10,
+    fontFamily: 'DMSans_500Medium',
+    fontSize: 14,
+    lineHeight: 20,
+    color: palette.ink,
+  },
+  infoBtn: {
+    marginTop: 18,
+    backgroundColor: palette.accent,
+    borderRadius: radii.md,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  infoBtnText: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 16,
+    color: palette.white,
   },
   monthFresh: {
     marginTop: 10,

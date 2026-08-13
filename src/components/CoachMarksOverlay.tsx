@@ -9,13 +9,14 @@ import type { TranslationKey } from '@/src/i18n/translations';
 import { palette, radii } from '@/src/theme/colors';
 
 type Step = {
-  id: 'privacy' | 'glance' | 'tabs';
+  id: 'privacy' | 'money' | 'glance' | 'tabs';
   title: TranslationKey;
   body: TranslationKey;
 };
 
 const STEPS: Step[] = [
   { id: 'privacy', title: 'coach.privacyTitle', body: 'coach.privacyBody' },
+  { id: 'money', title: 'coach.moneyTitle', body: 'coach.moneyBody' },
   { id: 'glance', title: 'coach.glanceTitle', body: 'coach.glanceBody' },
   { id: 'tabs', title: 'coach.tabsTitle', body: 'coach.tabsBody' },
 ];
@@ -103,6 +104,22 @@ export function CoachMarksOverlay() {
           />
         ) : null}
 
+        {current.id === 'money' ? (
+          <View
+            pointerEvents="none"
+            style={[
+              styles.spotBar,
+              {
+                left: 18,
+                right: 18,
+                top: insets.top + 168,
+                height: 168,
+                borderRadius: 22,
+              },
+            ]}
+          />
+        ) : null}
+
         {current.id === 'tabs' ? (
           <View
             pointerEvents="none"
@@ -124,6 +141,7 @@ export function CoachMarksOverlay() {
           style={[
             styles.cardWrap,
             current.id === 'privacy' && { left: 16, bottom: fabBottom + FAB_SIZE + 18 },
+            current.id === 'money' && { left: 18, right: 18, top: insets.top + 350 },
             current.id === 'glance' && { right: 16, bottom: fabBottom + GLANCE_SIZE + 18 },
             current.id === 'tabs' && { left: 18, right: 18, bottom: tabTop + 86 },
           ]}>
@@ -131,6 +149,7 @@ export function CoachMarksOverlay() {
             style={[
               styles.card,
               current.id === 'privacy' && styles.cardLeft,
+              current.id === 'money' && styles.cardCenter,
               current.id === 'glance' && styles.cardRight,
             ]}>
             <Text style={styles.kicker}>
@@ -142,6 +161,7 @@ export function CoachMarksOverlay() {
               style={[
                 styles.arrow,
                 current.id === 'privacy' && styles.arrowLeft,
+                current.id === 'money' && styles.arrowTop,
                 current.id === 'glance' && styles.arrowRight,
                 current.id === 'tabs' && styles.arrowCenter,
               ]}
@@ -206,6 +226,7 @@ const styles = StyleSheet.create({
   },
   cardLeft: { alignSelf: 'flex-start' },
   cardRight: { alignSelf: 'flex-end' },
+  cardCenter: { alignSelf: 'center', maxWidth: 340 },
   kicker: {
     fontFamily: 'DMSans_600SemiBold',
     fontSize: 11,
@@ -238,6 +259,7 @@ const styles = StyleSheet.create({
   arrowLeft: { left: 22 },
   arrowRight: { right: 22 },
   arrowCenter: { alignSelf: 'center', left: '50%', marginLeft: -6 },
+  arrowTop: { top: -6, bottom: undefined, alignSelf: 'center', left: '50%', marginLeft: -6 },
   footer: {
     position: 'absolute',
     left: 16,

@@ -39,6 +39,16 @@ export const translations = {
     'home.availableCaption': 'Cash in hand today (cash + bank + savings accounts)',
     'home.savings': 'This month’s result',
     'home.savingsCaption': 'Income − spend this month (incl. debt payments)',
+    'home.availableInfoBody':
+      'This is the money you can use right now: cash + bank + savings accounts added together.',
+    'home.availableInfoCompare':
+      'It does not reset each month. Spending lowers it; salary raises it. Moving money between your own accounts barely changes it.',
+    'home.savingsInfoBody':
+      'This is only this calendar month: income minus expenses (including debt payments).',
+    'home.savingsInfoCompare':
+      'It restarts at zero every new month. A transfer to savings does not change it — that is not income or spend.',
+    'home.moneyInfoEyebrow': 'What this tile means',
+    'home.moneyInfoGotIt': 'Got it',
     'home.debts': 'Debts',
     'home.netWorth': 'Net worth',
     'home.attention': 'Needs attention',
@@ -477,7 +487,7 @@ export const translations = {
 
     'onboard.welcomeTitle': "Let's make money feel simple",
     'onboard.welcomeBody':
-      'In under a minute you’ll set your name, currency, categories, and a friendly guided flow to log coffee, salary, or savings.',
+      'In under a minute you’ll set your name, currency, categories, and a friendly guided flow to log coffee, salary, or savings. On Home, tap Available now or This month’s result when you want to know what each number means.',
     'onboard.welcomeShare':
       'If you later share a household ledger, each person only registers their own spends — never someone else’s.',
     'onboard.start': 'Sounds good',
@@ -511,6 +521,9 @@ export const translations = {
     'coach.tapHint': 'Tap to continue',
     'coach.privacyTitle': 'Show/hide amounts',
     'coach.privacyBody': 'Tap the eye to show or hide the values in the app.',
+    'coach.moneyTitle': 'Available vs this month',
+    'coach.moneyBody':
+      'Tap “Available now” or “This month’s result” anytime for a short explanation. One is cash today; the other is whether this month stayed in the green.',
     'coach.glanceTitle': 'Check this month’s amounts',
     'coach.glanceBody': 'Open this to review totals by concept and spot what needs attention.',
     'coach.tabsTitle': 'The rest lives down here',
@@ -666,6 +679,16 @@ export const translations = {
     'home.availableCaption': 'Lo que tienes ahora (efectivo + banco + ahorro)',
     'home.savings': 'Resultado del mes',
     'home.savingsCaption': 'Ingresos − gastos de este mes (incluye cuotas)',
+    'home.availableInfoBody':
+      'Es el dinero que puedes usar ahora: efectivo + banco + cuentas de ahorro, sumados.',
+    'home.availableInfoCompare':
+      'No se reinicia cada mes. Gastar lo baja; el salario lo sube. Mover plata entre tus propias cuentas casi no lo cambia.',
+    'home.savingsInfoBody':
+      'Es solo este mes calendario: ingresos menos gastos (incluye cuotas de deudas).',
+    'home.savingsInfoCompare':
+      'Vuelve a cero cada mes nuevo. Una transferencia a ahorro no lo cambia — eso no es ingreso ni gasto.',
+    'home.moneyInfoEyebrow': 'Qué significa esta caja',
+    'home.moneyInfoGotIt': 'Entendido',
     'home.debts': 'Deudas',
     'home.netWorth': 'Patrimonio',
     'home.attention': 'Merece atención',
@@ -1106,7 +1129,7 @@ export const translations = {
 
     'onboard.welcomeTitle': 'Hagamos que el dinero se sienta simple',
     'onboard.welcomeBody':
-      'En menos de un minuto eliges tu nombre, moneda, categorías y un flujo guiado para registrar café, salario o ahorros.',
+      'En menos de un minuto eliges tu nombre, moneda, categorías y un flujo guiado para registrar café, salario o ahorros. En Inicio, toca Disponible hoy o Resultado del mes cuando quieras saber qué significa cada número.',
     'onboard.welcomeShare':
       'Si más adelante compartes el hogar, cada persona solo registra lo suyo — nunca el gasto de otra.',
     'onboard.start': 'Suena bien',
@@ -1140,6 +1163,9 @@ export const translations = {
     'coach.tapHint': 'Toca para seguir',
     'coach.privacyTitle': 'Ver/ocultar montos',
     'coach.privacyBody': 'Toca el ojo para ver u ocultar los valores de la app.',
+    'coach.moneyTitle': 'Disponible vs resultado del mes',
+    'coach.moneyBody':
+      'Toca “Disponible hoy” o “Resultado del mes” cuando quieras para ver la explicación. Uno es tu plata de ahora; el otro es si este mes vas a favor o en rojo.',
     'coach.glanceTitle': 'Validar los montos del mes',
     'coach.glanceBody': 'Aquí revisas totales por concepto y ves qué merece atención.',
     'coach.tabsTitle': 'El resto está abajo',
