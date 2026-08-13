@@ -170,6 +170,7 @@ export default function HomeScreen() {
               label={t('home.available')}
               value={format(availableCash)}
               tone={availableCash < expenses * 0.2 && expenses > 0 ? 'warn' : 'neutral'}
+              hint={t('home.availableCaption')}
             />
             <DashTile
               label={t('home.savings')}
@@ -177,10 +178,10 @@ export default function HomeScreen() {
               tone={savingsTone}
               hint={
                 savingsTone === 'good'
-                  ? t('home.savingsGood')
+                  ? `${t('home.savingsCaption')} · ${t('home.savingsGood')}`
                   : savingsTone === 'danger'
-                    ? t('home.savingsBad')
-                    : undefined
+                    ? `${t('home.savingsCaption')} · ${t('home.savingsBad')}`
+                    : t('home.savingsCaption')
               }
             />
             <DashTile
@@ -195,6 +196,7 @@ export default function HomeScreen() {
               tone={toneFromSavings(netWorth.net)}
             />
           </View>
+          <Text style={styles.moneyLegend}>{t('home.moneyLegend')}</Text>
           {!loading && expenses === 0 ? (
             <Text style={styles.monthFresh}>
               {t('home.monthFresh', { amount: format(0) })}
@@ -408,7 +410,7 @@ function DashTile({
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  content: { paddingHorizontal: 22, paddingBottom: 120, gap: 16 },
+  content: { paddingHorizontal: 22, paddingBottom: 168, gap: 16 },
   heroRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -508,6 +510,13 @@ const styles = StyleSheet.create({
     marginTop: 8,
     fontFamily: 'DMSans_400Regular',
     fontSize: 13,
+    color: palette.brandMuted,
+  },
+  moneyLegend: {
+    marginTop: 10,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 12,
+    lineHeight: 17,
     color: palette.brandMuted,
   },
   monthFresh: {

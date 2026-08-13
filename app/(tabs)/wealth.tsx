@@ -285,7 +285,7 @@ export default function WealthScreen() {
                 <TextInput
                   value={balance}
                   onChangeText={setBalance}
-                  keyboardType={currency === 'USD' ? 'decimal-pad' : 'number-pad'}
+                  keyboardType="decimal-pad"
                   placeholder="0"
                   placeholderTextColor={palette.inkSoft}
                   style={styles.input}
@@ -294,7 +294,7 @@ export default function WealthScreen() {
                 <TextInput
                   value={installment}
                   onChangeText={setInstallment}
-                  keyboardType={currency === 'USD' ? 'decimal-pad' : 'number-pad'}
+                  keyboardType="decimal-pad"
                   placeholder="0"
                   placeholderTextColor={palette.inkSoft}
                   style={styles.input}
@@ -459,7 +459,7 @@ export default function WealthScreen() {
 }
 
 const styles = StyleSheet.create({
-  content: { padding: 22, paddingBottom: 120, gap: 12 },
+  content: { padding: 22, paddingBottom: 168, gap: 12 },
   title: {
     fontFamily: 'Fraunces_700Bold',
     fontSize: 34,

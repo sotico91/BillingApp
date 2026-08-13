@@ -129,11 +129,12 @@ export function EditTransactionModal({ transaction, visible, onClose }: Props) {
               <TextInput
                 value={amount}
                 onChangeText={setAmount}
-                keyboardType={currency === 'USD' ? 'decimal-pad' : 'number-pad'}
+                keyboardType="decimal-pad"
                 style={styles.amountInput}
               />
             </View>
             <Text style={styles.hint}>{format(parse(amount) ?? 0, { reveal: true })}</Text>
+            <Text style={styles.hint}>{t('add.amountDecimalHint')}</Text>
 
             <Text style={styles.label}>{t('add.type')}</Text>
             <View style={styles.wrap}>

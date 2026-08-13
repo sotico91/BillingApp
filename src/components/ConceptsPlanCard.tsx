@@ -333,7 +333,7 @@ export function ConceptsPlanCard() {
               <TextInput
                 value={limitDraft}
                 onChangeText={setLimitDraft}
-                keyboardType={currency === 'USD' ? 'decimal-pad' : 'number-pad'}
+                keyboardType="decimal-pad"
                 placeholder="0"
                 placeholderTextColor={palette.inkSoft}
                 style={styles.input}

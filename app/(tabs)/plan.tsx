@@ -182,7 +182,7 @@ export default function PlanScreen() {
 }
 
 const styles = StyleSheet.create({
-  content: { padding: 22, paddingBottom: 120, gap: 12 },
+  content: { padding: 22, paddingBottom: 168, gap: 12 },
   title: {
     fontFamily: 'Fraunces_700Bold',
     fontSize: 34,

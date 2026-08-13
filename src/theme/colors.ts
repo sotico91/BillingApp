@@ -6,8 +6,10 @@ export const palette = {
   surface: 'rgba(255,255,255,0.92)',
   surfaceSolid: '#FFFFFF',
   ink: '#0F1C24',
-  inkMuted: '#4A5D68',
-  inkSoft: '#7A8E99',
+  /** Body secondary — readable at mid/low brightness. */
+  inkMuted: '#3A4D57',
+  /** Captions / hints — darker than before so greys stay legible. */
+  inkSoft: '#5A6E79',
   accent: '#FF6B4A',
   accentDeep: '#E25538',
   accentSoft: '#FFE3DB',

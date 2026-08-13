@@ -39,6 +39,7 @@ export function FloatingGlanceFab() {
   const concepts = useMemo(() => insightsForPeriod('mes', 'expense'), [insightsForPeriod]);
   const expenses = totalForPeriod('mes', 'expense');
   const income = totalForPeriod('mes', 'income');
+  const savings = income - expenses;
   const alerts = budgetStatus.filter((b) => b.ratio > 1 && b.spent > 0 && b.limit > 0).length;
 
   function confirmReset() {
@@ -110,6 +111,13 @@ export function FloatingGlanceFab() {
             <View style={styles.kpiRow}>
               <Kpi label={t('home.expenses')} value={format(expenses)} tone="danger" />
               <Kpi label={t('home.income')} value={format(income)} tone="good" />
+              <Kpi
+                label={t('home.savings')}
+                value={format(savings)}
+                tone={savings >= 0 ? 'good' : 'danger'}
+              />
+            </View>
+            <View style={[styles.kpiRow, { marginTop: -2 }]}>
               <Kpi label={t('home.available')} value={format(availableCash)} tone="neutral" />
             </View>
 

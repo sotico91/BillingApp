@@ -176,7 +176,7 @@ export function ExpenseForm({ onSaved }: Props) {
         <TextInput
           value={amount}
           onChangeText={setAmount}
-          keyboardType={currency === 'USD' ? 'decimal-pad' : 'number-pad'}
+          keyboardType="decimal-pad"
           placeholder="0"
           placeholderTextColor={palette.inkSoft}
           style={styles.amountInput}

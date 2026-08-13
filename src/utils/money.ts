@@ -42,18 +42,58 @@ export function formatCOP(amount: number): string {
   return formatMoney(amount, 'COP');
 }
 
-export function parseAmountInput(value: string, currency: Currency = 'COP'): number | null {
-  if (currency === 'USD') {
-    const cleaned = value.replace(/[^\d.]/g, '');
-    if (!cleaned) return null;
-    const amount = Number(cleaned);
-    if (!Number.isFinite(amount) || amount <= 0) return null;
-    return Math.round(amount * 100) / 100;
+/**
+ * Accept comma or dot as decimal, and common thousands separators
+ * (1.234,56 / 1,234.56 / 15,5 / 15.5 / 15.000).
+ */
+export function normalizeAmountDigits(value: string): string {
+  let s = value.trim().replace(/\s/g, '').replace(/[^\d.,]/g, '');
+  if (!s) return '';
+
+  const lastComma = s.lastIndexOf(',');
+  const lastDot = s.lastIndexOf('.');
+
+  if (lastComma >= 0 && lastDot >= 0) {
+    if (lastComma > lastDot) {
+      // 1.234,56 → 1234.56
+      s = s.replace(/\./g, '').replace(',', '.');
+    } else {
+      // 1,234.56 → 1234.56
+      s = s.replace(/,/g, '');
+    }
+    return s;
   }
 
-  const cleaned = value.replace(/[^\d]/g, '');
+  const sepIndex = Math.max(lastComma, lastDot);
+  if (sepIndex < 0) return s;
+
+  const frac = s.length - sepIndex - 1;
+  const sep = s[sepIndex];
+  const left = s.slice(0, sepIndex);
+  const right = s.slice(sepIndex + 1);
+
+  // Multiple same separators → thousands (1.234.567 / 1,234,567).
+  if ((sep === '.' && left.includes('.')) || (sep === ',' && left.includes(','))) {
+    return s.replace(/[.,]/g, '');
+  }
+
+  // Exactly 3 digits after a single separator → thousands (15.000 / 15,000).
+  if (frac === 3) {
+    return left + right;
+  }
+
+  // 1–2 fractional digits → decimal.
+  return `${left}.${right}`;
+}
+
+export function parseAmountInput(value: string, currency: Currency = 'COP'): number | null {
+  const cleaned = normalizeAmountDigits(value);
   if (!cleaned) return null;
   const amount = Number(cleaned);
   if (!Number.isFinite(amount) || amount <= 0) return null;
-  return amount;
+  if (currency === 'USD') {
+    return Math.round(amount * 100) / 100;
+  }
+  // COP display has no cents; keep pesos whole.
+  return Math.round(amount);
 }

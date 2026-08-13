@@ -300,7 +300,7 @@ export default function InsightsScreen() {
 }
 
 const styles = StyleSheet.create({
-  content: { padding: 22, paddingBottom: 120, gap: 14 },
+  content: { padding: 22, paddingBottom: 168, gap: 14 },
   heroRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
   heroCopy: { flex: 1 },
   pageTitle: {

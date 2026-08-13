@@ -308,13 +308,14 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
               <TextInput
                 value={amount}
                 onChangeText={setAmount}
-                keyboardType={currency === 'USD' ? 'decimal-pad' : 'number-pad'}
+                keyboardType="decimal-pad"
                 placeholder="0"
                 placeholderTextColor={palette.inkSoft}
                 style={styles.amountInput}
                 autoFocus
               />
             </View>
+            <Text style={styles.amountHint}>{t('add.amountDecimalHint')}</Text>
           </Animated.View>
         ) : null}
 
@@ -739,6 +740,12 @@ const styles = StyleSheet.create({
     fontSize: 48,
     color: palette.ink,
     paddingVertical: 6,
+  },
+  amountHint: {
+    marginTop: 8,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
+    color: palette.inkMuted,
   },
   catGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   catCard: {

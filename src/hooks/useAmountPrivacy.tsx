@@ -1,14 +1,18 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
 } from 'react';
 
+const AMOUNTS_VISIBLE_KEY = '@billingapp/amounts_visible';
+
 type AmountPrivacyContextValue = {
-  /** When false, monetary displays show a mask. Always starts hidden on cold launch. */
+  /** When false, monetary displays show a mask. Preference is persisted. */
   amountsVisible: boolean;
   setAmountsVisible: (visible: boolean) => void;
   toggleAmountsVisible: () => void;
@@ -17,11 +21,36 @@ type AmountPrivacyContextValue = {
 const AmountPrivacyContext = createContext<AmountPrivacyContextValue | null>(null);
 
 export function AmountPrivacyProvider({ children }: { children: ReactNode }) {
-  // In-memory only: survives background while the process lives; resets on kill.
-  const [amountsVisible, setAmountsVisible] = useState(false);
+  const [amountsVisible, setAmountsVisibleState] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const raw = await AsyncStorage.getItem(AMOUNTS_VISIBLE_KEY);
+        if (!cancelled && raw === '1') setAmountsVisibleState(true);
+        if (!cancelled && raw === '0') setAmountsVisibleState(false);
+      } finally {
+        if (!cancelled) setHydrated(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const setAmountsVisible = useCallback((visible: boolean) => {
+    setAmountsVisibleState(visible);
+    void AsyncStorage.setItem(AMOUNTS_VISIBLE_KEY, visible ? '1' : '0');
+  }, []);
 
   const toggleAmountsVisible = useCallback(() => {
-    setAmountsVisible((v) => !v);
+    setAmountsVisibleState((v) => {
+      const next = !v;
+      void AsyncStorage.setItem(AMOUNTS_VISIBLE_KEY, next ? '1' : '0');
+      return next;
+    });
   }, []);
 
   const value = useMemo(
@@ -30,8 +59,22 @@ export function AmountPrivacyProvider({ children }: { children: ReactNode }) {
       setAmountsVisible,
       toggleAmountsVisible,
     }),
-    [amountsVisible, toggleAmountsVisible]
+    [amountsVisible, setAmountsVisible, toggleAmountsVisible]
   );
+
+  // Avoid flashing the wrong mask before storage loads.
+  if (!hydrated) {
+    return (
+      <AmountPrivacyContext.Provider
+        value={{
+          amountsVisible: false,
+          setAmountsVisible,
+          toggleAmountsVisible,
+        }}>
+        {children}
+      </AmountPrivacyContext.Provider>
+    );
+  }
 
   return (
     <AmountPrivacyContext.Provider value={value}>

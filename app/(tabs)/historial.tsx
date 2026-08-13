@@ -14,7 +14,7 @@ import { useLanguage } from '@/src/i18n/LanguageContext';
 import type { TranslationKey } from '@/src/i18n/translations';
 import { palette, radii } from '@/src/theme/colors';
 import type { Period, Transaction } from '@/src/types/finance';
-import { shiftMonth, sumByType } from '@/src/utils/financeMath';
+import { shiftMonth, sumByType, sumSpendOut } from '@/src/utils/financeMath';
 import { tapFeedback } from '@/src/utils/selectFeedback';
 
 const PAGE_SIZE = 20;
@@ -71,10 +71,9 @@ export default function HistorialScreen() {
     if (page > totalPages - 1) setPage(Math.max(0, totalPages - 1));
   }, [page, totalPages]);
 
+  // Match Home savings: expenses include debt installments.
   const expenseTotal =
-    period === 'mes'
-      ? sumByType(items, 'expense')
-      : totalForPeriod(period, 'expense', 'mine');
+    period === 'mes' ? sumSpendOut(items) : totalForPeriod(period, 'expense', 'mine');
   const incomeTotal = sumByType(items, 'income');
   const monthBalance = incomeTotal - expenseTotal;
 
@@ -307,7 +306,7 @@ export default function HistorialScreen() {
 }
 
 const styles = StyleSheet.create({
-  content: { padding: 22, paddingBottom: 120, gap: 16 },
+  content: { padding: 22, paddingBottom: 168, gap: 16 },
   pageTitle: {
     fontFamily: 'Fraunces_700Bold',
     fontSize: 34,
