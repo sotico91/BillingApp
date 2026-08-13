@@ -157,6 +157,37 @@ export const translations = {
     'home.editNameBody': 'Update how we greet you on Home. New expenses will use this name.',
     'home.saveName': 'Save name',
 
+    'lock.enable': 'Enable Face ID / fingerprint',
+    'lock.disable': 'Disable Face ID / fingerprint',
+    'lock.unavailableTitle': 'App lock unavailable',
+    'lock.unavailableBody':
+      'Set up Face ID, fingerprint or a device PIN in system Settings first.',
+    'lock.enabledTitle': 'Face ID / fingerprint enabled',
+    'lock.enabledBody':
+      'BillingApp will use Face ID when you come back to the app. The device passcode is not used. Disable it anytime from ⋯.',
+    'lock.disabledTitle': 'Face ID / fingerprint disabled',
+    'lock.disabledBody':
+      'The app will open without Face ID. You can enable it again anytime from ⋯.',
+    'lock.promptFace': 'Unlock with Face ID',
+    'lock.promptFinger': 'Unlock with fingerprint',
+    'lock.promptPin': 'Unlock BillingApp',
+    'lock.promptDisable': 'Confirm to disable Face ID / fingerprint',
+    'lock.faceTitle': 'Unlock with Face ID',
+    'lock.faceBody':
+      'Use Face ID to open BillingApp. Enable or disable this anytime from ⋯.',
+    'lock.faceAction': 'Unlock with Face ID',
+    'lock.fingerTitle': 'Unlock with fingerprint',
+    'lock.fingerBody':
+      'Use your fingerprint to open BillingApp. Enable or disable this anytime from ⋯.',
+    'lock.fingerAction': 'Unlock with fingerprint',
+    'lock.pinTitle': 'Unlock with device PIN',
+    'lock.pinBody':
+      'Use your phone PIN. Enable or disable Face ID / fingerprint anytime from ⋯.',
+    'lock.pinAction': 'Unlock',
+    'lock.unlocking': 'Waiting…',
+    'lock.tapToUnlock': 'Tap to unlock',
+    'lock.usePasscode': 'Use passcode',
+
     'backup.exportJson': 'Export backup (JSON)',
     'backup.exportCsv': 'Export movements (CSV)',
     'backup.restore': 'Restore backup…',
@@ -746,6 +777,37 @@ export const translations = {
     'home.editNameBody':
       'Así te saludamos en Inicio. Los gastos nuevos usarán este nombre.',
     'home.saveName': 'Guardar nombre',
+
+    'lock.enable': 'Habilitar Face ID / huella',
+    'lock.disable': 'Deshabilitar Face ID / huella',
+    'lock.unavailableTitle': 'No se puede bloquear',
+    'lock.unavailableBody':
+      'Configura Face ID, huella o un PIN del teléfono en Ajustes del sistema primero.',
+    'lock.enabledTitle': 'Face ID / huella habilitado',
+    'lock.enabledBody':
+      'Al volver a BillingApp pedirá Face ID, no la clave del celular. Deshabilítalo cuando quieras en ⋯.',
+    'lock.disabledTitle': 'Face ID / huella deshabilitado',
+    'lock.disabledBody':
+      'La app se abre sin Face ID. Puedes habilitarlo otra vez cuando quieras en ⋯.',
+    'lock.promptFace': 'Desbloquear con Face ID',
+    'lock.promptFinger': 'Desbloquear con huella',
+    'lock.promptPin': 'Desbloquear BillingApp',
+    'lock.promptDisable': 'Confirma para deshabilitar Face ID / huella',
+    'lock.faceTitle': 'Desbloquear con Face ID',
+    'lock.faceBody':
+      'Usa Face ID para entrar. Habilita o deshabilita esto cuando quieras en ⋯.',
+    'lock.faceAction': 'Desbloquear con Face ID',
+    'lock.fingerTitle': 'Desbloquear con huella',
+    'lock.fingerBody':
+      'Usa tu huella para entrar. Habilita o deshabilita esto cuando quieras en ⋯.',
+    'lock.fingerAction': 'Desbloquear con huella',
+    'lock.pinTitle': 'Desbloquear con PIN',
+    'lock.pinBody':
+      'Usa el PIN del teléfono. Habilita o deshabilita Face ID / huella cuando quieras en ⋯.',
+    'lock.pinAction': 'Desbloquear',
+    'lock.unlocking': 'Esperando…',
+    'lock.tapToUnlock': 'Toca para desbloquear',
+    'lock.usePasscode': 'Usar código',
 
     'backup.exportJson': 'Exportar respaldo (JSON)',
     'backup.exportCsv': 'Exportar movimientos (CSV)',

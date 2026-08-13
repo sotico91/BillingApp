@@ -14,6 +14,7 @@ import { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 
+import { AppLockOverlay } from '@/src/components/AppLockOverlay';
 import { CoachMarksOverlay } from '@/src/components/CoachMarksOverlay';
 import { NamePromptOverlay } from '@/src/components/NamePromptOverlay';
 import { OnboardingOverlay } from '@/src/components/OnboardingOverlay';
@@ -74,6 +75,7 @@ export default function RootLayout() {
             <OnboardingOverlay />
             <NamePromptOverlay />
             <CoachMarksOverlay />
+            <AppLockOverlay />
           </ExpensesProvider>
         </AmountPrivacyProvider>
       </SettingsProvider>

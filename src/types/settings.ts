@@ -39,6 +39,8 @@ export type UserSettings = {
   onboardingDone: boolean;
   /** First-launch coach marks over the main controls. */
   coachMarksDone: boolean;
+  /** Require Face ID / fingerprint / device PIN to open the app. */
+  appLockEnabled: boolean;
   /** Stable id for this install / person. Used to attribute expenses. */
   personId: string;
   userName: string;

@@ -20,6 +20,7 @@ import {
   shareTransactionsCsv,
 } from '@/src/utils/backup';
 import { tapFeedback } from '@/src/utils/selectFeedback';
+import { authenticateAppLock, getAppLockKind } from '@/src/utils/appLock';
 
 type Props = {
   light?: boolean;
@@ -28,7 +29,7 @@ type Props = {
 export function ProfileMenuButton({ light = true }: Props) {
   const insets = useSafeAreaInsets();
   const { t, language } = useLanguage();
-  const { settings, quickTemplates, updateUserName, restoreSettingsFromBackup } =
+  const { settings, quickTemplates, updateUserName, restoreSettingsFromBackup, updateAppLock } =
     useSettings();
   const {
     transactions,
@@ -66,6 +67,36 @@ export function ProfileMenuButton({ light = true }: Props) {
     } finally {
       setSaving(false);
     }
+  }
+
+  async function toggleAppLock() {
+    setMenuOpen(false);
+    if (settings.appLockEnabled) {
+      await updateAppLock(false);
+      Alert.alert(t('lock.disabledTitle'), t('lock.disabledBody'));
+      return;
+    }
+    const kind = await getAppLockKind();
+    if (kind === 'none') {
+      Alert.alert(t('lock.unavailableTitle'), t('lock.unavailableBody'));
+      return;
+    }
+    // Let the ⋯ menu finish closing so Face ID is not replaced by the
+    // device passcode sheet.
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    const result = await authenticateAppLock(
+      t('lock.promptFace'),
+      t('lock.promptPin'),
+      t('lock.usePasscode')
+    );
+    if (!result.ok) {
+      if (result.reason === 'denied') {
+        Alert.alert(t('lock.unavailableTitle'), t('lock.unavailableBody'));
+      }
+      return;
+    }
+    await updateAppLock(true);
+    Alert.alert(t('lock.enabledTitle'), t('lock.enabledBody'));
   }
 
   async function exportBackup() {
@@ -171,6 +202,16 @@ export function ProfileMenuButton({ light = true }: Props) {
               }}
               style={styles.menuItem}>
               <Text style={styles.menuItemText}>{t('home.editName')}</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => {
+                tapFeedback();
+                void toggleAppLock();
+              }}
+              style={styles.menuItem}>
+              <Text style={styles.menuItemText}>
+                {settings.appLockEnabled ? t('lock.disable') : t('lock.enable')}
+              </Text>
             </Pressable>
             <Pressable
               onPress={() => {

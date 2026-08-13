@@ -49,6 +49,8 @@
 	<array>
 		<string>$(PRODUCT_BUNDLE_IDENTIFIER).expo.index_route</string>
 	</array>
+	<key>NSFaceIDUsageDescription</key>
+	<string>BillingApp uses Face ID to unlock your money data.</string>
 	<key>RCTNewArchEnabled</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>

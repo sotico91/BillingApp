@@ -52,6 +52,7 @@ type SettingsContextValue = {
     reminderLabels?: ReminderLabels;
   }) => Promise<void>;
   completeCoachMarks: () => Promise<void>;
+  updateAppLock: (enabled: boolean) => Promise<void>;
   updateUserName: (userName: string) => Promise<void>;
   addSpendConcept: (name: string, color?: string) => Promise<SpendConcept | null>;
   updateSpendConceptColor: (conceptId: string, color: string) => Promise<void>;
@@ -155,6 +156,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       const next: UserSettings = {
         onboardingDone: true,
         coachMarksDone: true,
+        appLockEnabled: settings.appLockEnabled === true,
         personId: settings.personId || createId(),
         userName: input.userName.trim(),
         currency: input.currency,
@@ -191,6 +193,13 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     setSettings(next);
     await saveSettings(next);
   }, [settings]);
+
+  const updateAppLock = useCallback(
+    async (enabled: boolean) => {
+      await persist({ ...settings, appLockEnabled: enabled });
+    },
+    [settings, persist]
+  );
 
   const updateUserName = useCallback(
     async (userName: string) => {
@@ -430,6 +439,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       quickTemplates,
       completeOnboarding,
       completeCoachMarks,
+      updateAppLock,
       updateUserName,
       addSpendConcept,
       updateSpendConceptColor,
@@ -451,6 +461,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       quickTemplates,
       completeOnboarding,
       completeCoachMarks,
+      updateAppLock,
       updateUserName,
       addSpendConcept,
       updateSpendConceptColor,

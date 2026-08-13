@@ -31,6 +31,7 @@ function createPersonId(): string {
 export const DEFAULT_SETTINGS: UserSettings = {
   onboardingDone: false,
   coachMarksDone: false,
+  appLockEnabled: false,
   personId: '',
   userName: '',
   currency: 'COP',
@@ -87,6 +88,7 @@ function migrateSettings(settings: UserSettings): {
         typeof settings.coachMarksDone === 'boolean'
           ? settings.coachMarksDone || settings.onboardingDone
           : settings.onboardingDone,
+      appLockEnabled: settings.appLockEnabled === true,
       spendConcepts,
       customConcepts: settings.customConcepts ?? [],
       reminderRules,

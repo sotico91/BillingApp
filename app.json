@@ -55,6 +55,12 @@
           "defaultChannel": "billing-alerts",
           "sounds": []
         }
+      ],
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "BillingApp uses Face ID to unlock your money data."
+        }
       ]
     ],
     "experiments": {
