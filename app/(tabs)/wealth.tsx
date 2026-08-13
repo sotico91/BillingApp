@@ -13,6 +13,7 @@ import { router } from 'expo-router';
 import { CollapsibleSection } from '@/src/components/CollapsibleSection';
 import { FadeInBlock } from '@/src/components/FadeInBlock';
 import { MoneyText } from '@/src/components/MoneyText';
+import { RaisedText } from '@/src/components/RaisedText';
 import { ScreenBackground } from '@/src/components/ScreenBackground';
 import { findSpendSub } from '@/src/data/spendConcepts';
 import { useFinance } from '@/src/hooks/useFinance';
@@ -195,7 +196,7 @@ export default function WealthScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}>
         <FadeInBlock>
-          <Text style={styles.title}>{t('wealth.title')}</Text>
+          <RaisedText style={styles.title}>{t('wealth.title')}</RaisedText>
           <Text style={styles.subtitle}>{t('wealth.subtitle')}</Text>
           <View style={styles.netBox}>
             <Text style={styles.netLabel}>{t('wealth.net')}</Text>

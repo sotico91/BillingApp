@@ -13,6 +13,7 @@ import { CollapsibleSection } from '@/src/components/CollapsibleSection';
 import { FadeInBlock } from '@/src/components/FadeInBlock';
 import { MoneyText } from '@/src/components/MoneyText';
 import { PeriodToggle } from '@/src/components/PeriodToggle';
+import { RaisedText } from '@/src/components/RaisedText';
 import { SavingsDecor } from '@/src/components/SavingsDecor';
 import { ScreenBackground } from '@/src/components/ScreenBackground';
 import { useFinance } from '@/src/hooks/useFinance';
@@ -43,7 +44,7 @@ export default function InsightsScreen() {
   const [answer, setAnswer] = useState('');
   const [activeSuggestion, setActiveSuggestion] = useState<string | null>(null);
   const [rankingOpen, setRankingOpen] = useState(false);
-  const [smartOpen, setSmartOpen] = useState(false);
+  const [smartOpen, setSmartOpen] = useState(true);
 
   const insights = insightsForPeriod(period);
   const total = totalForPeriod(period, 'expense');
@@ -114,7 +115,7 @@ export default function InsightsScreen() {
         <FadeInBlock>
           <View style={styles.heroRow}>
             <View style={styles.heroCopy}>
-              <Text style={styles.pageTitle}>{t('insights.title')}</Text>
+              <RaisedText style={styles.pageTitle}>{t('insights.title')}</RaisedText>
               <Text style={styles.pageHint}>{t('insights.subtitle')}</Text>
             </View>
             <SavingsDecor size="md" />
@@ -209,7 +210,8 @@ export default function InsightsScreen() {
             title={t('insights.smartTitle')}
             open={smartOpen}
             onToggle={() => setSmartOpen((v) => !v)}
-            summary={t('insights.smartCollapsed', { count: smart.length })}>
+            summary={smart[0]?.text ?? t('insights.smartCollapsed', { count: smart.length })}>
+            <Text style={styles.smartHint}>{t('insights.smartHint')}</Text>
             {smart.map((card) => (
               <View
                 key={card.id}
@@ -439,6 +441,13 @@ const styles = StyleSheet.create({
   suggestTextActive: {
     color: palette.accentDeep,
     fontFamily: 'DMSans_600SemiBold',
+  },
+  smartHint: {
+    marginBottom: 10,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
+    color: palette.inkMuted,
+    lineHeight: 18,
   },
   smartCard: {
     backgroundColor: palette.surfaceSolid,

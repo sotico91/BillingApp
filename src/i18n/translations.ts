@@ -131,6 +131,8 @@ export const translations = {
     'insights.ranking': 'Concept ranking',
     'insights.rankingCollapsed': '{count} concepts — tap to open',
     'insights.smartTitle': 'Smart notes',
+    'insights.smartHint':
+      'Short auto-summaries of the period you pick above. They are not buttons — they change when you log money or switch Today / Week / Month.',
     'insights.smartCollapsed': '{count} notes — tap to open',
     'insights.expense': 'expense',
     'insights.expenses': 'expenses',
@@ -570,6 +572,12 @@ export const translations = {
     'smart.spentLess': 'You spent {percent}% less than {compare}.',
     'smart.deliveryUp': 'Delivery is up versus last month.',
     'smart.categoryUp': '{category} is up versus {compare}.',
+    'smart.snapshot':
+      '{period}: you spent {expenses} and earned {income}. Result: {result}.',
+    'smart.snapshotEmpty':
+      '{period}: no movements yet. Log income or spend and this note will update.',
+    'smart.behind': '{period}: you are behind by {amount} (expenses exceed income).',
+    'smart.noCompare': 'Not enough history yet to compare with {compare}.',
     'smart.savedMore': '{period}: you are ahead by {amount} (income − expenses).',
     'smart.topIncomeShare':
       '{category} is your largest share of income ({period}): {percent}% of what you earned.',
@@ -771,6 +779,8 @@ export const translations = {
     'insights.ranking': 'Ranking de categorías',
     'insights.rankingCollapsed': '{count} categorías — toca para abrir',
     'insights.smartTitle': 'Notas inteligentes',
+    'insights.smartHint':
+      'Resúmenes automáticos del periodo que eliges arriba. No son botones: cambian al registrar movimientos o al pasar Hoy / Semana / Mes.',
     'insights.smartCollapsed': '{count} notas — toca para abrir',
     'insights.expense': 'gasto',
     'insights.expenses': 'gastos',
@@ -1213,6 +1223,12 @@ export const translations = {
     'smart.spentLess': 'Gastaste {percent}% menos que {compare}.',
     'smart.deliveryUp': 'Tus domicilios subieron frente al mes pasado.',
     'smart.categoryUp': 'Tus gastos de {category} subieron frente a {compare}.',
+    'smart.snapshot':
+      '{period}: gastaste {expenses} e ingresaste {income}. Resultado: {result}.',
+    'smart.snapshotEmpty':
+      '{period}: aún no hay movimientos. Registra un ingreso o un gasto y esta nota se actualiza.',
+    'smart.behind': '{period}: vas {amount} atrás (los gastos superan los ingresos).',
+    'smart.noCompare': 'Aún no hay suficiente historial para comparar con {compare}.',
     'smart.savedMore': '{period}: vas {amount} adelante (ingresos − gastos).',
     'smart.topIncomeShare':
       '{category} es lo que más pesa sobre tu ingreso ({period}): {percent}% de lo que ganaste.',

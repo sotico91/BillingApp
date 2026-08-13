@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 
 import { ExpenseForm, type SavedMovement } from '@/src/components/ExpenseForm';
+import { RaisedText } from '@/src/components/RaisedText';
 import { FriendlyAddFlow } from '@/src/components/FriendlyAddFlow';
 import { ScreenBackground } from '@/src/components/ScreenBackground';
 import { useMoney } from '@/src/hooks/useMoney';
@@ -57,7 +58,7 @@ export default function AgregarScreen() {
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <View style={styles.content}>
-          <Text style={styles.title}>{t('add.title')}</Text>
+          <RaisedText style={styles.title}>{t('add.title')}</RaisedText>
 
           <View style={styles.modeSwitch}>
             <Pressable

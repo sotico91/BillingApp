@@ -11,6 +11,7 @@ import { FadeInBlock } from '@/src/components/FadeInBlock';
 import { LanguageSwitcher } from '@/src/components/LanguageSwitcher';
 import { PredictedSpendsCard } from '@/src/components/PredictedSpendsCard';
 import { ProfileMenuButton } from '@/src/components/ProfileMenuButton';
+import { RaisedText } from '@/src/components/RaisedText';
 import { SavingsDecor } from '@/src/components/SavingsDecor';
 import { ScreenBackground } from '@/src/components/ScreenBackground';
 import { useFinance } from '@/src/hooks/useFinance';
@@ -137,8 +138,10 @@ export default function HomeScreen() {
           <View style={styles.heroRow}>
             <View style={styles.heroCopy}>
               <Text style={styles.brandMark}>{t('brand.mark')}</Text>
-              <Text style={styles.greeting}>{greeting}</Text>
-              <Text style={styles.brand}>{t('brand.name')}</Text>
+              <RaisedText tone="gold" style={styles.greeting}>
+                {greeting}
+              </RaisedText>
+              <RaisedText style={styles.brand}>{t('brand.name')}</RaisedText>
               <Text style={styles.spaceLabel}>{spaceLabel}</Text>
               <Text style={styles.subtitle}>{t('home.subtitle')}</Text>
             </View>

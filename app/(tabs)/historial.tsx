@@ -7,6 +7,7 @@ import { ExpenseRow } from '@/src/components/ExpenseRow';
 import { FadeInBlock } from '@/src/components/FadeInBlock';
 import { MoneyText } from '@/src/components/MoneyText';
 import { PeriodToggle } from '@/src/components/PeriodToggle';
+import { RaisedText } from '@/src/components/RaisedText';
 import { ScreenBackground } from '@/src/components/ScreenBackground';
 import { useFinance } from '@/src/hooks/useFinance';
 import { useMoney } from '@/src/hooks/useMoney';
@@ -123,7 +124,7 @@ export default function HistorialScreen() {
     <ScreenBackground>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <FadeInBlock>
-          <Text style={styles.pageTitle}>{t('history.title')}</Text>
+          <RaisedText style={styles.pageTitle}>{t('history.title')}</RaisedText>
           <PeriodToggle
             value={period}
             onChange={(next) => {

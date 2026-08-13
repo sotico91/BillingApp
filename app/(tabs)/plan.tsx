@@ -6,6 +6,7 @@ import { CollapsibleSection } from '@/src/components/CollapsibleSection';
 import { ConceptsPlanCard } from '@/src/components/ConceptsPlanCard';
 import { FadeInBlock } from '@/src/components/FadeInBlock';
 import { MoneyText } from '@/src/components/MoneyText';
+import { RaisedText } from '@/src/components/RaisedText';
 import { ReminderSettingsCard } from '@/src/components/ReminderSettingsCard';
 import { ScreenBackground } from '@/src/components/ScreenBackground';
 import { useFinance } from '@/src/hooks/useFinance';
@@ -38,7 +39,7 @@ export default function PlanScreen() {
     <ScreenBackground>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <FadeInBlock>
-          <Text style={styles.title}>{t('plan.title')}</Text>
+          <RaisedText style={styles.title}>{t('plan.title')}</RaisedText>
           <Text style={styles.subtitle}>{t('plan.subtitle')}</Text>
         </FadeInBlock>
 

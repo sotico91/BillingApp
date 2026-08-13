@@ -167,6 +167,21 @@ export function buildSmartInsights(
   const incomeNow = sumByType(current, 'income');
   const ant = antExpenseBreakdown(current, spendConcepts);
   const cards: InsightCard[] = [];
+  const saved = incomeNow - spendNow;
+  const hasMovements = current.length > 0;
+
+  cards.push({
+    id: 'snapshot',
+    tone: !hasMovements ? 'info' : saved >= 0 ? 'good' : 'warn',
+    text: hasMovements
+      ? t('smart.snapshot', {
+          period: periodLabel,
+          expenses: format(spendNow),
+          income: format(incomeNow),
+          result: format(saved),
+        })
+      : t('smart.snapshotEmpty', { period: periodLabel }),
+  });
 
   if (spendPrev > 0) {
     const delta = ((spendNow - spendPrev) / spendPrev) * 100;
@@ -186,6 +201,12 @@ export function buildSmartInsights(
               }),
       });
     }
+  } else if (spendNow > 0) {
+    cards.push({
+      id: 'no-compare',
+      tone: 'info',
+      text: t('smart.noCompare', { compare: compareLabel }),
+    });
   }
 
   const rising = topRisingExpenseCategory(current, previous);
@@ -196,18 +217,6 @@ export function buildSmartInsights(
       text: t('smart.categoryUp', {
         category: resolveCategoryLabel(rising.categoryId, t, spendConcepts),
         compare: compareLabel,
-      }),
-    });
-  }
-
-  const saved = incomeNow - spendNow;
-  if (saved > 0) {
-    cards.push({
-      id: 'saved',
-      tone: 'good',
-      text: t('smart.savedMore', {
-        amount: format(saved),
-        period: periodLabel,
       }),
     });
   }
@@ -228,16 +237,14 @@ export function buildSmartInsights(
       });
     }
     const spendShare = Math.round((spendNow / incomeNow) * 100);
-    if (spendShare >= 70) {
-      cards.push({
-        id: 'spend-income-share',
-        tone: spendShare >= 90 ? 'warn' : 'info',
-        text: t('smart.spendIncomeShare', {
-          percent: spendShare,
-          period: periodLabel,
-        }),
-      });
-    }
+    cards.push({
+      id: 'spend-income-share',
+      tone: spendShare >= 90 ? 'warn' : spendShare >= 70 ? 'info' : 'good',
+      text: t('smart.spendIncomeShare', {
+        percent: spendShare,
+        period: periodLabel,
+      }),
+    });
   }
 
   if (ant.total > 0) {
@@ -251,15 +258,7 @@ export function buildSmartInsights(
     });
   }
 
-  if (cards.length === 0) {
-    cards.push({
-      id: 'empty',
-      tone: 'info',
-      text: t('smart.empty'),
-    });
-  }
-
-  return cards.slice(0, 5);
+  return cards.slice(0, 6);
 }
 
 /** Prior day / prior week window ending at the start of the current period. */

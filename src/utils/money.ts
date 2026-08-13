@@ -23,18 +23,21 @@ export function formatMoney(amount: number, currency: Currency): string {
     );
   }
 
+  // Empty / zero tiles should read as money ($0,00), not a bare 0.
+  const isZero = !Number.isFinite(amount) || amount === 0;
   return keepMoneyOnOneLine(
     new Intl.NumberFormat('es-CO', {
       style: 'currency',
       currency: 'COP',
-      maximumFractionDigits: 0,
-    }).format(Math.round(amount))
+      minimumFractionDigits: isZero ? 2 : 0,
+      maximumFractionDigits: isZero ? 2 : 0,
+    }).format(isZero ? 0 : Math.round(amount))
   );
 }
 
 /** Mask used when amounts are hidden for privacy. */
 export function maskMoney(currency: Currency): string {
-  return currency === 'USD' ? '$*****.**' : '$*****';
+  return currency === 'USD' ? '$*****.**' : '$*****,**';
 }
 
 /** @deprecated use formatMoney with currency from settings */
