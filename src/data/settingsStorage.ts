@@ -30,6 +30,7 @@ function createPersonId(): string {
 
 export const DEFAULT_SETTINGS: UserSettings = {
   onboardingDone: false,
+  coachMarksDone: false,
   personId: '',
   userName: '',
   currency: 'COP',
@@ -81,6 +82,11 @@ function migrateSettings(settings: UserSettings): {
   return {
     settings: {
       ...settings,
+      // Existing installs already finished onboarding: never replay the tour on launch.
+      coachMarksDone:
+        typeof settings.coachMarksDone === 'boolean'
+          ? settings.coachMarksDone || settings.onboardingDone
+          : settings.onboardingDone,
       spendConcepts,
       customConcepts: settings.customConcepts ?? [],
       reminderRules,

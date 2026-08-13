@@ -39,6 +39,8 @@ type ReminderLabels = Record<string, { title: string; body: string }>;
 type SettingsContextValue = {
   settings: UserSettings;
   ready: boolean;
+  /** True only in the session right after onboarding — not on later launches. */
+  coachMarksPending: boolean;
   quickTemplates: QuickTemplate[];
   completeOnboarding: (input: {
     userName: string;
@@ -49,6 +51,7 @@ type SettingsContextValue = {
     reminderHour?: number;
     reminderLabels?: ReminderLabels;
   }) => Promise<void>;
+  completeCoachMarks: () => Promise<void>;
   updateUserName: (userName: string) => Promise<void>;
   addSpendConcept: (name: string, color?: string) => Promise<SpendConcept | null>;
   updateSpendConceptColor: (conceptId: string, color: string) => Promise<void>;
@@ -90,6 +93,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   const [settings, setSettings] = useState<UserSettings>(DEFAULT_SETTINGS);
   const [quickTemplates, setQuickTemplates] = useState<QuickTemplate[]>([]);
   const [ready, setReady] = useState(false);
+  const [coachMarksPending, setCoachMarksPending] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -150,6 +154,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       }));
       const next: UserSettings = {
         onboardingDone: true,
+        coachMarksDone: true,
         personId: settings.personId || createId(),
         userName: input.userName.trim(),
         currency: input.currency,
@@ -167,6 +172,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       const seeded: QuickTemplate[] = [];
       setSettings(next);
       setQuickTemplates(seeded);
+      setCoachMarksPending(true);
       await Promise.all([saveSettings(next), saveQuickTemplates(seeded)]);
 
       if (reminderRules.length > 0 && input.reminderLabels) {
@@ -177,6 +183,14 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     },
     [settings.personId, settings.spendConcepts]
   );
+
+  const completeCoachMarks = useCallback(async () => {
+    setCoachMarksPending(false);
+    if (settings.coachMarksDone) return;
+    const next: UserSettings = { ...settings, coachMarksDone: true };
+    setSettings(next);
+    await saveSettings(next);
+  }, [settings]);
 
   const updateUserName = useCallback(
     async (userName: string) => {
@@ -412,8 +426,10 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     () => ({
       settings,
       ready,
+      coachMarksPending,
       quickTemplates,
       completeOnboarding,
+      completeCoachMarks,
       updateUserName,
       addSpendConcept,
       updateSpendConceptColor,
@@ -431,8 +447,10 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     [
       settings,
       ready,
+      coachMarksPending,
       quickTemplates,
       completeOnboarding,
+      completeCoachMarks,
       updateUserName,
       addSpendConcept,
       updateSpendConceptColor,

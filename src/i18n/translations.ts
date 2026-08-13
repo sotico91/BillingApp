@@ -468,6 +468,16 @@ export const translations = {
     'onboard.reminderHint': 'Tip: coffee, delivery and transport are common ant expenses.',
     'onboard.step': 'Step {current} of {total}',
 
+    'coach.step': '{current} of {total}',
+    'coach.skip': 'Skip',
+    'coach.tapHint': 'Tap to continue',
+    'coach.privacyTitle': 'Show/hide amounts',
+    'coach.privacyBody': 'Tap the eye to show or hide the values in the app.',
+    'coach.glanceTitle': 'Check this month’s amounts',
+    'coach.glanceBody': 'Open this to review totals by concept and spot what needs attention.',
+    'coach.tabsTitle': 'The rest lives down here',
+    'coach.tabsBody': 'Activity to edit, Plan for limits, Wealth for accounts, Insights to understand.',
+
     'reminder.title': 'Expense reminders',
     'reminder.collapsed': '{count} reminders — tap to open',
     'reminder.body':
@@ -1048,6 +1058,16 @@ export const translations = {
       'Elige conceptos para empezar. Luego en Plan puedes fijar subcategoría, fecha y hora por alerta.',
     'onboard.reminderHint': 'Tip: en Plan configura Recibos/Luz u otras subcategorías con día y hora.',
     'onboard.step': 'Paso {current} de {total}',
+
+    'coach.step': '{current} de {total}',
+    'coach.skip': 'Saltar',
+    'coach.tapHint': 'Toca para seguir',
+    'coach.privacyTitle': 'Ver/ocultar montos',
+    'coach.privacyBody': 'Toca el ojo para ver u ocultar los valores de la app.',
+    'coach.glanceTitle': 'Validar los montos del mes',
+    'coach.glanceBody': 'Aquí revisas totales por concepto y ves qué merece atención.',
+    'coach.tabsTitle': 'El resto está abajo',
+    'coach.tabsBody': 'Actividad para editar, Plan para topes, Patrimonio para cuentas, Análisis para entender.',
 
     'reminder.title': 'Recordatorios de gastos',
     'reminder.collapsed': '{count} recordatorios — toca para abrir',
