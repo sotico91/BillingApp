@@ -139,6 +139,7 @@ export const translations = {
     'insights.income': 'income',
     'insights.incomes': 'income entries',
     'insights.emptyPeriod': 'No expenses in this period.',
+    'insights.uncategorized': 'Uncategorized',
     'insights.savedHint': 'Savings tip',
     'decor.tapShow': 'Tap totals',
     'decor.tapHide': 'Hide',
@@ -175,32 +176,32 @@ export const translations = {
     'home.editNameBody': 'Update how we greet you on Home. New expenses will use this name.',
     'home.saveName': 'Save name',
 
-    'lock.enable': 'Enable Face ID / fingerprint',
-    'lock.disable': 'Disable Face ID / fingerprint',
-    'lock.unavailableTitle': 'App lock unavailable',
+    'lock.enable': 'Turn on Face ID',
+    'lock.disable': 'Turn off Face ID',
+    'lock.unavailableTitle': 'Can’t turn on Face ID yet',
     'lock.unavailableBody':
-      'Set up Face ID, fingerprint or a device PIN in system Settings first.',
-    'lock.enabledTitle': 'Face ID / fingerprint enabled',
+      'Add Face ID, a fingerprint or a phone PIN in iPhone Settings, then try again.',
+    'lock.enabledTitle': 'Face ID is on',
     'lock.enabledBody':
-      'BillingApp will use Face ID when you come back to the app. The device passcode is not used. Disable it anytime from ⋯.',
-    'lock.disabledTitle': 'Face ID / fingerprint disabled',
+      'When you leave and come back, BillingApp will ask for Face ID. It does not use your phone PIN. Turn it off anytime from ⋯.',
+    'lock.disabledTitle': 'Face ID is off',
     'lock.disabledBody':
-      'The app will open without Face ID. You can enable it again anytime from ⋯.',
+      'The app opens right away, with no Face ID. Turn it on again anytime from ⋯.',
     'lock.promptFace': 'Unlock with Face ID',
     'lock.promptFinger': 'Unlock with fingerprint',
     'lock.promptPin': 'Unlock BillingApp',
-    'lock.promptDisable': 'Confirm to disable Face ID / fingerprint',
+    'lock.promptDisable': 'Confirm with Face ID to turn it off',
     'lock.faceTitle': 'Unlock with Face ID',
     'lock.faceBody':
-      'Use Face ID to open BillingApp. Enable or disable this anytime from ⋯.',
+      'Use Face ID to open the app. Turn this on or off anytime from ⋯.',
     'lock.faceAction': 'Unlock with Face ID',
     'lock.fingerTitle': 'Unlock with fingerprint',
     'lock.fingerBody':
-      'Use your fingerprint to open BillingApp. Enable or disable this anytime from ⋯.',
+      'Use your fingerprint to open the app. Turn this on or off anytime from ⋯.',
     'lock.fingerAction': 'Unlock with fingerprint',
     'lock.pinTitle': 'Unlock with device PIN',
     'lock.pinBody':
-      'Use your phone PIN. Enable or disable Face ID / fingerprint anytime from ⋯.',
+      'Use your phone PIN. You can still turn Face ID on or off from ⋯.',
     'lock.pinAction': 'Unlock',
     'lock.unlocking': 'Waiting…',
     'lock.tapToUnlock': 'Tap to unlock',
@@ -489,7 +490,7 @@ export const translations = {
 
     'onboard.welcomeTitle': "Let's make money feel simple",
     'onboard.welcomeBody':
-      'In under a minute you’ll set your name, currency, categories, and a friendly guided flow to log coffee, salary, or savings. On Home, tap Available now or This month’s result when you want to know what each number means.',
+      'In under a minute you’ll set your name, currency and a few spending concepts. Coffee, power bills or Uber go later as subcategories in Plan. On Home, tap Available now or This month’s result when you want to know what each number means.',
     'onboard.welcomeShare':
       'If you later share a household ledger, each person only registers their own spends — never someone else’s.',
     'onboard.start': 'Sounds good',
@@ -506,16 +507,23 @@ export const translations = {
     'onboard.currencyCop': 'Colombian pesos (COP)',
     'onboard.currencyUsd': 'US dollars (USD)',
     'onboard.categoriesTitle': 'What do you usually spend on?',
-    'onboard.categoriesBody': 'Tap to keep what matters. You can edit this anytime.',
+    'onboard.categoriesBody':
+      'Pick a few broad concepts. Things like coffee or power belong later as subcategories in Plan.',
     'onboard.categoriesNeedOne': 'Select at least one concept.',
+    'onboard.concept.recibos': 'Bills',
+    'onboard.concept.creditos': 'Credit',
+    'onboard.concept.transporte': 'Transport',
+    'onboard.concept.alimentacion': 'Food',
+    'onboard.concept.vivienda': 'Housing',
+    'onboard.concept.general': 'General',
     'onboard.notifyTitle': 'Want a little confirmation?',
     'onboard.notifyBody': 'We’ll nudge you when a movement is saved—helpful while you build the habit.',
     'onboard.notifyYes': 'Yes, notify me',
     'onboard.notifyNo': 'No thanks',
-    'onboard.reminderTitle': 'Which expenses should remind you?',
+    'onboard.reminderTitle': 'Which concepts should remind you?',
     'onboard.reminderBody':
-      'Pick the concepts you want a daily local reminder for (evening by default). You can change this later in Plan.',
-    'onboard.reminderHint': 'Tip: coffee, delivery and transport are common ant expenses.',
+      'Pick the concepts you want a daily local reminder for (evening by default). Add subcategories later in Plan.',
+    'onboard.reminderHint': 'Tip: keep this light — reminders follow the concept, not a single café.',
     'onboard.step': 'Step {current} of {total}',
 
     'coach.step': '{current} of {total}',
@@ -599,7 +607,7 @@ export const translations = {
     'search.answerExpenses': 'Your expenses ({period}): {amount} across {count} movements.',
     'search.answerIncome': 'Your income ({period}): {amount}.',
     'search.answerSavings':
-      'Savings signal ({period}): {amount} (income {income} − expenses {expenses}).',
+      'You saved {amount} {period} (income {income} − expenses {expenses}).',
     'search.answerCategory':
       '{label} ({period}): {amount} across {count} movements.',
     'search.answerCategoryMethod':
@@ -787,6 +795,7 @@ export const translations = {
     'insights.income': 'ingreso',
     'insights.incomes': 'ingresos',
     'insights.emptyPeriod': 'Sin gastos en este período.',
+    'insights.uncategorized': 'Sin categoría',
     'insights.savedHint': 'Ahorro inteligente',
     'decor.tapShow': 'Ver totales',
     'decor.tapHide': 'Ocultar',
@@ -824,32 +833,32 @@ export const translations = {
       'Así te saludamos en Inicio. Los gastos nuevos usarán este nombre.',
     'home.saveName': 'Guardar nombre',
 
-    'lock.enable': 'Habilitar Face ID / huella',
-    'lock.disable': 'Deshabilitar Face ID / huella',
-    'lock.unavailableTitle': 'No se puede bloquear',
+    'lock.enable': 'Activar Face ID',
+    'lock.disable': 'Quitar Face ID',
+    'lock.unavailableTitle': 'Aún no se puede activar Face ID',
     'lock.unavailableBody':
-      'Configura Face ID, huella o un PIN del teléfono en Ajustes del sistema primero.',
-    'lock.enabledTitle': 'Face ID / huella habilitado',
+      'Primero configura Face ID, huella o un PIN en Ajustes del iPhone e inténtalo de nuevo.',
+    'lock.enabledTitle': 'Face ID activado',
     'lock.enabledBody':
-      'Al volver a BillingApp pedirá Face ID, no la clave del celular. Deshabilítalo cuando quieras en ⋯.',
-    'lock.disabledTitle': 'Face ID / huella deshabilitado',
+      'Si sales y vuelves a la app, te pedirá Face ID. No usa el PIN del teléfono. Para quitarlo, entra otra vez a ⋯.',
+    'lock.disabledTitle': 'Face ID desactivado',
     'lock.disabledBody':
-      'La app se abre sin Face ID. Puedes habilitarlo otra vez cuando quieras en ⋯.',
+      'La app se abre de una vez, sin Face ID. Puedes activarlo otra vez cuando quieras en ⋯.',
     'lock.promptFace': 'Desbloquear con Face ID',
     'lock.promptFinger': 'Desbloquear con huella',
     'lock.promptPin': 'Desbloquear BillingApp',
-    'lock.promptDisable': 'Confirma para deshabilitar Face ID / huella',
+    'lock.promptDisable': 'Confirma con Face ID para quitarlo',
     'lock.faceTitle': 'Desbloquear con Face ID',
     'lock.faceBody':
-      'Usa Face ID para entrar. Habilita o deshabilita esto cuando quieras en ⋯.',
+      'Usa Face ID para entrar. Actívalo o quítalo cuando quieras en ⋯.',
     'lock.faceAction': 'Desbloquear con Face ID',
     'lock.fingerTitle': 'Desbloquear con huella',
     'lock.fingerBody':
-      'Usa tu huella para entrar. Habilita o deshabilita esto cuando quieras en ⋯.',
+      'Usa tu huella para entrar. Actívalo o quítalo cuando quieras en ⋯.',
     'lock.fingerAction': 'Desbloquear con huella',
     'lock.pinTitle': 'Desbloquear con PIN',
     'lock.pinBody':
-      'Usa el PIN del teléfono. Habilita o deshabilita Face ID / huella cuando quieras en ⋯.',
+      'Usa el PIN del teléfono. Face ID se sigue activando o quitando desde ⋯.',
     'lock.pinAction': 'Desbloquear',
     'lock.unlocking': 'Esperando…',
     'lock.tapToUnlock': 'Toca para desbloquear',
@@ -1139,7 +1148,7 @@ export const translations = {
 
     'onboard.welcomeTitle': 'Hagamos que el dinero se sienta simple',
     'onboard.welcomeBody':
-      'En menos de un minuto eliges tu nombre, moneda, categorías y un flujo guiado para registrar café, salario o ahorros. En Inicio, toca Disponible hoy o Resultado del mes cuando quieras saber qué significa cada número.',
+      'En menos de un minuto eliges tu nombre, moneda y unos pocos conceptos de gasto. Café, luz o Uber van después como subcategorías en Plan. En Inicio, toca Disponible hoy o Resultado del mes cuando quieras saber qué significa cada número.',
     'onboard.welcomeShare':
       'Si más adelante compartes el hogar, cada persona solo registra lo suyo — nunca el gasto de otra.',
     'onboard.start': 'Suena bien',
@@ -1156,16 +1165,23 @@ export const translations = {
     'onboard.currencyCop': 'Pesos colombianos (COP)',
     'onboard.currencyUsd': 'Dólares (USD)',
     'onboard.categoriesTitle': '¿En qué sueles gastar?',
-    'onboard.categoriesBody': 'Toca para dejar lo que te importa. Lo puedes editar cuando quieras.',
-    'onboard.categoriesNeedOne': 'Selecciona al menos una categoría.',
+    'onboard.categoriesBody':
+      'Elige pocos conceptos amplios. Café, luz o Uber los agregas luego como subcategorías en Plan.',
+    'onboard.categoriesNeedOne': 'Selecciona al menos un concepto.',
+    'onboard.concept.recibos': 'Recibos',
+    'onboard.concept.creditos': 'Créditos',
+    'onboard.concept.transporte': 'Transporte',
+    'onboard.concept.alimentacion': 'Alimentación',
+    'onboard.concept.vivienda': 'Vivienda',
+    'onboard.concept.general': 'General',
     'onboard.notifyTitle': '¿Quieres una confirmación amable?',
     'onboard.notifyBody': 'Te avisamos al guardar un movimiento—útil mientras creas el hábito.',
     'onboard.notifyYes': 'Sí, avísame',
     'onboard.notifyNo': 'No, gracias',
-    'onboard.reminderTitle': '¿De qué gastos quieres recordatorio?',
+    'onboard.reminderTitle': '¿De qué conceptos quieres recordatorio?',
     'onboard.reminderBody':
-      'Elige conceptos para empezar. Luego en Plan puedes fijar subcategoría, fecha y hora por alerta.',
-    'onboard.reminderHint': 'Tip: en Plan configura Recibos/Luz u otras subcategorías con día y hora.',
+      'Elige conceptos para un aviso diario (por la tarde). Las subcategorías las armas después en Plan.',
+    'onboard.reminderHint': 'Tip: el recordatorio es del concepto, no de un café suelto.',
     'onboard.step': 'Paso {current} de {total}',
 
     'coach.step': '{current} de {total}',
@@ -1250,7 +1266,7 @@ export const translations = {
     'search.answerExpenses': 'Tus gastos ({period}): {amount} en {count} movimientos.',
     'search.answerIncome': 'Tus ingresos ({period}): {amount}.',
     'search.answerSavings':
-      'Señal de ahorro ({period}): {amount} (ingresos {income} − gastos {expenses}).',
+      'Ahorraste {amount} {period} (ingresos {income} − gastos {expenses}).',
     'search.answerCategory':
       '{label} ({period}): {amount} en {count} movimientos.',
     'search.answerCategoryMethod':

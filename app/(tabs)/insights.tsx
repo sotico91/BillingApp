@@ -63,7 +63,7 @@ export default function InsightsScreen() {
           ? 'this week'
           : 'this month';
   const searchPlaceholder = t('insights.searchPlaceholder', { when: searchWhen });
-  const smart = buildSmartInsights(transactions, t, format, spendConcepts, period);
+  const smart = buildSmartInsights(transactions, t, format, spendConcepts, period, debts);
   const topBudget = top
     ? budgetStatus.find((b) => b.categoryId === top.categoryId)
     : undefined;
@@ -96,6 +96,7 @@ export default function InsightsScreen() {
       answerFinanceQuery(q, transactions, format, t, {
         defaultPeriod: period,
         debtsTotal: debtTotal,
+        debts,
         availableCash,
         spendConcepts,
         budgetStatus,
@@ -278,7 +279,7 @@ export default function InsightsScreen() {
                   : topTone === 'good'
                     ? t('insights.topGood')
                     : t('insights.percentOfTotal', {
-                        percent: top.percent.toFixed(0),
+                        percent: Math.round(top.percent),
                       })}
               </Text>
             </View>

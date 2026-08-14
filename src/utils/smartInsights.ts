@@ -1,7 +1,7 @@
 import { CATEGORIES } from '@/src/data/financeDefaults';
-import { findSpendSub, flattenSpendSubs } from '@/src/data/spendConcepts';
+import { findSpendSub, flattenSpendSubs, findConceptById } from '@/src/data/spendConcepts';
 import type { TranslationKey } from '@/src/i18n/translations';
-import type { Period, Transaction } from '@/src/types/finance';
+import type { Period, Transaction, Debt } from '@/src/types/finance';
 import type { SpendConcept } from '@/src/types/settings';
 import { categoryLabel as resolveCategoryLabel } from '@/src/utils/categoryLabel';
 import {
@@ -11,6 +11,7 @@ import {
   previousMonthRange,
   sumByType,
   sumSpendOut,
+  unpaidInstallmentsForMonth,
 } from '@/src/utils/financeMath';
 
 export type InsightCard = {
@@ -27,6 +28,7 @@ type AskOptions = {
   availableCash?: number;
   spendConcepts?: SpendConcept[];
   budgetStatus?: { categoryId: string; ratio: number; limit: number }[];
+  debts?: Debt[];
 };
 
 const CATEGORY_ALIASES: Record<string, string[]> = {
@@ -80,6 +82,43 @@ const CATEGORY_ALIASES: Record<string, string[]> = {
   ingresos: ['ingresos', 'income', 'otros ingresos'],
   otros: ['otros', 'other', 'miscelaneos', 'varios'],
 };
+
+function hasStem(haystack: string, stem: string): boolean {
+  return new RegExp(`(?:^|[^a-z0-9])${escapeRegExp(stem)}`).test(haystack);
+}
+
+function isIncomeUsedAsReference(q: string): boolean {
+  return (
+    hasStem(q, 'consum') ||
+    includesAny(q, [
+      'de mi salario',
+      'del salario',
+      'de mi sueldo',
+      'del sueldo',
+      'de mi ingreso',
+      'de mis ingresos',
+      'del ingreso',
+      'de los ingresos',
+      'of my salary',
+      'of my income',
+      'of income',
+      '% de mi',
+      'porcentaje de mi',
+      'percent of my',
+      'percent of income',
+    ])
+  );
+}
+
+function skipIncomeCategoryMatch(q: string): boolean {
+  return (
+    isIncomeUsedAsReference(q) ||
+    hasStem(q, 'gast') ||
+    hasStem(q, 'ahorr') ||
+    hasStem(q, 'categ') ||
+    includesAny(q, ['%', 'porcentaje', 'percent', 'spend', 'spent', 'save', 'saved'])
+  );
+}
 
 const INCOME_CATEGORY_IDS = ['salario', 'freelance', 'bonos', 'reembolsos', 'ingresos'];
 
@@ -140,12 +179,40 @@ function topRisingExpenseCategory(
   return best;
 }
 
+function withAccruedInstallments(
+  list: Transaction[],
+  debts: Debt[] | undefined,
+  periodKey: string
+): Transaction[] {
+  if (periodKey !== 'mes' || !debts?.length) return list;
+  const now = new Date();
+  const extra = unpaidInstallmentsForMonth(
+    list,
+    debts,
+    now.getFullYear(),
+    now.getMonth()
+  );
+  if (extra.length === 0) return list;
+  return [
+    ...list,
+    ...extra.map((item) => ({
+      id: `accrued-${item.debtId}`,
+      type: 'debt_payment' as const,
+      amount: item.amount,
+      categoryId: item.categoryId,
+      debtId: item.debtId,
+      createdAt: now.toISOString(),
+    })),
+  ];
+}
+
 export function buildSmartInsights(
   transactions: Transaction[],
   t: TFn,
   format: (n: number) => string,
   spendConcepts: SpendConcept[] = [],
-  period: Period = 'mes'
+  period: Period = 'mes',
+  debts?: Debt[]
 ): InsightCard[] {
   const periodLabel = t(`period.${period}` as TranslationKey);
   const compareLabel =
@@ -155,7 +222,11 @@ export function buildSmartInsights(
         ? t('smart.compareLastWeek')
         : t('smart.compareLastMonth');
 
-  const current = filterByPeriod(transactions, period);
+  const current = withAccruedInstallments(
+    filterByPeriod(transactions, period),
+    debts,
+    period
+  );
   const { from, to } =
     period === 'mes'
       ? previousMonthRange()
@@ -462,6 +533,7 @@ function detectCategories(
   }
 
   for (const cat of CATEGORIES) {
+    if (skipIncomeCategoryMatch(q) && INCOME_CATEGORY_IDS.includes(cat.id)) continue;
     const aliases = CATEGORY_ALIASES[cat.id] ?? [cat.id];
     let best = 0;
     for (const alias of aliases) {
@@ -605,16 +677,19 @@ function topExpenseCategory(
   return best;
 }
 
-function expenseCategoryTotals(
-  list: Transaction[]
+function expenseTotalsByConcept(
+  list: Transaction[],
+  spendConcepts: SpendConcept[]
 ): Map<string, { amount: number; count: number }> {
   const map = new Map<string, { amount: number; count: number }>();
   for (const tx of list) {
     if ((tx.type !== 'expense' && tx.type !== 'debt_payment') || !tx.categoryId) continue;
-    const cur = map.get(tx.categoryId) ?? { amount: 0, count: 0 };
+    const hit = findSpendSub(spendConcepts, tx.categoryId);
+    const key = hit?.concept.id ?? tx.categoryId;
+    const cur = map.get(key) ?? { amount: 0, count: 0 };
     cur.amount += tx.amount;
     cur.count += 1;
-    map.set(tx.categoryId, cur);
+    map.set(key, cur);
   }
   return map;
 }
@@ -624,8 +699,10 @@ function resolveCategoryDisplayName(
   spendConcepts: SpendConcept[],
   categoryLabel: (id: string) => string
 ): string {
+  const concept = findConceptById(spendConcepts, categoryId);
+  if (concept?.name) return concept.name;
   const hit = findSpendSub(spendConcepts, categoryId);
-  if (hit) return `${hit.concept.name}/${hit.sub.name}`;
+  if (hit) return hit.concept.name;
   return categoryLabel(categoryId);
 }
 
@@ -635,7 +712,7 @@ function topCategoryByIncomePercent(
   spendConcepts: SpendConcept[]
 ): { categoryId: string; amount: number; count: number; percent: number } | null {
   if (income <= 0) return null;
-  const map = expenseCategoryTotals(list);
+  const map = expenseTotalsByConcept(list, spendConcepts);
   let best: { categoryId: string; amount: number; count: number; percent: number } | null =
     null;
   for (const [categoryId, v] of map) {
@@ -659,7 +736,7 @@ function rankCategoriesByIncomePercent(
   limit = 5
 ): Array<{ label: string; percent: number; amount: number }> {
   if (income <= 0) return [];
-  const map = expenseCategoryTotals(list);
+  const map = expenseTotalsByConcept(list, spendConcepts);
   return Array.from(map.entries())
     .map(([categoryId, v]) => ({
       label: resolveCategoryDisplayName(categoryId, spendConcepts, categoryLabel),
@@ -690,28 +767,17 @@ function tryAnswerPercentQuery(
   categoryLabel: (id: string) => string,
   flags: PercentQueryFlags
 ): string | null {
-  const asksBudgetBasis = includesAny(q, [
-    'tope',
-    'topes',
-    'presupuesto',
-    'budget',
-    'limite',
-    'límite',
-    'del presupuesto',
-    'of budget',
+  const asksIncomeBasis = includesAny(q, [
+    'salario',
+    'sueldo',
+    'ingreso',
+    'ingresos',
+    'nomina',
+    'nómina',
+    'income',
+    'payroll',
+    'mi sueldo',
   ]);
-  const asksIncomeBasis =
-    includesAny(q, [
-      'salario',
-      'sueldo',
-      'ingreso',
-      'ingresos',
-      'nomina',
-      'nómina',
-      'income',
-      'payroll',
-      'mi sueldo',
-    ]) || !asksBudgetBasis;
   const asksPercent =
     flags.wantsPercent ||
     includesAny(q, [
@@ -724,7 +790,8 @@ function tryAnswerPercentQuery(
       'parte del',
       'share of',
     ]) ||
-    (flags.wantsTop && asksIncomeBasis);
+    (flags.wantsTop && asksIncomeBasis) ||
+    (hasStem(q, 'consum') && asksIncomeBasis);
 
   if (!asksPercent || !asksIncomeBasis) return null;
 
@@ -733,21 +800,64 @@ function tryAnswerPercentQuery(
 
   const spendTotal = sumSpendOut(list);
 
+  let cats = flags.cats;
+  if (
+    cats &&
+    skipIncomeCategoryMatch(q) &&
+    cats.ids.some((id) => INCOME_CATEGORY_IDS.includes(id))
+  ) {
+    cats = null;
+  }
+
+  const wantsRanking = includesAny(q, [
+    'ranking',
+    'lista',
+    'listado',
+    'cuales',
+    'cuáles',
+    'categorias',
+    'categorías',
+    'categories',
+  ]);
   const wantsHighestShare =
-    flags.wantsTop ||
-    includesAny(q, [
-      'mayor porcentaje',
-      'mas porcentaje',
-      'más porcentaje',
-      'mas alto',
-      'más alto',
-      'mayor gasto',
-      'highest percent',
-      'biggest share',
-      'largest share',
-      'categoria mas alta',
-      'categoría más alta',
-    ]);
+    !wantsRanking &&
+    (flags.wantsTop ||
+      hasStem(q, 'consum') ||
+      includesAny(q, [
+        'mayor porcentaje',
+        'mas porcentaje',
+        'más porcentaje',
+        'mas alto',
+        'más alto',
+        'mayor gasto',
+        'highest percent',
+        'biggest share',
+        'largest share',
+        'categoria mas alta',
+        'categoría más alta',
+        'que categoria',
+        'qué categoría',
+        'which category',
+        'uses the most',
+      ]));
+
+  if (wantsRanking) {
+    const ranked = rankCategoriesByIncomePercent(
+      list,
+      income,
+      spendConcepts,
+      categoryLabel,
+      4
+    );
+    if (ranked.length === 0) return t('search.answerEmptyPeriod', { period: periodLabel });
+    return t('search.answerRankingPercentIncome', {
+      period: periodLabel,
+      income: format(income),
+      detail: ranked
+        .map((r) => `${r.label} ${Math.round(r.percent)}% (${format(r.amount)})`)
+        .join(' · '),
+    });
+  }
 
   if (wantsHighestShare) {
     const top = topCategoryByIncomePercent(list, income, spendConcepts);
@@ -762,10 +872,7 @@ function tryAnswerPercentQuery(
     });
   }
 
-  if (
-    flags.wantsSavings ||
-    includesAny(q, ['ahorro', 'ahorros', 'sobro', 'sobró', 'savings', 'me queda'])
-  ) {
+  if (flags.wantsSavings || hasStem(q, 'ahorr') || includesAny(q, ['sobro', 'sobró', 'savings', 'me queda', 'saved', 'save'])) {
     const saved = income - spendTotal;
     return t('search.answerSavingsPercentIncome', {
       percent: Math.round((saved / income) * 100),
@@ -786,18 +893,15 @@ function tryAnswerPercentQuery(
     });
   }
 
-  if (
-    flags.cats &&
-    !flags.cats.ids.some((id) => INCOME_CATEGORY_IDS.includes(id))
-  ) {
-    let matched = matchTransactionsToCategories(list, flags.cats, spendConcepts);
+  if (cats) {
+    let matched = matchTransactionsToCategories(list, cats, spendConcepts);
     const amount = matched.reduce((s, x) => s + x.amount, 0);
     const label =
-      flags.cats.label === 'food-group'
+      cats.label === 'food-group'
         ? t('search.labelFood')
-        : flags.cats.displayName && !flags.cats.displayName.startsWith('concept-')
-          ? flags.cats.displayName
-          : flags.cats.ids.map(categoryLabel).join(' + ');
+        : cats.displayName && !cats.displayName.startsWith('concept-')
+          ? cats.displayName
+          : cats.ids.map(categoryLabel).join(' + ');
     if (matched.length === 0) {
       return t('search.answerCategoryEmpty', { label, period: periodLabel });
     }
@@ -807,36 +911,6 @@ function tryAnswerPercentQuery(
       amount: format(amount),
       income: format(income),
       period: periodLabel,
-    });
-  }
-
-  if (
-    includesAny(q, [
-      'ranking',
-      'lista',
-      'listado',
-      'top',
-      'cuales',
-      'cuáles',
-      'categorias',
-      'categorías',
-      'categories',
-    ])
-  ) {
-    const ranked = rankCategoriesByIncomePercent(
-      list,
-      income,
-      spendConcepts,
-      categoryLabel,
-      4
-    );
-    if (ranked.length === 0) return t('search.answerEmptyPeriod', { period: periodLabel });
-    return t('search.answerRankingPercentIncome', {
-      period: periodLabel,
-      income: format(income),
-      detail: ranked
-        .map((r) => `${r.label} ${Math.round(r.percent)}% (${format(r.amount)})`)
-        .join(' · '),
     });
   }
 
@@ -946,7 +1020,11 @@ export function answerFinanceQuery(
 
   const q = normalize(raw);
   const period = resolvePeriod(q, options.defaultPeriod ?? 'mes');
-  const list = txsForPeriod(transactions, period.key);
+  const list = withAccruedInstallments(
+    txsForPeriod(transactions, period.key),
+    options.debts,
+    period.key
+  );
   const periodLabel = t(period.labelKey);
 
   const wantsCount = includesAny(q, [
@@ -959,12 +1037,7 @@ export function answerFinanceQuery(
     'times',
     'conteo',
   ]);
-  const wantsIncome = includesAny(q, [
-    'ingreso',
-    'ingresos',
-    'salario',
-    'sueldo',
-    'income',
+  const earnedIncomeIntent = includesAny(q, [
     'gane',
     'gané',
     'recibi',
@@ -972,16 +1045,31 @@ export function answerFinanceQuery(
     'cobre',
     'cobré',
   ]);
-  const wantsSavings = includesAny(q, [
-    'ahorro',
-    'ahorros',
-    'savings',
-    'sobro',
-    'sobró',
-    'me queda',
-    'balance',
-    'neto del mes',
+  const incomeWord = includesAny(q, [
+    'ingreso',
+    'ingresos',
+    'salario',
+    'sueldo',
+    'income',
+    'payroll',
+    'nomina',
+    'nómina',
   ]);
+  const wantsIncome =
+    earnedIncomeIntent ||
+    (incomeWord && !skipIncomeCategoryMatch(q) && !isIncomeUsedAsReference(q));
+  const wantsSavings =
+    hasStem(q, 'ahorr') ||
+    includesAny(q, [
+      'savings',
+      'saved',
+      'save',
+      'sobro',
+      'sobró',
+      'me queda',
+      'balance',
+      'neto del mes',
+    ]);
   const wantsAnt = includesAny(q, [
     'hormiga',
     'hormigas',
@@ -1087,6 +1175,18 @@ export function answerFinanceQuery(
   if (percentAnswer) return percentAnswer;
 
   // --- Specific intents (order matters) ---
+
+  if (wantsSavings) {
+    const income = sumByType(list, 'income');
+    const expense = sumSpendOut(list);
+    const saved = income - expense;
+    return t('search.answerSavings', {
+      amount: format(saved),
+      period: periodLabel,
+      income: format(income),
+      expenses: format(expense),
+    });
+  }
 
   if (wantsAvailable && options.availableCash != null) {
     return t('search.answerAvailable', { amount: format(options.availableCash) });
@@ -1222,19 +1322,10 @@ export function answerFinanceQuery(
     });
   }
 
-  if (wantsSavings) {
-    const income = sumByType(list, 'income');
-    const expense = sumSpendOut(list);
-    const saved = income - expense;
-    return t('search.answerSavings', {
-      amount: format(saved),
-      period: periodLabel,
-      income: format(income),
-      expenses: format(expense),
-    });
-  }
-
-  if (wantsIncome || cats?.ids.some((id) => INCOME_CATEGORY_IDS.includes(id))) {
+  if (
+    wantsIncome ||
+    (cats?.ids.some((id) => INCOME_CATEGORY_IDS.includes(id)) && !skipIncomeCategoryMatch(q))
+  ) {
     const amount = sumByType(list, 'income');
     const count = list.filter((x) => x.type === 'income').length;
     if (wantsCount) {
@@ -1301,6 +1392,7 @@ export function answerFinanceQuery(
   }
 
   if (
+    !wantsSavings &&
     includesAny(q, [
       'gaste',
       'gasté',

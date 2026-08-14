@@ -124,6 +124,67 @@ export function sumSpendOut(transactions: Transaction[]): number {
     .reduce((sum, t) => sum + t.amount, 0);
 }
 
+export type AccruedInstallment = {
+  debtId: string;
+  categoryId: string;
+  amount: number;
+  name?: string;
+};
+
+/**
+ * Monthly installments not yet logged as a payment. Count them as committed
+ * spend for the calendar month without touching account balances.
+ */
+export function unpaidInstallmentsForMonth(
+  transactions: Transaction[],
+  debts: Debt[],
+  year: number,
+  monthIndex: number
+): AccruedInstallment[] {
+  const monthTxs = filterByCalendarMonth(transactions, year, monthIndex);
+  const paidByDebt = new Map<string, number>();
+  const paidByCategory = new Map<string, number>();
+  for (const t of monthTxs) {
+    if (t.type !== 'expense' && t.type !== 'debt_payment') continue;
+    if (t.type === 'debt_payment' && t.debtId) {
+      paidByDebt.set(t.debtId, (paidByDebt.get(t.debtId) ?? 0) + t.amount);
+    }
+    if (t.categoryId) {
+      paidByCategory.set(t.categoryId, (paidByCategory.get(t.categoryId) ?? 0) + t.amount);
+    }
+  }
+
+  const extra: AccruedInstallment[] = [];
+  for (const debt of debts) {
+    if (!(debt.installment > 0) || !(debt.balance > 0)) continue;
+    const due = Math.min(debt.installment, debt.balance);
+    const paidDirect = paidByDebt.get(debt.id) ?? 0;
+    const paidCat = debt.categoryId ? paidByCategory.get(debt.categoryId) ?? 0 : 0;
+    const paid = paidDirect > 0 ? paidDirect : paidCat;
+    const remaining = Math.max(0, due - paid);
+    if (remaining <= 0) continue;
+    extra.push({
+      debtId: debt.id,
+      categoryId: debt.categoryId ?? `debt-${debt.id}`,
+      amount: remaining,
+      name: debt.name?.trim() || undefined,
+    });
+  }
+  return extra;
+}
+
+export function accruedInstallmentsTotal(
+  transactions: Transaction[],
+  debts: Debt[],
+  year: number,
+  monthIndex: number
+): number {
+  return unpaidInstallmentsForMonth(transactions, debts, year, monthIndex).reduce(
+    (s, x) => s + x.amount,
+    0
+  );
+}
+
 export function isAntCategoryId(
   categoryId: string,
   spendConcepts: SpendConcept[] = []
@@ -257,11 +318,6 @@ export function predictMonthlySpends(
   const paidCategoryIds = new Set(
     thisMonth.map((t) => t.categoryId).filter((id): id is string => !!id)
   );
-  const paidDebtIds = new Set(
-    thisMonth
-      .filter((t) => t.type === 'debt_payment' && !!t.debtId)
-      .map((t) => t.debtId!)
-  );
 
   const results: PredictedSpend[] = [];
   const coveredCategories = new Set<string>();
@@ -269,9 +325,6 @@ export function predictMonthlySpends(
   for (const debt of debts) {
     if (!(debt.installment > 0)) continue;
     const categoryId = debt.categoryId ?? `debt-${debt.id}`;
-    const paid =
-      paidDebtIds.has(debt.id) ||
-      (!!debt.categoryId && paidCategoryIds.has(debt.categoryId));
     let typicalDay = 1;
     if (debt.nextPaymentDate) {
       const d = new Date(debt.nextPaymentDate).getDate();
@@ -282,7 +335,7 @@ export function predictMonthlySpends(
       categoryId,
       amount: debt.installment,
       typicalDay,
-      status: paid ? 'paid' : 'pending',
+      status: 'paid',
       source: 'debt',
       debtId: debt.id,
       label: debt.name?.trim() || undefined,

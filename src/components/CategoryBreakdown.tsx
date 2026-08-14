@@ -1,5 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 
+import { findSpendSub } from '@/src/data/spendConcepts';
 import { MoneyText } from '@/src/components/MoneyText';
 import { useMoney } from '@/src/hooks/useMoney';
 import { useSettings } from '@/src/hooks/useSettings';
@@ -48,7 +49,6 @@ export function CategoryBreakdown({ insights, emptyLabel, budgetStatus }: Props)
     );
   }
 
-  const max = Math.max(...insights.map((i) => i.total), 1);
   const maxCount = Math.max(...insights.map((i) => i.count), 0);
   const mostFrequentId =
     maxCount >= 3
@@ -59,10 +59,22 @@ export function CategoryBreakdown({ insights, emptyLabel, budgetStatus }: Props)
     (budgetStatus ?? []).map((b) => [b.categoryId, b] as const)
   );
 
+  function budgetFor(item: Insight) {
+    const direct = budgetMap.get(item.categoryId);
+    if (direct) return direct;
+    let worst: BudgetHint | undefined;
+    for (const b of budgetStatus ?? []) {
+      const hit = findSpendSub(spendConcepts, b.categoryId);
+      if (hit?.concept.id !== item.categoryId) continue;
+      if (!worst || b.ratio > worst.ratio) worst = b;
+    }
+    return worst;
+  }
+
   return (
     <View style={styles.list}>
       {insights.map((item, index) => {
-        const budget = budgetMap.get(item.categoryId);
+        const budget = budgetFor(item);
         const budgetTone = budget ? toneFromBudgetRatio(budget.ratio) : 'neutral';
         const isTopSpend = index === 0 && item.percent >= 30;
         const isMostFrequent = item.categoryId === mostFrequentId;
@@ -130,20 +142,20 @@ export function CategoryBreakdown({ insights, emptyLabel, budgetStatus }: Props)
                           : tone === 'good'
                             ? palette.success
                             : item.color,
-                    width: `${Math.max((item.total / max) * 100, 6)}%`,
+                    width: `${Math.max(Math.min(item.percent, 100), 6)}%`,
                   },
                 ]}
               />
             </View>
             <Text style={styles.meta}>
-              {t('insights.percentOfTotalShort', { percent: item.percent.toFixed(0) })}
+              {t('insights.percentOfTotalShort', { percent: Math.round(item.percent) })}
               {' · '}
               {item.count}{' '}
               {item.count === 1 ? t('insights.expense') : t('insights.expenses')}
               {budget
                 ? ` · ${t('insights.topeMeta', {
                     spent: format(budget.spent ?? item.total),
-                    limit: format(budget.limit),
+                    limit: format(budget.limit ?? 0),
                   })}`
                 : ''}
             </Text>

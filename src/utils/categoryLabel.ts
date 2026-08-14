@@ -1,5 +1,5 @@
 import { CATEGORIES, expenseCategories } from '@/src/data/financeDefaults';
-import { spendSubLabel } from '@/src/data/spendConcepts';
+import { findConceptById, spendSubLabel } from '@/src/data/spendConcepts';
 import type { TranslationKey } from '@/src/i18n/translations';
 import type { SpendConcept } from '@/src/types/settings';
 
@@ -49,6 +49,18 @@ export function categoryLabel(
   spendConcepts: SpendConcept[] = []
 ): string {
   if (!categoryId) return '';
+  if (categoryId === '__none__') {
+    try {
+      const label = t('insights.uncategorized' as TranslationKey);
+      if (label && label !== 'insights.uncategorized') return label;
+    } catch {
+      /* ignore */
+    }
+    return 'Uncategorized';
+  }
+
+  const concept = findConceptById(spendConcepts, categoryId);
+  if (concept?.name) return concept.name;
 
   const fromTree = spendSubLabel(categoryId, spendConcepts);
   if (fromTree && fromTree !== categoryId) return fromTree;

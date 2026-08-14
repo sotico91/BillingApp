@@ -12,7 +12,7 @@ import {
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { expenseCategories } from '@/src/data/categories';
+import { createSpendSub, ONBOARDING_CONCEPTS } from '@/src/data/spendConcepts';
 import { useSettings } from '@/src/hooks/useSettings';
 import { useLanguage } from '@/src/i18n/LanguageContext';
 import type { TranslationKey } from '@/src/i18n/translations';
@@ -30,7 +30,7 @@ export function OnboardingOverlay() {
   const [userName, setUserName] = useState('');
   const [currency, setCurrency] = useState<Currency>('COP');
   const [selected, setSelected] = useState<string[]>(() =>
-    expenseCategories().map((c) => c.id)
+    ONBOARDING_CONCEPTS.map((c) => c.id)
   );
   const [notifyOnExpense, setNotifyOnExpense] = useState(true);
   const [reminderIds, setReminderIds] = useState<string[]>([]);
@@ -68,14 +68,24 @@ export function OnboardingOverlay() {
     }
     setSaving(true);
     try {
-      const reminderCategoryIds = reminderIds.filter((id) => selected.includes(id));
+      const spendConcepts = ONBOARDING_CONCEPTS.filter((c) => selected.includes(c.id)).map(
+        (c) => ({
+          id: c.id,
+          name: t(c.nameKey),
+          color: c.color,
+          subs: [createSpendSub(c.id, t('onboard.concept.general'))],
+        })
+      );
+      const reminderCategoryIds = reminderIds
+        .map((conceptId) => spendConcepts.find((c) => c.id === conceptId)?.subs[0]?.id)
+        .filter((id): id is string => !!id);
       const reminderLabels = Object.fromEntries(
         reminderCategoryIds.map((categoryId) => [
           categoryId,
           {
             title: t('reminder.pushTitle'),
             body: t('reminder.pushBody', {
-              category: categoryLabel(categoryId, t),
+              category: categoryLabel(categoryId, t, spendConcepts),
             }),
           },
         ])
@@ -83,7 +93,7 @@ export function OnboardingOverlay() {
       await completeOnboarding({
         userName: trimmed,
         currency,
-        enabledCategoryIds: selected,
+        spendConcepts,
         notifyOnExpense,
         reminderCategoryIds,
         reminderHour: 20,
@@ -190,21 +200,21 @@ export function OnboardingOverlay() {
               <Text style={styles.title}>{t('onboard.categoriesTitle')}</Text>
               <Text style={styles.copy}>{t('onboard.categoriesBody')}</Text>
               <ScrollView style={styles.catScroll} contentContainerStyle={styles.catWrap}>
-                {expenseCategories().map((category) => {
-                  const active = selected.includes(category.id);
+                {ONBOARDING_CONCEPTS.map((concept) => {
+                  const active = selected.includes(concept.id);
                   return (
                     <Pressable
-                      key={category.id}
-                      onPress={() => toggleCategory(category.id)}
+                      key={concept.id}
+                      onPress={() => toggleCategory(concept.id)}
                       style={[
                         styles.catChip,
                         active && {
-                          backgroundColor: category.color,
-                          borderColor: category.color,
+                          backgroundColor: concept.color,
+                          borderColor: concept.color,
                         },
                       ]}>
                       <Text style={[styles.catText, active && styles.catTextActive]}>
-                        {categoryLabel(category.id, t)}
+                        {t(concept.nameKey)}
                       </Text>
                     </Pressable>
                   );
@@ -235,23 +245,21 @@ export function OnboardingOverlay() {
               <Text style={styles.title}>{t('onboard.reminderTitle')}</Text>
               <Text style={styles.copy}>{t('onboard.reminderBody')}</Text>
               <ScrollView style={styles.catScroll} contentContainerStyle={styles.catWrap}>
-                {expenseCategories()
-                  .filter((c) => selected.includes(c.id))
-                  .map((category) => {
-                    const active = reminderIds.includes(category.id);
+                {ONBOARDING_CONCEPTS.filter((c) => selected.includes(c.id)).map((concept) => {
+                    const active = reminderIds.includes(concept.id);
                     return (
                       <Pressable
-                        key={category.id}
-                        onPress={() => toggleReminder(category.id)}
+                        key={concept.id}
+                        onPress={() => toggleReminder(concept.id)}
                         style={[
                           styles.catChip,
                           active && {
-                            backgroundColor: category.color,
-                            borderColor: category.color,
+                            backgroundColor: concept.color,
+                            borderColor: concept.color,
                           },
                         ]}>
                         <Text style={[styles.catText, active && styles.catTextActive]}>
-                          {categoryLabel(category.id, t)}
+                          {t(concept.nameKey)}
                         </Text>
                       </Pressable>
                     );

@@ -5,6 +5,24 @@ import type { CustomConcept, SpendConcept, SpendSub } from '@/src/types/settings
 export const CREDITS_CONCEPT_ID = 'concept-creditos';
 export const CREDITS_CONCEPT_NAME = 'Créditos';
 
+/** Few broad buckets for first-run — café, luz, etc. are subs the user adds later. */
+export const ONBOARDING_CONCEPTS: {
+  id: string;
+  color: string;
+  nameKey:
+    | 'onboard.concept.recibos'
+    | 'onboard.concept.creditos'
+    | 'onboard.concept.transporte'
+    | 'onboard.concept.alimentacion'
+    | 'onboard.concept.vivienda';
+}[] = [
+  { id: 'concept-recibos', color: '#4361EE', nameKey: 'onboard.concept.recibos' },
+  { id: CREDITS_CONCEPT_ID, color: '#E63946', nameKey: 'onboard.concept.creditos' },
+  { id: 'concept-transporte', color: '#2EC4B6', nameKey: 'onboard.concept.transporte' },
+  { id: 'concept-alimentacion', color: '#E07A5F', nameKey: 'onboard.concept.alimentacion' },
+  { id: 'concept-vivienda', color: '#3E6B8A', nameKey: 'onboard.concept.vivienda' },
+];
+
 /** Palette the user can pick when creating/editing a concept. */
 export const CONCEPT_COLOR_OPTIONS = [
   '#2EC4B6',

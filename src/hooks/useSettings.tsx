@@ -45,7 +45,7 @@ type SettingsContextValue = {
   completeOnboarding: (input: {
     userName: string;
     currency: Currency;
-    enabledCategoryIds: string[];
+    spendConcepts: SpendConcept[];
     notifyOnExpense: boolean;
     reminderCategoryIds: string[];
     reminderHour?: number;
@@ -135,7 +135,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     async (input: {
       userName: string;
       currency: Currency;
-      enabledCategoryIds: string[];
+      spendConcepts: SpendConcept[];
       notifyOnExpense: boolean;
       reminderCategoryIds: string[];
       reminderHour?: number;
@@ -160,8 +160,8 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         personId: settings.personId || createId(),
         userName: input.userName.trim(),
         currency: input.currency,
-        enabledCategoryIds: input.enabledCategoryIds,
-        spendConcepts: settings.spendConcepts ?? [],
+        enabledCategoryIds: input.spendConcepts.flatMap((c) => c.subs.map((s) => s.id)),
+        spendConcepts: input.spendConcepts,
         customConcepts: [],
         catalogVersion: CURRENT_CATALOG_VERSION,
         notifyOnExpense: input.notifyOnExpense,
@@ -183,7 +183,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         await clearCategoryReminders();
       }
     },
-    [settings.personId, settings.spendConcepts]
+    [settings.personId, settings.appLockEnabled]
   );
 
   const completeCoachMarks = useCallback(async () => {
