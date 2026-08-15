@@ -503,7 +503,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: 'DMSans_400Regular',
     fontSize: 13,
-    color: palette.inkMuted,
+    color: palette.brandMuted,
     lineHeight: 18,
   },
   copyHint: {

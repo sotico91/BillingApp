@@ -447,7 +447,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     fontFamily: 'DMSans_400Regular',
     fontSize: 13,
-    color: palette.inkMuted,
+    color: palette.brandMuted,
     lineHeight: 18,
   },
   smartCard: {

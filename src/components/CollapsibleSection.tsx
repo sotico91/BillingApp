@@ -68,11 +68,11 @@ const styles = StyleSheet.create({
   summary: {
     fontFamily: 'DMSans_400Regular',
     fontSize: 13,
-    color: palette.inkMuted,
+    color: palette.brandMuted,
   },
   chevron: {
     fontSize: 16,
-    color: palette.inkMuted,
+    color: palette.brandMuted,
     paddingLeft: 4,
   },
   body: {
