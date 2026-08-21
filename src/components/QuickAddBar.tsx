@@ -17,7 +17,12 @@ import { useLanguage } from '@/src/i18n/LanguageContext';
 import { palette, radii } from '@/src/theme/colors';
 import { categoryLabel } from '@/src/utils/categoryLabel';
 import { notifyExpenseRegistered } from '@/src/utils/notifications';
+import { tapFeedback } from '@/src/utils/selectFeedback';
 
+/**
+ * One-tap repeats only. New expenses go through the glance FAB → Agregar flow.
+ * Renders nothing until the user has logged at least one expense (templates).
+ */
 export function QuickAddBar() {
   const { t } = useLanguage();
   const { format } = useMoney();
@@ -31,6 +36,10 @@ export function QuickAddBar() {
     ...flattenSpendSubs(spendConcepts).map((s) => s.id),
   ]);
   const templates = quickTemplates.filter((item) => allowedIds.has(item.categoryId));
+
+  if (templates.length === 0) {
+    return null;
+  }
 
   async function handleQuickAdd(templateId: string) {
     const template = templates.find((x) => x.id === templateId);
@@ -68,32 +77,31 @@ export function QuickAddBar() {
       <Text style={styles.title}>{t('home.quickTitle')}</Text>
       <Text style={styles.hint}>{t('home.quickHint')}</Text>
 
-      {templates.length === 0 ? (
-        <Text style={styles.empty}>{t('home.quickEmpty')}</Text>
-      ) : (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
-          {templates.map((template) => {
-            const category = getCategoryById(template.categoryId);
-            const busy = busyId === template.id;
-            return (
-              <Pressable
-                key={template.id}
-                onPress={() => void handleQuickAdd(template.id)}
-                disabled={!!busyId}
-                style={[styles.chip, { borderColor: category.color }]}>
-                <View style={[styles.dot, { backgroundColor: category.color }]} />
-                <View>
-                  <Text style={styles.chipTitle}>
-                    {categoryLabel(template.categoryId, t, spendConcepts)}
-                  </Text>
-                  <Text style={styles.chipAmount}>{format(template.amount)}</Text>
-                </View>
-                {busy ? <ActivityIndicator size="small" color={palette.accent} /> : null}
-              </Pressable>
-            );
-          })}
-        </ScrollView>
-      )}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
+        {templates.map((template) => {
+          const category = getCategoryById(template.categoryId);
+          const busy = busyId === template.id;
+          return (
+            <Pressable
+              key={template.id}
+              onPress={() => {
+                tapFeedback();
+                void handleQuickAdd(template.id);
+              }}
+              disabled={!!busyId}
+              style={[styles.chip, { borderColor: category.color }]}>
+              <View style={[styles.dot, { backgroundColor: category.color }]} />
+              <View>
+                <Text style={styles.chipTitle}>
+                  {categoryLabel(template.categoryId, t, spendConcepts)}
+                </Text>
+                <Text style={styles.chipAmount}>{format(template.amount)}</Text>
+              </View>
+              {busy ? <ActivityIndicator size="small" color={palette.accent} /> : null}
+            </Pressable>
+          );
+        })}
+      </ScrollView>
     </View>
   );
 }
@@ -117,12 +125,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: palette.inkMuted,
     lineHeight: 18,
-  },
-  empty: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
-    color: palette.inkSoft,
-    marginTop: 4,
   },
   row: {
     gap: 10,

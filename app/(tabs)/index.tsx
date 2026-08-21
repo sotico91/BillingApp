@@ -11,6 +11,7 @@ import { FadeInBlock } from '@/src/components/FadeInBlock';
 import { LanguageSwitcher } from '@/src/components/LanguageSwitcher';
 import { PredictedSpendsCard } from '@/src/components/PredictedSpendsCard';
 import { ProfileMenuButton } from '@/src/components/ProfileMenuButton';
+import { QuickAddBar } from '@/src/components/QuickAddBar';
 import { RaisedText } from '@/src/components/RaisedText';
 import { SavingsDecor } from '@/src/components/SavingsDecor';
 import { ScreenBackground } from '@/src/components/ScreenBackground';
@@ -215,6 +216,10 @@ export default function HomeScreen() {
         </FadeInBlock>
 
         <FadeInBlock index={3}>
+          <QuickAddBar />
+        </FadeInBlock>
+
+        <FadeInBlock index={4}>
           <CollapsibleSection
             title={t('home.attention')}
             open={attentionOpen}
@@ -251,7 +256,7 @@ export default function HomeScreen() {
           </CollapsibleSection>
         </FadeInBlock>
 
-        <FadeInBlock index={4}>
+        <FadeInBlock index={5}>
           <CollapsibleSection
             title={t('home.predictTitle')}
             open={predictOpen}
@@ -269,7 +274,7 @@ export default function HomeScreen() {
         </FadeInBlock>
 
         {recent.length > 0 ? (
-          <FadeInBlock index={5}>
+          <FadeInBlock index={6}>
             <CollapsibleSection
               title={t('home.todayList')}
               open={todayOpen}
@@ -296,7 +301,7 @@ export default function HomeScreen() {
           </FadeInBlock>
         ) : null}
 
-        <FadeInBlock index={6}>
+        <FadeInBlock index={7}>
           <CollapsibleSection
             title={t('home.antTitle')}
             open={antOpen}
