@@ -90,18 +90,44 @@ export function startBadgeClearOnActive(): () => void {
   };
 }
 
+let lastExpenseNotify: { key: string; at: number } | null = null;
+const EXPENSE_NOTIFY_ID = 'billing-expense-confirm';
+
 export async function notifyExpenseRegistered(title: string, body: string): Promise<void> {
   if (Platform.OS === 'web') return;
 
   const granted = await ensureNotificationPermission();
   if (!granted) return;
 
+  const key = `${title}\n${body}`;
+  const now = Date.now();
+  // Guard against double-taps / remounts stacking the same confirm dozens of times.
+  if (
+    lastExpenseNotify &&
+    lastExpenseNotify.key === key &&
+    now - lastExpenseNotify.at < 4000
+  ) {
+    return;
+  }
+  lastExpenseNotify = { key, at: now };
+
+  const content = {
+    title,
+    body,
+    data: { type: 'expense-registered' as const },
+    ...(Platform.OS === 'android' ? { channelId: ANDROID_CHANNEL_ID } : null),
+  };
+
+  // Same identifier replaces a prior confirm instead of stacking duplicates.
+  try {
+    await Notifications.dismissNotificationAsync(EXPENSE_NOTIFY_ID);
+  } catch {
+    /* nothing to dismiss */
+  }
+
   await Notifications.scheduleNotificationAsync({
-    content: {
-      title,
-      body,
-      ...(Platform.OS === 'android' ? { channelId: ANDROID_CHANNEL_ID } : null),
-    },
+    identifier: EXPENSE_NOTIFY_ID,
+    content,
     trigger: null,
   });
 }

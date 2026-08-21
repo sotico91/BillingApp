@@ -374,11 +374,9 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
 
       if (nextRules.length === 0) {
         await clearCategoryReminders();
-        return;
       }
-
-      // Re-schedule so channel / badge / copy stay in sync after app updates.
-      await syncRemindersFromRules(nextRules, labels);
+      // If rules are unchanged, leave existing schedules alone — re-syncing on
+      // every app open can flood Android with duplicate local notifications.
     },
     [settings, updateReminders]
   );

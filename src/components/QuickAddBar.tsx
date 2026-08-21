@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -25,10 +25,11 @@ import { tapFeedback } from '@/src/utils/selectFeedback';
  */
 export function QuickAddBar() {
   const { t } = useLanguage();
-  const { format } = useMoney();
+  const { format, formatPlain } = useMoney();
   const { settings, quickTemplates, updateQuickTemplate } = useSettings();
   const { addExpense } = useExpenses();
   const [busyId, setBusyId] = useState<string | null>(null);
+  const busyLock = useRef(false);
   const spendConcepts = settings.spendConcepts ?? [];
 
   const allowedIds = new Set([
@@ -43,8 +44,9 @@ export function QuickAddBar() {
 
   async function handleQuickAdd(templateId: string) {
     const template = templates.find((x) => x.id === templateId);
-    if (!template || busyId) return;
+    if (!template || busyLock.current) return;
 
+    busyLock.current = true;
     setBusyId(templateId);
     try {
       await addExpense({
@@ -62,12 +64,13 @@ export function QuickAddBar() {
         await notifyExpenseRegistered(
           t('notify.title'),
           t('notify.body', {
-            amount: format(template.amount),
+            amount: formatPlain(template.amount),
             category: categoryLabel(template.categoryId, t, spendConcepts),
           })
         );
       }
     } finally {
+      busyLock.current = false;
       setBusyId(null);
     }
   }

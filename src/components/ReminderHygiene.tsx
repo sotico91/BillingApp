@@ -7,6 +7,7 @@ import { categoryLabel } from '@/src/utils/categoryLabel';
 
 /**
  * Drops reminder rules whose subcategory no longer exists in the user's concept tree.
+ * Does not reschedule when nothing changed (avoids Android dumping many local alerts).
  */
 export function ReminderHygiene() {
   const { t } = useLanguage();

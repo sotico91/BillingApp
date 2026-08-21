@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import {
   Alert,
   Pressable,
@@ -56,6 +56,7 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
   const [accountId, setAccountId] = useState(accounts[0]?.id ?? 'cash');
   const [note, setNote] = useState('');
   const [saving, setSaving] = useState(false);
+  const savingLock = useRef(false);
 
   const incomeChoices = useMemo(
     () => categoriesForKind('income', settings.enabledCategoryIds),
@@ -144,12 +145,14 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
   }
 
   async function save() {
+    if (savingLock.current) return;
     const parsed = parse(amount);
     if (!parsed) {
       Alert.alert(t('add.invalidTitle'), t('add.invalidMessage'));
       return;
     }
 
+    savingLock.current = true;
     setSaving(true);
     try {
       const type = intentToType(intent);
@@ -204,6 +207,7 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
     } catch {
       Alert.alert(t('add.invalidTitle'), t('add.saveError'));
     } finally {
+      savingLock.current = false;
       setSaving(false);
     }
   }

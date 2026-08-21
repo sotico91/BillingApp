@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import {
   Alert,
   Pressable,
@@ -67,6 +67,7 @@ export function ExpenseForm({ onSaved }: Props) {
   const [toAccountId, setToAccountId] = useState('savings');
   const [note, setNote] = useState('');
   const [saving, setSaving] = useState(false);
+  const savingLock = useRef(false);
 
   const categoryChoices = useMemo(() => {
     if (type === 'income') {
@@ -100,12 +101,14 @@ export function ExpenseForm({ onSaved }: Props) {
   }
 
   async function handleSave() {
+    if (savingLock.current) return;
     const parsed = parse(amount);
     if (!parsed) {
       Alert.alert(t('add.invalidTitle'), t('add.invalidMessage'));
       return;
     }
 
+    savingLock.current = true;
     setSaving(true);
     try {
       const beforeTodayExpense = totalForPeriod('hoy', 'expense');
@@ -162,6 +165,7 @@ export function ExpenseForm({ onSaved }: Props) {
     } catch {
       Alert.alert(t('add.invalidTitle'), t('add.saveError'));
     } finally {
+      savingLock.current = false;
       setSaving(false);
     }
   }
