@@ -78,6 +78,11 @@ type SettingsContextValue = {
   updateQuickTemplate: (
     template: Omit<QuickTemplate, 'id' | 'updatedAt'> & { id?: string }
   ) => Promise<void>;
+  removeQuickTemplate: (id: string) => Promise<void>;
+  /** Drop one-tap chips that no longer match any remaining expense. */
+  pruneQuickTemplatesToExistingExpenses: (
+    expenses: { categoryId: string; amount: number }[]
+  ) => Promise<void>;
   restoreSettingsFromBackup: (input: {
     settings: UserSettings;
     quickTemplates: QuickTemplate[];
@@ -411,6 +416,18 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     [quickTemplates]
   );
 
+  const pruneQuickTemplatesToExistingExpenses = useCallback(
+    async (expenses: { categoryId: string; amount: number }[]) => {
+      const next = quickTemplates.filter((t) =>
+        expenses.some((e) => e.categoryId === t.categoryId && e.amount === t.amount)
+      );
+      if (next.length === quickTemplates.length) return;
+      setQuickTemplates(next);
+      await saveQuickTemplates(next);
+    },
+    [quickTemplates]
+  );
+
   const restoreSettingsFromBackup = useCallback(
     async (input: { settings: UserSettings; quickTemplates: QuickTemplate[] }) => {
       const nextSettings: UserSettings = {
@@ -450,6 +467,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       pruneRemindersToRegistered,
       updateQuickTemplate,
       removeQuickTemplate,
+      pruneQuickTemplatesToExistingExpenses,
       restoreSettingsFromBackup,
     }),
     [
@@ -472,6 +490,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       pruneRemindersToRegistered,
       updateQuickTemplate,
       removeQuickTemplate,
+      pruneQuickTemplatesToExistingExpenses,
       restoreSettingsFromBackup,
     ]
   );

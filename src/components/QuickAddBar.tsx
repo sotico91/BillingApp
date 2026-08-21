@@ -27,7 +27,7 @@ export function QuickAddBar() {
   const { t } = useLanguage();
   const { format, formatPlain } = useMoney();
   const { settings, quickTemplates, updateQuickTemplate } = useSettings();
-  const { addExpense } = useExpenses();
+  const { addExpense, transactions } = useExpenses();
   const [busyId, setBusyId] = useState<string | null>(null);
   const busyLock = useRef(false);
   const spendConcepts = settings.spendConcepts ?? [];
@@ -36,7 +36,17 @@ export function QuickAddBar() {
     ...settings.enabledCategoryIds,
     ...flattenSpendSubs(spendConcepts).map((s) => s.id),
   ]);
-  const templates = quickTemplates.filter((item) => allowedIds.has(item.categoryId));
+  // Only chips backed by a still-existing expense (deleted spends must not stay tappable).
+  const templates = quickTemplates.filter(
+    (item) =>
+      allowedIds.has(item.categoryId) &&
+      transactions.some(
+        (tx) =>
+          tx.type === 'expense' &&
+          tx.categoryId === item.categoryId &&
+          tx.amount === item.amount
+      )
+  );
 
   if (templates.length === 0) {
     return null;

@@ -202,7 +202,8 @@ function applyAccountDelta(
 }
 
 export function FinanceProvider({ children }: { children: React.ReactNode }) {
-  const { settings, ready: settingsReady } = useSettings();
+  const { settings, ready: settingsReady, pruneQuickTemplatesToExistingExpenses } =
+    useSettings();
   const { now, monthKey } = useCalendarClock();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
@@ -403,8 +404,16 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       setTransactions(nextTx);
       setAccounts(nextAccounts);
       await Promise.all([saveTransactions(nextTx), saveAccounts(nextAccounts)]);
+      // One-tap = repeat an existing spend; drop chips when nothing remains to repeat.
+      if (existing.type === 'expense') {
+        await pruneQuickTemplatesToExistingExpenses(
+          nextTx
+            .filter((t) => t.type === 'expense')
+            .map((t) => ({ categoryId: t.categoryId, amount: t.amount }))
+        );
+      }
     },
-    [transactions, accounts, settings.personId]
+    [transactions, accounts, settings.personId, pruneQuickTemplatesToExistingExpenses]
   );
 
   const updateTransaction = useCallback(
