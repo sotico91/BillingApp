@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -17,65 +17,64 @@ import { useLanguage } from '@/src/i18n/LanguageContext';
 import { palette, radii } from '@/src/theme/colors';
 import { categoryLabel } from '@/src/utils/categoryLabel';
 import { notifyExpenseRegistered } from '@/src/utils/notifications';
+import { buildOneTapHabits } from '@/src/utils/oneTapHabits';
 import { tapFeedback } from '@/src/utils/selectFeedback';
 
 /**
- * One-tap repeats only. New expenses go through the glance FAB → Agregar flow.
- * Renders nothing until the user has logged at least one expense (templates).
+ * One-tap = repeat a frequent habit (category + amount), not every past expense.
+ * New / one-off spends go through the glance FAB → Agregar flow.
  */
 export function QuickAddBar() {
   const { t } = useLanguage();
   const { format, formatPlain } = useMoney();
-  const { settings, quickTemplates, updateQuickTemplate } = useSettings();
+  const { settings, updateQuickTemplate } = useSettings();
   const { addExpense, transactions } = useExpenses();
   const [busyId, setBusyId] = useState<string | null>(null);
   const busyLock = useRef(false);
   const spendConcepts = settings.spendConcepts ?? [];
 
-  const allowedIds = new Set([
-    ...settings.enabledCategoryIds,
-    ...flattenSpendSubs(spendConcepts).map((s) => s.id),
-  ]);
-  // Only chips backed by a still-existing expense (deleted spends must not stay tappable).
-  const templates = quickTemplates.filter(
-    (item) =>
-      allowedIds.has(item.categoryId) &&
-      transactions.some(
-        (tx) =>
-          tx.type === 'expense' &&
-          tx.categoryId === item.categoryId &&
-          tx.amount === item.amount
-      )
+  const allowedIds = useMemo(
+    () =>
+      new Set([
+        ...settings.enabledCategoryIds,
+        ...flattenSpendSubs(spendConcepts).map((s) => s.id),
+      ]),
+    [settings.enabledCategoryIds, spendConcepts]
   );
 
-  if (templates.length === 0) {
+  const habits = useMemo(
+    () => buildOneTapHabits(transactions, allowedIds),
+    [transactions, allowedIds]
+  );
+
+  if (habits.length === 0) {
     return null;
   }
 
-  async function handleQuickAdd(templateId: string) {
-    const template = templates.find((x) => x.id === templateId);
-    if (!template || busyLock.current) return;
+  async function handleQuickAdd(habitId: string) {
+    const habit = habits.find((x) => x.id === habitId);
+    if (!habit || busyLock.current) return;
 
     busyLock.current = true;
-    setBusyId(templateId);
+    setBusyId(habitId);
     try {
       await addExpense({
-        amount: template.amount,
-        categoryId: template.categoryId,
-        note: template.note,
+        amount: habit.amount,
+        categoryId: habit.categoryId,
+        note: habit.note,
       });
       await updateQuickTemplate({
-        categoryId: template.categoryId,
-        amount: template.amount,
-        note: template.note,
+        categoryId: habit.categoryId,
+        amount: habit.amount,
+        note: habit.note,
       });
 
       if (settings.notifyOnExpense) {
         await notifyExpenseRegistered(
           t('notify.title'),
           t('notify.body', {
-            amount: formatPlain(template.amount),
-            category: categoryLabel(template.categoryId, t, spendConcepts),
+            amount: formatPlain(habit.amount),
+            category: categoryLabel(habit.categoryId, t, spendConcepts),
           })
         );
       }
@@ -91,24 +90,24 @@ export function QuickAddBar() {
       <Text style={styles.hint}>{t('home.quickHint')}</Text>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
-        {templates.map((template) => {
-          const category = getCategoryById(template.categoryId);
-          const busy = busyId === template.id;
+        {habits.map((habit) => {
+          const category = getCategoryById(habit.categoryId);
+          const busy = busyId === habit.id;
           return (
             <Pressable
-              key={template.id}
+              key={habit.id}
               onPress={() => {
                 tapFeedback();
-                void handleQuickAdd(template.id);
+                void handleQuickAdd(habit.id);
               }}
               disabled={!!busyId}
               style={[styles.chip, { borderColor: category.color }]}>
               <View style={[styles.dot, { backgroundColor: category.color }]} />
               <View>
                 <Text style={styles.chipTitle}>
-                  {categoryLabel(template.categoryId, t, spendConcepts)}
+                  {categoryLabel(habit.categoryId, t, spendConcepts)}
                 </Text>
-                <Text style={styles.chipAmount}>{format(template.amount)}</Text>
+                <Text style={styles.chipAmount}>{format(habit.amount)}</Text>
               </View>
               {busy ? <ActivityIndicator size="small" color={palette.accent} /> : null}
             </Pressable>
