@@ -3,7 +3,7 @@ export type Language = 'en' | 'es';
 export const translations = {
   en: {
     'brand.mark': 'BILLING',
-    'brand.name': 'BillingApp',
+    'brand.name': 'Billing',
     'home.subtitle': 'Register → classify → understand → decide.',
     'home.greeting': 'Hi, {name}',
     'home.greetingFallback': 'Hi there',
@@ -659,7 +659,7 @@ export const translations = {
   },
   es: {
     'brand.mark': 'BILLING',
-    'brand.name': 'BillingApp',
+    'brand.name': 'Billing',
     'home.subtitle': 'Registrar → clasificar → entender → decidir.',
     'home.greeting': 'Hola, {name}',
     'home.greetingFallback': 'Hola',
