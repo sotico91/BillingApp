@@ -24,6 +24,7 @@ import type { TranslationKey } from '@/src/i18n/translations';
 import { palette, radii } from '@/src/theme/colors';
 import type { PaymentMethod, TransactionType } from '@/src/types/finance';
 import { categoryLabel } from '@/src/utils/categoryLabel';
+import { incomeDestinationAccounts } from '@/src/utils/netWorth';
 import { notifyExpenseRegistered } from '@/src/utils/notifications';
 
 export type SavedMovement = {
@@ -81,6 +82,11 @@ export function ExpenseForm({ onSaved }: Props) {
     return spendSubsAsCategories([concept]);
   }, [type, settings.enabledCategoryIds, spendConcepts, conceptId]);
 
+  const accountChoices = useMemo(
+    () => (type === 'income' ? incomeDestinationAccounts(accounts) : accounts),
+    [type, accounts]
+  );
+
   const scale = useSharedValue(1);
   const buttonStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -90,6 +96,11 @@ export function ExpenseForm({ onSaved }: Props) {
     setType(next);
     if (next === 'income') {
       setCategoryId('salario');
+      setAccountId(
+        incomeDestinationAccounts(accounts).find((a) => a.type === 'bank')?.id ??
+          incomeDestinationAccounts(accounts)[0]?.id ??
+          'cash'
+      );
     } else if (next === 'expense') {
       const first = spendConcepts[0];
       setConceptId(first?.id ?? '');
@@ -224,7 +235,7 @@ export function ExpenseForm({ onSaved }: Props) {
         {type === 'income' ? t('flow.whichAccountIncome') : t('add.account')}
       </Text>
       <View style={styles.chips}>
-        {accounts.map((acc) => (
+        {accountChoices.map((acc) => (
           <Pressable
             key={acc.id}
             onPress={() => setAccountId(acc.id)}

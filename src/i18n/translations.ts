@@ -40,9 +40,11 @@ export const translations = {
     'home.savings': 'This month’s result',
     'home.savingsCaption': 'Income − spend this month (incl. debt payments)',
     'home.availableInfoBody':
-      'This is the money you can use right now: cash + bank + savings accounts added together.',
+      'Total you can spend right now, split by where it sits: cash, bank, and savings — the same accounts you pick when you spend.',
     'home.availableInfoCompare':
-      'It does not reset each month. Spending lowers it; salary raises it. Moving money between your own accounts barely changes it.',
+      'Bonus or salary is the kind of income; the money lands in the account you chose. To fix a wrong place: edit that income and change “Which account did it land in?”',
+    'home.availableByAccount': 'Where it is',
+    'home.availableTotal': 'Total available',
     'home.savingsInfoBody':
       'This is only this calendar month: income minus expenses (including debt payments).',
     'home.savingsInfoCompare':
@@ -300,12 +302,14 @@ export const translations = {
 
     'wealth.title': 'Wealth',
     'wealth.subtitle':
-      'Accounts, net worth, and installments linked to your Credit concepts.',
+      'Net worth = what you have in accounts minus debts. Income raises the account you chose (cash/bank/savings), not a separate “bonus” pot.',
     'wealth.accounts': 'Accounts',
     'wealth.accountsCollapsed': '{count} accounts — tap to open',
     'wealth.assets': 'Assets',
     'wealth.liabilities': 'Liabilities',
     'wealth.net': 'Net worth',
+    'wealth.accountOwes': 'You owe {amount}',
+    'wealth.accountHas': '{amount}',
     'wealth.debts': 'Installments & credit',
     'wealth.debtsEmptyShort': 'No installments yet',
     'wealth.debtsCollapsed': '{count} · {amount}/mo fixed — tap to open',
@@ -696,9 +700,11 @@ export const translations = {
     'home.savings': 'Resultado del mes',
     'home.savingsCaption': 'Ingresos − gastos de este mes (incluye cuotas)',
     'home.availableInfoBody':
-      'Es el dinero que puedes usar ahora: efectivo + banco + cuentas de ahorro, sumados.',
+      'Total que puedes gastar ahora, separado por dónde está: efectivo, banco y ahorro — las mismas cuentas que eliges al gastar.',
     'home.availableInfoCompare':
-      'No se reinicia cada mes. Gastar lo baja; el salario lo sube. Mover plata entre tus propias cuentas casi no lo cambia.',
+      'Bonos o salario es el tipo de ingreso; el dinero queda en la cuenta que elegiste. Si cayó mal: edita ese ingreso y cambia “¿En qué cuenta entró?”',
+    'home.availableByAccount': 'Dónde está',
+    'home.availableTotal': 'Total disponible',
     'home.savingsInfoBody':
       'Es solo este mes calendario: ingresos menos gastos (incluye cuotas de deudas).',
     'home.savingsInfoCompare':
@@ -957,12 +963,14 @@ export const translations = {
 
     'wealth.title': 'Patrimonio',
     'wealth.subtitle':
-      'Cuentas, patrimonio neto y cuotas ligadas a tus conceptos de Créditos.',
+      'Patrimonio = lo que hay en tus cuentas menos deudas. Un ingreso sube la cuenta que elegiste (efectivo/banco/ahorro); Bonos es solo el tipo de ingreso.',
     'wealth.accounts': 'Cuentas',
     'wealth.accountsCollapsed': '{count} cuentas — toca para abrir',
     'wealth.assets': 'Activos',
     'wealth.liabilities': 'Pasivos',
     'wealth.net': 'Patrimonio neto',
+    'wealth.accountOwes': 'Debes {amount}',
+    'wealth.accountHas': '{amount}',
     'wealth.debts': 'Cuotas y créditos',
     'wealth.debtsEmptyShort': 'Sin cuotas aún',
     'wealth.debtsCollapsed': '{count} · {amount}/mes fijos — toca para abrir',

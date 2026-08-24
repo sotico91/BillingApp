@@ -219,7 +219,15 @@ export default function WealthScreen() {
             {accounts.map((acc) => (
               <View key={acc.id} style={styles.card}>
                 <Text style={styles.cardTitle}>{t(acc.nameKey as TranslationKey)}</Text>
-                <MoneyText style={styles.amount}>{format(acc.balance)}</MoneyText>
+                <MoneyText
+                  style={[
+                    styles.amount,
+                    acc.balance < 0 ? styles.amountDebt : null,
+                  ]}>
+                  {acc.balance < 0
+                    ? t('wealth.accountOwes', { amount: format(Math.abs(acc.balance)) })
+                    : format(acc.balance)}
+                </MoneyText>
               </View>
             ))}
           </CollapsibleSection>
@@ -635,6 +643,11 @@ const styles = StyleSheet.create({
     fontFamily: 'Fraunces_600SemiBold',
     fontSize: 24,
     color: palette.ink,
+  },
+  amountDebt: {
+    color: palette.danger,
+    fontSize: 16,
+    fontFamily: 'DMSans_600SemiBold',
   },
   meta: {
     marginTop: 4,

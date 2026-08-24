@@ -49,6 +49,7 @@ import {
   accruedInstallmentsTotal,
   type PredictedSpend,
 } from '@/src/utils/financeMath';
+import { computeNetWorth } from '@/src/utils/netWorth';
 import {
   filterByPersonScope,
   isRegisteredByMe,
@@ -144,6 +145,13 @@ type FinanceContextValue = {
   recurringTransactions: Transaction[];
   predictedThisMonth: PredictedSpend[];
   availableCash: number;
+  /** Liquid accounts that make up availableCash (cash / bank / savings). */
+  availableByAccount: Array<{
+    id: string;
+    type: Account['type'];
+    balance: number;
+    nameKey: string;
+  }>;
   netWorth: { assets: number; liabilities: number; net: number };
   budgetStatus: Array<{
     categoryId: string;
@@ -652,25 +660,28 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
     return predictMonthlySpends(mine, debts, now);
   }, [transactions, debts, now, monthKey, settings.personId]);
 
-  const availableCash = useMemo(
+  const availableByAccount = useMemo(
     () =>
       accounts
         .filter((a) => a.type === 'cash' || a.type === 'bank' || a.type === 'savings')
-        .reduce((s, a) => s + Math.max(a.balance, 0), 0),
+        .map((a) => ({
+          id: a.id,
+          type: a.type,
+          balance: Math.max(a.balance, 0),
+          nameKey: a.nameKey,
+        })),
     [accounts]
   );
 
-  const netWorth = useMemo(() => {
-    const assets = accounts
-      .filter((a) => a.type !== 'credit')
-      .reduce((s, a) => s + Math.max(a.balance, 0), 0);
-    const creditLiabilities = accounts
-      .filter((a) => a.type === 'credit')
-      .reduce((s, a) => s + Math.abs(Math.min(a.balance, 0)), 0);
-    const debtLiabilities = debts.reduce((s, d) => s + d.balance, 0);
-    const liabilities = creditLiabilities + debtLiabilities;
-    return { assets, liabilities, net: assets - liabilities };
-  }, [accounts, debts]);
+  const availableCash = useMemo(
+    () => availableByAccount.reduce((s, a) => s + a.balance, 0),
+    [availableByAccount]
+  );
+
+  const netWorth = useMemo(
+    () => computeNetWorth(accounts, debts),
+    [accounts, debts]
+  );
 
   const budgetStatus = useMemo(() => {
     const month = transactionsForPeriod('mes', 'mine').filter(
@@ -748,6 +759,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       recurringTransactions,
       predictedThisMonth,
       availableCash,
+      availableByAccount,
       netWorth,
       budgetStatus,
       expenses: filterByPersonScope(transactions, 'mine', settings.personId).filter(
@@ -782,6 +794,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       recurringTransactions,
       predictedThisMonth,
       availableCash,
+      availableByAccount,
       netWorth,
       budgetStatus,
       addExpense,

@@ -43,6 +43,7 @@ export default function HomeScreen() {
     transactionsForPeriod,
     loading,
     availableCash,
+    availableByAccount,
     netWorth,
     debts,
     antForPeriod,
@@ -387,6 +388,25 @@ export default function HomeScreen() {
                   : 'home.savingsInfoBody') as TranslationKey
               )}
             </Text>
+            {moneyInfo === 'available' ? (
+              <View style={styles.availableBreakdown}>
+                <Text style={styles.availableBreakdownTitle}>
+                  {t('home.availableByAccount')}
+                </Text>
+                {availableByAccount.map((acc) => (
+                  <View key={acc.id} style={styles.availableRow}>
+                    <Text style={styles.availableRowLabel}>
+                      {t(acc.nameKey as TranslationKey)}
+                    </Text>
+                    <Text style={styles.availableRowValue}>{format(acc.balance)}</Text>
+                  </View>
+                ))}
+                <View style={[styles.availableRow, styles.availableRowTotal]}>
+                  <Text style={styles.availableTotalLabel}>{t('home.availableTotal')}</Text>
+                  <Text style={styles.availableTotalValue}>{format(availableCash)}</Text>
+                </View>
+              </View>
+            ) : null}
             <Text style={styles.infoCompare}>
               {t(
                 (moneyInfo === 'available'
@@ -605,6 +625,55 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 22,
     color: palette.inkMuted,
+  },
+  availableBreakdown: {
+    marginTop: 14,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: palette.border,
+    gap: 8,
+  },
+  availableBreakdownTitle: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 12,
+    letterSpacing: 0.4,
+    textTransform: 'uppercase',
+    color: palette.inkSoft,
+    marginBottom: 2,
+  },
+  availableRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  availableRowLabel: {
+    flex: 1,
+    fontFamily: 'DMSans_500Medium',
+    fontSize: 15,
+    color: palette.ink,
+  },
+  availableRowValue: {
+    fontFamily: 'Fraunces_600SemiBold',
+    fontSize: 16,
+    color: palette.ink,
+  },
+  availableRowTotal: {
+    marginTop: 4,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: palette.border,
+  },
+  availableTotalLabel: {
+    flex: 1,
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 15,
+    color: palette.ink,
+  },
+  availableTotalValue: {
+    fontFamily: 'Fraunces_700Bold',
+    fontSize: 18,
+    color: palette.brand,
   },
   infoCompare: {
     marginTop: 10,

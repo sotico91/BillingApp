@@ -27,6 +27,7 @@ import type { TranslationKey } from '@/src/i18n/translations';
 import { palette, radii } from '@/src/theme/colors';
 import type { PaymentMethod } from '@/src/types/finance';
 import { categoryLabel } from '@/src/utils/categoryLabel';
+import { incomeDestinationAccounts } from '@/src/utils/netWorth';
 import { notifyExpenseRegistered } from '@/src/utils/notifications';
 import { tapFeedback } from '@/src/utils/selectFeedback';
 import type { SavedMovement } from '@/src/components/ExpenseForm';
@@ -45,6 +46,8 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
   const { addTransaction, totalForPeriod, accounts, debts } = useFinance();
 
   const spendConcepts = settings.spendConcepts ?? [];
+  const incomeAccounts = useMemo(() => incomeDestinationAccounts(accounts), [accounts]);
+  const accountChoices = intent === 'earn' ? incomeAccounts : accounts;
 
   const [step, setStep] = useState(0);
   const [intent, setIntent] = useState<FriendlyIntent>('spend');
@@ -245,8 +248,8 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
                         defaultCategoryIdForKind('income', settings.enabledCategoryIds)
                       );
                       setAccountId(
-                        accounts.find((a) => a.type === 'bank')?.id ??
-                          accounts[0]?.id ??
+                        incomeDestinationAccounts(accounts).find((a) => a.type === 'bank')?.id ??
+                          incomeDestinationAccounts(accounts)[0]?.id ??
                           'cash'
                       );
                     }
@@ -499,7 +502,7 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
               {intent === 'earn' ? t('flow.whichAccountIncome') : t('flow.whichAccount')}
             </Text>
             <View style={styles.catGrid}>
-              {accounts.map((acc) => (
+              {accountChoices.map((acc) => (
                 <Pressable
                   key={acc.id}
                   onPress={() => {

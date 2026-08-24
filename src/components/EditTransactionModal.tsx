@@ -21,6 +21,7 @@ import type { TranslationKey } from '@/src/i18n/translations';
 import { palette, radii } from '@/src/theme/colors';
 import type { PaymentMethod, Transaction, TransactionType } from '@/src/types/finance';
 import { categoryLabel } from '@/src/utils/categoryLabel';
+import { incomeDestinationAccounts } from '@/src/utils/netWorth';
 
 type Props = {
   transaction: Transaction | null;
@@ -61,6 +62,11 @@ export function EditTransactionModal({ transaction, visible, onClose }: Props) {
     }
     return spendSubsAsCategories(settings.spendConcepts ?? []);
   }, [type, settings.enabledCategoryIds, settings.spendConcepts]);
+
+  const accountChoices = useMemo(
+    () => (type === 'income' ? incomeDestinationAccounts(accounts) : accounts),
+    [type, accounts]
+  );
 
   useEffect(() => {
     if (!transaction) return;
@@ -196,7 +202,7 @@ export function EditTransactionModal({ transaction, visible, onClose }: Props) {
               {type === 'income' ? t('flow.whichAccountIncome') : t('flow.whichAccount')}
             </Text>
             <View style={styles.wrap}>
-              {accounts.map((acc) => (
+              {accountChoices.map((acc) => (
                 <Pressable
                   key={acc.id}
                   onPress={() => setAccountId(acc.id)}
