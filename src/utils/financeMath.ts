@@ -132,8 +132,9 @@ export type AccruedInstallment = {
 };
 
 /**
- * Monthly installments not yet logged as a payment. Count them as committed
- * spend for the calendar month without touching account balances.
+ * Unpaid Wealth installments for a calendar month.
+ * Kept for reminders / predictions — do NOT add these to month spend totals;
+ * only logged expense / debt_payment movements count as gasto.
  */
 export function unpaidInstallmentsForMonth(
   transactions: Transaction[],
@@ -318,6 +319,19 @@ export function predictMonthlySpends(
   const paidCategoryIds = new Set(
     thisMonth.map((t) => t.categoryId).filter((id): id is string => !!id)
   );
+  const paidByDebtId = new Map<string, number>();
+  const paidAmountByCategory = new Map<string, number>();
+  for (const t of thisMonth) {
+    if (t.type === 'debt_payment' && t.debtId) {
+      paidByDebtId.set(t.debtId, (paidByDebtId.get(t.debtId) ?? 0) + t.amount);
+    }
+    if (t.categoryId) {
+      paidAmountByCategory.set(
+        t.categoryId,
+        (paidAmountByCategory.get(t.categoryId) ?? 0) + t.amount
+      );
+    }
+  }
 
   const results: PredictedSpend[] = [];
   const coveredCategories = new Set<string>();
@@ -330,12 +344,20 @@ export function predictMonthlySpends(
       const d = new Date(debt.nextPaymentDate).getDate();
       if (!Number.isNaN(d)) typicalDay = d;
     }
+    const due = Math.min(debt.installment, Math.max(debt.balance, 0) || debt.installment);
+    const paidDirect = paidByDebtId.get(debt.id) ?? 0;
+    const paidCat = debt.categoryId
+      ? paidAmountByCategory.get(debt.categoryId) ?? 0
+      : 0;
+    // Prefer explicit debt_payment; otherwise any spend on the linked concept.
+    const paid = paidDirect > 0 ? paidDirect : paidCat;
+    const isPaid = due <= 0 || paid >= due;
     results.push({
       id: `debt-${debt.id}`,
       categoryId,
       amount: debt.installment,
       typicalDay,
-      status: 'paid',
+      status: isPaid ? 'paid' : 'pending',
       source: 'debt',
       debtId: debt.id,
       label: debt.name?.trim() || undefined,

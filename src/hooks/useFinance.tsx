@@ -45,8 +45,6 @@ import {
   percentOfBase,
   predictMonthlySpends,
   sumByType,
-  unpaidInstallmentsForMonth,
-  accruedInstallmentsTotal,
   type PredictedSpend,
 } from '@/src/utils/financeMath';
 import { computeNetWorth } from '@/src/utils/netWorth';
@@ -572,23 +570,14 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
     ) => {
       const list = transactionsForPeriod(period, scope);
       if (type === 'expense') {
-        const actual = list
+        // Only real logged spend — unpaid Wealth installments are reminders, not expenses.
+        return list
           .filter((t) => t.type === 'expense' || t.type === 'debt_payment')
           .reduce((s, t) => s + t.amount, 0);
-        if (period !== 'mes') return actual;
-        return (
-          actual +
-          accruedInstallmentsTotal(
-            scopedTransactions(scope),
-            debts,
-            now.getFullYear(),
-            now.getMonth()
-          )
-        );
       }
       return sumByType(list, type);
     },
-    [transactionsForPeriod, scopedTransactions, debts, now]
+    [transactionsForPeriod]
   );
 
   const insightsForPeriod = useCallback(
@@ -608,24 +597,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
         cur.count += 1;
         map.set(key, cur);
       }
-      let total = list.reduce((sum, e) => sum + e.amount, 0);
-      if (kind === 'expense' && period === 'mes') {
-        const extra = unpaidInstallmentsForMonth(
-          scopedTransactions('mine'),
-          debts,
-          now.getFullYear(),
-          now.getMonth()
-        );
-        for (const item of extra) {
-          const hit = findSpendSub(concepts, item.categoryId);
-          const key = hit?.concept.id ?? item.categoryId;
-          const cur = map.get(key) ?? { total: 0, count: 0 };
-          cur.total += item.amount;
-          cur.count += 1;
-          map.set(key, cur);
-          total += item.amount;
-        }
-      }
+      const total = list.reduce((sum, e) => sum + e.amount, 0);
       return Array.from(map.entries())
         .map(([categoryId, stats]) => ({
           categoryId,
@@ -638,7 +610,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
         }))
         .sort((a, b) => b.total - a.total);
     },
-    [transactionsForPeriod, settings.spendConcepts, scopedTransactions, debts, now]
+    [transactionsForPeriod, settings.spendConcepts]
   );
 
   const antForPeriod = useCallback(
@@ -687,21 +659,10 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
     const month = transactionsForPeriod('mes', 'mine').filter(
       (t) => t.type === 'expense' || t.type === 'debt_payment'
     );
-    const extra = unpaidInstallmentsForMonth(
-      scopedTransactions('mine'),
-      debts,
-      now.getFullYear(),
-      now.getMonth()
-    );
-    const extraByCat = new Map<string, number>();
-    for (const item of extra) {
-      extraByCat.set(item.categoryId, (extraByCat.get(item.categoryId) ?? 0) + item.amount);
-    }
     return budgets.map((b) => {
-      const spent =
-        month
-          .filter((t) => t.categoryId === b.categoryId)
-          .reduce((s, t) => s + t.amount, 0) + (extraByCat.get(b.categoryId) ?? 0);
+      const spent = month
+        .filter((t) => t.categoryId === b.categoryId)
+        .reduce((s, t) => s + t.amount, 0);
       const remaining = b.limit - spent;
       return {
         categoryId: b.categoryId,
@@ -711,7 +672,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
         ratio: b.limit > 0 ? spent / b.limit : 0,
       };
     });
-  }, [budgets, transactionsForPeriod, scopedTransactions, debts, now]);
+  }, [budgets, transactionsForPeriod]);
 
   const addExpense = useCallback(
     async (input: {

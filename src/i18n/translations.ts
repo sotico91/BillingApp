@@ -38,7 +38,7 @@ export const translations = {
     'home.available': 'Available now',
     'home.availableCaption': 'Cash in hand today (cash + bank + savings accounts)',
     'home.savings': 'This month’s result',
-    'home.savingsCaption': 'Income − spend this month (incl. debt payments)',
+    'home.savingsCaption': 'Income − spend this month (only what you logged)',
     'home.availableInfoBody':
       'Total you can spend right now, split by where it sits: cash, bank, and savings — the same accounts you pick when you spend.',
     'home.availableInfoCompare':
@@ -46,7 +46,7 @@ export const translations = {
     'home.availableByAccount': 'Where it is',
     'home.availableTotal': 'Total available',
     'home.savingsInfoBody':
-      'This is only this calendar month: income minus expenses (including debt payments).',
+      'This calendar month: income minus expenses and debt payments you actually logged. Installments in Wealth stay as reminders until you register the payment — they do not inflate this number.',
     'home.savingsInfoCompare':
       'It restarts at zero every new month. A transfer to savings does not change it — that is not income or spend.',
     'home.moneyInfoEyebrow': 'What this tile means',
@@ -68,7 +68,7 @@ export const translations = {
     'home.predictSummary': '{pending} to watch · {amount}',
     'home.predictSummaryClear': 'Nothing pending · {amount}',
     'home.predictEmpty':
-      'Debt installments and repeating monthly expenses appear here so you can watch them.',
+      'Debt installments and repeating monthly expenses appear here so you can watch them — they are not counted as spend until you log the payment.',
     'home.predictDay': 'Due ~ day {day}',
     'home.predictPaid': 'Paid',
 
@@ -166,7 +166,7 @@ export const translations = {
     'insights.topGood': 'Expenses look controlled here',
     'home.savingsGood': 'You’re ahead this month',
     'home.savingsBad': 'You’re behind this month',
-    'home.savingsHint': 'Income − expenses (and debt payments) this calendar month',
+    'home.savingsHint': 'Income − expenses this month (only logged movements)',
     'home.moneyLegend':
       'Available now = what’s in your accounts today. This month’s result = whether this month’s income covered this month’s spend — it resets every new month.',
     'home.frequentAlert': 'Most frequent: {category} ({count} times)',
@@ -323,6 +323,8 @@ export const translations = {
     'wealth.debtRate': 'Annual rate % (optional)',
     'wealth.debtPayDay': 'Payment day of month (1–28)',
     'wealth.debtPayDayNeed': 'Payment day must be between 1 and 28.',
+    'wealth.debtPayDayHint':
+      'Reminder day only — cash/bank is not deducted until you log the payment in Add.',
     'wealth.debtSave': 'Save installment',
     'wealth.debtEdit': 'Edit',
     'wealth.debtUpdate': 'Save changes',
@@ -330,9 +332,9 @@ export const translations = {
     'wealth.debtDelete': 'Remove',
     'wealth.debtNeed': 'Name, balance and monthly installment must be greater than 0.',
     'wealth.howToPay':
-      'To pay: Add → “I paid a debt”. Balance goes down and counts toward that concept/limit.',
+      'Registering a debt in Wealth does not add it to this month’s spend. To pay: Add → “I paid a debt” — that logs the expense and lowers the account.',
     'wealth.debtPermanentHint':
-      'This is a permanent expense: you pay the installment each month until the balance is gone.',
+      'Permanent installment on file: reminder + limit in Plan. It becomes spend only when you log the payment in Add.',
     'wealth.debtConceptHint':
       'Each installment is saved under Credit and watched like your other concepts.',
     'wealth.debtBudgetHint':
@@ -698,7 +700,7 @@ export const translations = {
     'home.available': 'Disponible hoy',
     'home.availableCaption': 'Lo que tienes ahora (efectivo + banco + ahorro)',
     'home.savings': 'Resultado del mes',
-    'home.savingsCaption': 'Ingresos − gastos de este mes (incluye cuotas)',
+    'home.savingsCaption': 'Ingresos − gastos de este mes (solo lo que registraste)',
     'home.availableInfoBody':
       'Total que puedes gastar ahora, separado por dónde está: efectivo, banco y ahorro — las mismas cuentas que eliges al gastar.',
     'home.availableInfoCompare':
@@ -706,7 +708,7 @@ export const translations = {
     'home.availableByAccount': 'Dónde está',
     'home.availableTotal': 'Total disponible',
     'home.savingsInfoBody':
-      'Es solo este mes calendario: ingresos menos gastos (incluye cuotas de deudas).',
+      'Este mes calendario: ingresos menos gastos y pagos de deuda que sí registraste. Las cuotas en Patrimonio son recordatorio hasta que registres el pago — no inflan este número.',
     'home.savingsInfoCompare':
       'Vuelve a cero cada mes nuevo. Una transferencia a ahorro no lo cambia — eso no es ingreso ni gasto.',
     'home.moneyInfoEyebrow': 'Qué significa esta caja',
@@ -728,7 +730,7 @@ export const translations = {
     'home.predictSummary': '{pending} por atender · {amount}',
     'home.predictSummaryClear': 'Nada pendiente · {amount}',
     'home.predictEmpty':
-      'Aquí salen cuotas de deudas y gastos que se repiten mes a mes, para prestarles atención.',
+      'Aquí salen cuotas de deudas y gastos que se repiten mes a mes, para prestarles atención. No cuentan como gasto hasta que registres el pago.',
     'home.predictDay': 'Vence ~ día {day}',
     'home.predictPaid': 'Ya pagado',
 
@@ -826,7 +828,7 @@ export const translations = {
     'insights.topGood': 'Aquí el gasto se ve controlado',
     'home.savingsGood': 'Este mes vas a favor',
     'home.savingsBad': 'Este mes vas en rojo',
-    'home.savingsHint': 'Ingresos − gastos (y cuotas) de este mes calendario',
+    'home.savingsHint': 'Ingresos − gastos del mes (solo movimientos registrados)',
     'home.moneyLegend':
       'Disponible hoy = lo que hay en tus cuentas ahora. Resultado del mes = si lo que entró este mes cubrió lo que salió — se reinicia cada mes nuevo.',
     'home.frequentAlert': 'Más frecuente: {category} ({count} veces)',
@@ -984,6 +986,8 @@ export const translations = {
     'wealth.debtRate': 'Tasa anual % (opcional)',
     'wealth.debtPayDay': 'Día de pago del mes (1–28)',
     'wealth.debtPayDayNeed': 'El día de pago debe estar entre 1 y 28.',
+    'wealth.debtPayDayHint':
+      'Solo es el día de la cuota: efectivo/banco no bajan hasta que registres el pago en Agregar.',
     'wealth.debtSave': 'Guardar cuota',
     'wealth.debtEdit': 'Editar',
     'wealth.debtUpdate': 'Guardar cambios',
@@ -991,9 +995,9 @@ export const translations = {
     'wealth.debtDelete': 'Eliminar',
     'wealth.debtNeed': 'Nombre, saldo y cuota mensual mayores a 0.',
     'wealth.howToPay':
-      'Para pagar: Agregar → “Pagué una deuda”. Baja el saldo y cuenta en ese concepto/tope.',
+      'Registrar la deuda en Patrimonio no la suma al gasto del mes. Para pagar: Agregar → “Pagué una deuda” — ahí sí cuenta el gasto y baja la cuenta.',
     'wealth.debtPermanentHint':
-      'Esto es un gasto permanente: cada mes pagas la cuota hasta acabar el saldo.',
+      'Cuota permanente en ficha: recordatorio + tope en Plan. Solo es gasto cuando registras el pago en Agregar.',
     'wealth.debtConceptHint':
       'Cada cuota se guarda en Créditos y se vigila como tus otros conceptos.',
     'wealth.debtBudgetHint':

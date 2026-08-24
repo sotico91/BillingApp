@@ -317,6 +317,7 @@ export default function WealthScreen() {
                   placeholderTextColor={palette.inkSoft}
                   style={styles.input}
                 />
+                <Text style={styles.copyHint}>{t('wealth.debtPayDayHint')}</Text>
                 <Text style={styles.label}>{t('wealth.debtRate')}</Text>
                 <TextInput
                   value={rate}

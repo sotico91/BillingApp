@@ -11,7 +11,6 @@ import {
   previousMonthRange,
   sumByType,
   sumSpendOut,
-  unpaidInstallmentsForMonth,
 } from '@/src/utils/financeMath';
 
 export type InsightCard = {
@@ -181,29 +180,12 @@ function topRisingExpenseCategory(
 
 function withAccruedInstallments(
   list: Transaction[],
-  debts: Debt[] | undefined,
-  periodKey: string
+  _debts: Debt[] | undefined,
+  _periodKey: string
 ): Transaction[] {
-  if (periodKey !== 'mes' || !debts?.length) return list;
-  const now = new Date();
-  const extra = unpaidInstallmentsForMonth(
-    list,
-    debts,
-    now.getFullYear(),
-    now.getMonth()
-  );
-  if (extra.length === 0) return list;
-  return [
-    ...list,
-    ...extra.map((item) => ({
-      id: `accrued-${item.debtId}`,
-      type: 'debt_payment' as const,
-      amount: item.amount,
-      categoryId: item.categoryId,
-      debtId: item.debtId,
-      createdAt: now.toISOString(),
-    })),
-  ];
+  // Debts from Wealth are reminders until the user logs a real payment.
+  // Do not invent virtual debt_payment rows for insights or search.
+  return list;
 }
 
 export function buildSmartInsights(
