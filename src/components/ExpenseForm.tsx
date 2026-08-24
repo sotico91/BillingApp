@@ -148,7 +148,10 @@ export function ExpenseForm({ onSaved }: Props) {
         });
       }
 
-      if (settings.notifyOnExpense) {
+      if (
+        settings.notifyOnExpense &&
+        (type === 'expense' || type === 'income')
+      ) {
         void notifyExpenseRegistered(
           t('notify.title'),
           t('notify.body', {

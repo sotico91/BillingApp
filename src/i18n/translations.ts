@@ -576,7 +576,7 @@ export const translations = {
     'reminder.save': 'Save reminders',
     'reminder.savedTitle': 'Reminders updated',
     'reminder.savedBody': 'Your local reminders were scheduled with date and time.',
-    'reminder.pushTitle': 'BillingApp reminder',
+    'reminder.pushTitle': 'Billing reminder',
     'reminder.pushBody': 'Did you log {category} yet?',
     'reminder.pickCategories': 'Concepts to remind',
 
@@ -1239,7 +1239,7 @@ export const translations = {
     'reminder.save': 'Guardar recordatorios',
     'reminder.savedTitle': 'Recordatorios actualizados',
     'reminder.savedBody': 'Tus alertas locales quedaron con fecha y hora.',
-    'reminder.pushTitle': 'Recordatorio BillingApp',
+    'reminder.pushTitle': 'Recordatorio Billing',
     'reminder.pushBody': '¿Ya registraste {category}?',
     'reminder.pickCategories': 'Conceptos a recordar',
 

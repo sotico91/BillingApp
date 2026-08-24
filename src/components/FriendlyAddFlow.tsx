@@ -190,12 +190,17 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
       }
 
       // Never block save on notification permission / scheduling (esp. Android).
-      if (settings.notifyOnExpense) {
+      // Only expense/income confirms — transfers must not reuse a prior category label.
+      if (settings.notifyOnExpense && (type === 'expense' || type === 'income')) {
+        const category =
+          type === 'income'
+            ? categoryLabel(categoryId, t, spendConcepts)
+            : debtLabel;
         void notifyExpenseRegistered(
           t('notify.title'),
           t('notify.body', {
             amount: formatPlain(parsed),
-            category: debtLabel,
+            category,
           })
         ).catch(() => undefined);
       }

@@ -91,8 +91,43 @@ export function startBadgeClearOnActive(): () => void {
 }
 
 let lastExpenseNotify: { key: string; at: number } | null = null;
-const EXPENSE_NOTIFY_ID = 'billing-expense-confirm';
+const EXPENSE_NOTIFY_PREFIX = 'billing-expense-';
 
+async function clearPriorExpenseConfirms(): Promise<void> {
+  try {
+    const presented = await Notifications.getPresentedNotificationsAsync();
+    await Promise.all(
+      presented
+        .filter((n) => {
+          const id = n.request.identifier;
+          const type = n.request.content.data?.type;
+          return (
+            type === 'expense-registered' ||
+            (typeof id === 'string' && id.startsWith(EXPENSE_NOTIFY_PREFIX))
+          );
+        })
+        .map((n) => Notifications.dismissNotificationAsync(n.request.identifier))
+    );
+  } catch {
+    /* tray query unsupported on some builds */
+  }
+
+  try {
+    const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+    await Promise.all(
+      scheduled
+        .filter((n) => n.identifier.startsWith(EXPENSE_NOTIFY_PREFIX))
+        .map((n) => Notifications.cancelScheduledNotificationAsync(n.identifier))
+    );
+  } catch {
+    /* ignore */
+  }
+}
+
+/**
+ * Immediate local confirm for a save. Uses a unique id each time so Android
+ * does not reuse a previous banner (e.g. Rappi text after logging rent).
+ */
 export async function notifyExpenseRegistered(title: string, body: string): Promise<void> {
   if (Platform.OS === 'web') return;
 
@@ -111,23 +146,18 @@ export async function notifyExpenseRegistered(title: string, body: string): Prom
   }
   lastExpenseNotify = { key, at: now };
 
-  const content = {
-    title,
-    body,
-    data: { type: 'expense-registered' as const },
-    ...(Platform.OS === 'android' ? { channelId: ANDROID_CHANNEL_ID } : null),
-  };
+  await clearPriorExpenseConfirms();
 
-  // Same identifier replaces a prior confirm instead of stacking duplicates.
-  try {
-    await Notifications.dismissNotificationAsync(EXPENSE_NOTIFY_ID);
-  } catch {
-    /* nothing to dismiss */
-  }
+  const identifier = `${EXPENSE_NOTIFY_PREFIX}${now}-${Math.random().toString(36).slice(2, 8)}`;
 
   await Notifications.scheduleNotificationAsync({
-    identifier: EXPENSE_NOTIFY_ID,
-    content,
+    identifier,
+    content: {
+      title,
+      body,
+      data: { type: 'expense-registered' as const },
+      ...(Platform.OS === 'android' ? { channelId: ANDROID_CHANNEL_ID } : null),
+    },
     trigger: null,
   });
 }
