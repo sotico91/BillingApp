@@ -1,5 +1,10 @@
 import { CATEGORIES } from '@/src/data/financeDefaults';
-import { findSpendSub, flattenSpendSubs, findConceptById } from '@/src/data/spendConcepts';
+import {
+  CREDITS_CONCEPT_ID,
+  findSpendSub,
+  flattenSpendSubs,
+  findConceptById,
+} from '@/src/data/spendConcepts';
 import type { TranslationKey } from '@/src/i18n/translations';
 import type { Period, Transaction, Debt } from '@/src/types/finance';
 import type { SpendConcept } from '@/src/types/settings';
@@ -503,7 +508,14 @@ function detectCategories(
       }
     }
 
-    const conceptScore = scorePhraseInQuery(q, concept.name);
+    const conceptPhrases =
+      concept.id === CREDITS_CONCEPT_ID
+        ? [concept.name, 'creditos', 'créditos', 'credito', 'crédito', 'cuotas']
+        : [concept.name];
+    let conceptScore = 0;
+    for (const phrase of conceptPhrases) {
+      conceptScore = Math.max(conceptScore, scorePhraseInQuery(q, phrase));
+    }
     if (conceptScore > 0 && concept.subs.length > 0) {
       candidates.push({
         ids: concept.subs.map((s) => s.id),
@@ -570,9 +582,16 @@ function matchTransactionsToCategories(
 ): Transaction[] {
   const idSet = new Set(cats.ids);
   return list.filter((x) => {
-    if (x.type !== 'expense' || !x.categoryId) return false;
+    // Debt payments from Wealth land on Credit subs — count them like expenses.
+    if ((x.type !== 'expense' && x.type !== 'debt_payment') || !x.categoryId) {
+      return false;
+    }
     const categoryId = x.categoryId;
     if (idSet.has(categoryId)) return true;
+    // Parent concept id (e.g. concept-creditos) should match all its subs.
+    if (idSet.has(findSpendSub(spendConcepts, categoryId)?.concept.id ?? '')) {
+      return true;
+    }
     return cats.ids.some((id) => {
       if (categoryId === `sub-${id}` || id === `sub-${categoryId}`) return true;
       const hit = findSpendSub(spendConcepts, categoryId);
@@ -590,7 +609,21 @@ function matchTransactionsToCategories(
 function detectPaymentMethod(q: string): 'cash' | 'debit' | 'credit' | 'transfer' | null {
   if (includesAny(q, ['efectivo', 'cash'])) return 'cash';
   if (includesAny(q, ['debito', 'débito', 'debit'])) return 'debit';
-  if (includesAny(q, ['tarjeta', 'credito', 'crédito', 'credit', 'card'])) return 'credit';
+  // Do NOT treat bare "crédito(s)" as card — that is the Créditos spend concept / installments.
+  if (
+    includesAny(q, [
+      'tarjeta de credito',
+      'tarjeta de crédito',
+      'tarjeta credito',
+      'tarjeta crédito',
+      'credit card',
+      'con tarjeta',
+      'tarjeta',
+      'card',
+    ])
+  ) {
+    return 'credit';
+  }
   if (includesAny(q, ['transferencia', 'transferencias', 'transfer'])) return 'transfer';
   return null;
 }
@@ -612,6 +645,12 @@ function extractNoteNeedle(q: string): string | null {
       'cuenta',
       'mi',
       'la',
+      'credito',
+      'creditos',
+      'cuota',
+      'cuotas',
+      'deuda',
+      'deudas',
     ])
   ) {
     return normalize(para[1]);
@@ -625,7 +664,7 @@ function topExpenseCategory(
 ): { categoryId: string; amount: number; count: number } | null {
   const map = new Map<string, { amount: number; count: number }>();
   for (const tx of list) {
-    if (tx.type !== 'expense' || !tx.categoryId) continue;
+    if ((tx.type !== 'expense' && tx.type !== 'debt_payment') || !tx.categoryId) continue;
     const cur = map.get(tx.categoryId) ?? { amount: 0, count: 0 };
     cur.amount += tx.amount;
     cur.count += 1;
@@ -927,14 +966,14 @@ export type SearchSuggestion = {
   prompt: string;
 };
 
-/** Quick prompts tailored to the user's concepts and selected period. */
+/** Quick prompts tailored to the user's concepts, recent spend, and selected period. */
 export function buildSearchSuggestions(
   spendConcepts: SpendConcept[],
   language: 'en' | 'es',
-  period: Period = 'mes'
+  period: Period = 'mes',
+  options: { transactions?: Transaction[]; debts?: Debt[] } = {}
 ): string[] {
   const prompts: string[] = [];
-  const subs = flattenSpendSubs(spendConcepts).slice(0, 4);
   const when =
     language === 'es'
       ? period === 'hoy'
@@ -948,42 +987,83 @@ export function buildSearchSuggestions(
           ? 'this week'
           : 'this month';
 
+  const periodTxs = options.transactions
+    ? filterByPeriod(options.transactions, period)
+    : [];
+  const spentBySub = new Map<string, number>();
+  for (const tx of periodTxs) {
+    if ((tx.type !== 'expense' && tx.type !== 'debt_payment') || !tx.categoryId) continue;
+    spentBySub.set(tx.categoryId, (spentBySub.get(tx.categoryId) ?? 0) + tx.amount);
+  }
+
+  const activeSubs = flattenSpendSubs(spendConcepts)
+    .map((sub) => ({
+      sub,
+      spent: spentBySub.get(sub.id) ?? 0,
+    }))
+    .sort((a, b) => b.spent - a.spent || a.sub.name.localeCompare(b.sub.name));
+
+  const featuredSubs = [
+    ...activeSubs.filter((x) => x.spent > 0).slice(0, 4),
+    ...activeSubs.filter((x) => x.spent <= 0).slice(0, 4),
+  ]
+    .filter(
+      (x, i, arr) => arr.findIndex((y) => y.sub.id === x.sub.id) === i
+    )
+    .slice(0, 4);
+
+  const hasDebtPayments = periodTxs.some((t) => t.type === 'debt_payment');
+  const hasDebts = (options.debts?.length ?? 0) > 0;
+  const creditsConcept = spendConcepts.find((c) => c.id === CREDITS_CONCEPT_ID);
+
   if (language === 'es') {
     prompts.push(`¿Qué % de mi ingreso gasté ${when}?`);
-    prompts.push(`¿Qué categoría consume más % de mi salario ${when}?`);
     prompts.push(`¿Cuánto gasté ${when}?`);
+    if (hasDebtPayments || hasDebts) {
+      prompts.push(`¿Cuánto pagué en cuotas ${when}?`);
+      if (creditsConcept) {
+        prompts.push(`¿Cuánto gasté en ${creditsConcept.name} ${when}?`);
+      }
+    }
     prompts.push(`¿Cuánto ahorré ${when}?`);
     prompts.push(
       period === 'mes'
         ? '¿Cuáles son mis gastos hormiga?'
         : `¿Cuáles son mis gastos hormiga ${when}?`
     );
-    for (const sub of subs) {
+    for (const { sub } of featuredSubs) {
       const hit = findSpendSub(spendConcepts, sub.id);
       const name = hit ? `${hit.concept.name}/${sub.name}` : sub.name;
       prompts.push(`¿Cuánto gasté en ${name} ${when}?`);
     }
     prompts.push(`¿En qué gasté más ${when}?`);
     prompts.push('¿Cuánto tengo disponible?');
+    if (hasDebts) prompts.push('¿Cuánto debo en deudas?');
   } else {
     prompts.push(`What % of my income did I spend ${when}?`);
-    prompts.push(`Which category uses the most % of my salary ${when}?`);
     prompts.push(`How much did I spend ${when}?`);
+    if (hasDebtPayments || hasDebts) {
+      prompts.push(`How much did I pay in installments ${when}?`);
+      if (creditsConcept) {
+        prompts.push(`How much on ${creditsConcept.name} ${when}?`);
+      }
+    }
     prompts.push(`How much did I save ${when}?`);
     prompts.push(
       period === 'mes'
         ? 'What are my ant expenses?'
         : `What are my ant expenses ${when}?`
     );
-    for (const sub of subs) {
+    for (const { sub } of featuredSubs) {
       const hit = findSpendSub(spendConcepts, sub.id);
       const name = hit ? `${hit.concept.name}/${sub.name}` : sub.name;
       prompts.push(`How much on ${name} ${when}?`);
     }
     prompts.push(`Where did I spend the most ${when}?`);
     prompts.push('How much available cash do I have?');
+    if (hasDebts) prompts.push('How much do I still owe?');
   }
-  return prompts.slice(0, 8);
+  return prompts.slice(0, 10);
 }
 
 /**
@@ -1061,7 +1141,38 @@ export function answerFinanceQuery(
     'ant expense',
     'ant expenses',
   ]);
-  const wantsDebt = includesAny(q, ['deuda', 'deudas', 'debt', 'loan', 'credito activo', 'crédito activo']);
+  const wantsDebt = includesAny(q, [
+    'deuda',
+    'deudas',
+    'debt',
+    'loan',
+    'credito activo',
+    'crédito activo',
+    'saldo de deuda',
+    'cuanto debo',
+    'cuánto debo',
+  ]);
+  const wantsDebtPayments = includesAny(q, [
+    'cuota',
+    'cuotas',
+    'pago de deuda',
+    'pagos de deuda',
+    'pague deuda',
+    'pagué deuda',
+    'pague una deuda',
+    'pagué una deuda',
+    'pague a credito',
+    'pagué a crédito',
+    'pague a creditos',
+    'pagué a créditos',
+    'pague creditos',
+    'pagué créditos',
+    'pagos a creditos',
+    'pagos a créditos',
+    'debt payment',
+    'installment',
+    'installments',
+  ]);
   const wantsAvailable = includesAny(q, [
     'disponible',
     'available',
@@ -1174,7 +1285,38 @@ export function answerFinanceQuery(
     return t('search.answerAvailable', { amount: format(options.availableCash) });
   }
 
-  if (wantsDebt && options.debtsTotal != null) {
+  if (wantsDebtPayments) {
+    let payments = list.filter((x) => x.type === 'debt_payment');
+    if (cats) {
+      const matched = matchTransactionsToCategories(payments, cats, spendConcepts);
+      if (matched.length > 0 || cats.score >= 20) {
+        payments = matched.length > 0 ? matched : payments;
+      }
+    }
+    const amount = payments.reduce((s, x) => s + x.amount, 0);
+    const label =
+      cats?.displayName && !cats.displayName.startsWith('concept-')
+        ? cats.displayName
+        : t('type.debt_payment');
+    if (payments.length === 0) {
+      return t('search.answerCategoryEmpty', { label, period: periodLabel });
+    }
+    if (wantsCount) {
+      return t('search.answerCount', {
+        count: payments.length,
+        label,
+        period: periodLabel,
+      });
+    }
+    return t('search.answerCategory', {
+      label,
+      amount: format(amount),
+      period: periodLabel,
+      count: payments.length,
+    });
+  }
+
+  if (wantsDebt && options.debtsTotal != null && !cats) {
     return t('search.answerDebt', { amount: format(options.debtsTotal) });
   }
 
@@ -1345,7 +1487,9 @@ export function answerFinanceQuery(
 
   if (method) {
     const matched = list.filter(
-      (x) => x.type === 'expense' && x.paymentMethod === method
+      (x) =>
+        (x.type === 'expense' || x.type === 'debt_payment') &&
+        x.paymentMethod === method
     );
     const amount = matched.reduce((s, x) => s + x.amount, 0);
     if (wantsCount) {

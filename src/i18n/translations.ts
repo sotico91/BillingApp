@@ -628,7 +628,7 @@ export const translations = {
     'search.answerUnclear':
       'I could not match that question to your data. Try something like: {examples}',
     'search.examples':
-      '“What % of my income did I spend?”, “Which concept uses most of my income?”, “How much on delivery?”',
+      '“How much did I pay in installments?”, “How much on Credit?”, “What % of my income did I spend?”',
     'search.answerTopWithIncome':
       'Your biggest expense ({period}) is {label}: {amount} ({percent}% of income {income}) across {count} movements.',
     'search.answerNoIncome':
@@ -1294,7 +1294,7 @@ export const translations = {
     'search.answerUnclear':
       'No pude relacionar esa pregunta con tus datos. Prueba algo como: {examples}',
     'search.examples':
-      '“¿Qué % de mi ingreso gasté?”, “¿Qué categoría consume más de mi salario?”, “¿Cuánto en domicilio?”',
+      '“¿Cuánto pagué en cuotas?”, “¿Cuánto gasté en Créditos?”, “¿Qué % de mi ingreso gasté?”',
     'search.answerTopWithIncome':
       'Tu mayor gasto ({period}) es {label}: {amount} ({percent}% del ingreso {income}) en {count} movimientos.',
     'search.answerNoIncome':

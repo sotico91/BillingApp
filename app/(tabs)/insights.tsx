@@ -79,9 +79,10 @@ export default function InsightsScreen() {
       buildSearchSuggestions(
         spendConcepts,
         language === 'es' ? 'es' : 'en',
-        period
+        period,
+        { transactions, debts }
       ),
-    [spendConcepts, language, period]
+    [spendConcepts, language, period, transactions, debts]
   );
 
   function ask(nextQuery?: string) {
