@@ -81,7 +81,7 @@ type SettingsContextValue = {
   removeQuickTemplate: (id: string) => Promise<void>;
   /** Drop one-tap chips that no longer match any remaining expense. */
   pruneQuickTemplatesToExistingExpenses: (
-    expenses: { categoryId: string; amount: number }[]
+    expenses: { categoryId: string }[]
   ) => Promise<void>;
   restoreSettingsFromBackup: (input: {
     settings: UserSettings;
@@ -419,7 +419,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   const pruneQuickTemplatesToExistingExpenses = useCallback(
     async (expenses: { categoryId: string; amount: number }[]) => {
       const next = quickTemplates.filter((t) =>
-        expenses.some((e) => e.categoryId === t.categoryId && e.amount === t.amount)
+        expenses.some((e) => e.categoryId === t.categoryId)
       );
       if (next.length === quickTemplates.length) return;
       setQuickTemplates(next);

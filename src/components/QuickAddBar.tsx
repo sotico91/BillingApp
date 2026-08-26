@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -10,26 +11,28 @@ import {
 
 import { getCategoryById } from '@/src/data/categories';
 import { flattenSpendSubs } from '@/src/data/spendConcepts';
-import { useExpenses } from '@/src/hooks/useExpenses';
+import { QuickRepeatSheet } from '@/src/components/QuickRepeatSheet';
+import { useFinance } from '@/src/hooks/useFinance';
 import { useMoney } from '@/src/hooks/useMoney';
 import { useSettings } from '@/src/hooks/useSettings';
 import { useLanguage } from '@/src/i18n/LanguageContext';
 import { palette, radii } from '@/src/theme/colors';
 import { categoryLabel } from '@/src/utils/categoryLabel';
 import { notifyExpenseRegistered } from '@/src/utils/notifications';
-import { buildOneTapHabits } from '@/src/utils/oneTapHabits';
+import { buildOneTapHabits, type OneTapHabit } from '@/src/utils/oneTapHabits';
 import { tapFeedback } from '@/src/utils/selectFeedback';
 
 /**
- * One-tap = repeat a frequent habit (category + amount), not every past expense.
- * New / one-off spends go through the glance FAB → Agregar flow.
+ * One-tap = repeat a frequent subcategory with the last amount (editable).
+ * Long-press opens Agregar with concept prefilled.
  */
 export function QuickAddBar() {
   const { t } = useLanguage();
-  const { format, formatPlain } = useMoney();
+  const { format, formatPlain, parse, currency } = useMoney();
   const { settings, updateQuickTemplate } = useSettings();
-  const { addExpense, transactions } = useExpenses();
+  const { addTransaction, transactions } = useFinance();
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [sheetHabit, setSheetHabit] = useState<OneTapHabit | null>(null);
   const busyLock = useRef(false);
   const spendConcepts = settings.spendConcepts ?? [];
 
@@ -43,29 +46,35 @@ export function QuickAddBar() {
   );
 
   const habits = useMemo(
-    () => buildOneTapHabits(transactions, allowedIds),
-    [transactions, allowedIds]
+    () => buildOneTapHabits(transactions, allowedIds, spendConcepts),
+    [transactions, allowedIds, spendConcepts]
   );
 
   if (habits.length === 0) {
     return null;
   }
 
-  async function handleQuickAdd(habitId: string) {
-    const habit = habits.find((x) => x.id === habitId);
-    if (!habit || busyLock.current) return;
+  const sheetLabel = sheetHabit
+    ? categoryLabel(sheetHabit.categoryId, t, spendConcepts)
+    : '';
+
+  async function registerHabit(habit: OneTapHabit, amount: number) {
+    if (busyLock.current) return;
 
     busyLock.current = true;
-    setBusyId(habitId);
+    setBusyId(habit.id);
     try {
-      await addExpense({
-        amount: habit.amount,
+      await addTransaction({
+        type: 'expense',
+        amount,
         categoryId: habit.categoryId,
         note: habit.note,
+        paymentMethod: habit.paymentMethod ?? 'debit',
+        accountId: habit.accountId ?? 'cash',
       });
       await updateQuickTemplate({
         categoryId: habit.categoryId,
-        amount: habit.amount,
+        amount,
         note: habit.note,
       });
 
@@ -73,48 +82,97 @@ export function QuickAddBar() {
         await notifyExpenseRegistered(
           t('notify.title'),
           t('notify.body', {
-            amount: formatPlain(habit.amount),
+            amount: formatPlain(amount),
             category: categoryLabel(habit.categoryId, t, spendConcepts),
           })
         );
       }
+      setSheetHabit(null);
     } finally {
       busyLock.current = false;
       setBusyId(null);
     }
   }
 
-  return (
-    <View style={styles.wrap}>
-      <Text style={styles.title}>{t('home.quickTitle')}</Text>
-      <Text style={styles.hint}>{t('home.quickHint')}</Text>
+  function openFullAdd(habit: OneTapHabit, amount?: number) {
+    setSheetHabit(null);
+    router.push({
+      pathname: '/agregar',
+      params: {
+        categoryId: habit.categoryId,
+        amount: String(amount ?? habit.amount),
+        mode: 'advanced',
+      },
+    });
+  }
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
-        {habits.map((habit) => {
-          const category = getCategoryById(habit.categoryId);
-          const busy = busyId === habit.id;
-          return (
-            <Pressable
-              key={habit.id}
-              onPress={() => {
-                tapFeedback();
-                void handleQuickAdd(habit.id);
-              }}
-              disabled={!!busyId}
-              style={[styles.chip, { borderColor: category.color }]}>
-              <View style={[styles.dot, { backgroundColor: category.color }]} />
-              <View>
-                <Text style={styles.chipTitle}>
-                  {categoryLabel(habit.categoryId, t, spendConcepts)}
-                </Text>
-                <Text style={styles.chipAmount}>{format(habit.amount)}</Text>
-              </View>
-              {busy ? <ActivityIndicator size="small" color={palette.accent} /> : null}
-            </Pressable>
-          );
-        })}
-      </ScrollView>
-    </View>
+  return (
+    <>
+      <View style={styles.wrap}>
+        <Text style={styles.title}>{t('home.quickTitle')}</Text>
+        <Text style={styles.hint}>{t('home.quickHint')}</Text>
+
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
+          {habits.map((habit) => {
+            const category = getCategoryById(habit.categoryId);
+            const busy = busyId === habit.id;
+            const label = categoryLabel(habit.categoryId, t, spendConcepts);
+            return (
+              <Pressable
+                key={habit.id}
+                onPress={() => {
+                  tapFeedback();
+                  setSheetHabit(habit);
+                }}
+                onLongPress={() => {
+                  tapFeedback();
+                  openFullAdd(habit);
+                }}
+                delayLongPress={400}
+                disabled={!!busyId}
+                style={[styles.chip, { borderColor: category.color }]}>
+                <View style={[styles.dot, { backgroundColor: category.color }]} />
+                <View style={styles.chipBody}>
+                  <View style={styles.chipTitleRow}>
+                    <Text style={styles.chipTitle} numberOfLines={1}>
+                      {label}
+                    </Text>
+                    {habit.isAnt ? (
+                      <View style={styles.antDot}>
+                        <Text style={styles.antDotText}>🐜</Text>
+                      </View>
+                    ) : null}
+                  </View>
+                  <Text style={styles.chipAmount}>
+                    {t('home.quickLastAmount', { amount: format(habit.amount) })}
+                  </Text>
+                </View>
+                {busy ? <ActivityIndicator size="small" color={palette.accent} /> : null}
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+      </View>
+
+      <QuickRepeatSheet
+        visible={sheetHabit != null}
+        habit={sheetHabit}
+        label={sheetLabel}
+        format={format}
+        currency={currency}
+        parse={parse}
+        busy={busyId != null}
+        onClose={() => setSheetHabit(null)}
+        onConfirm={(amount) => {
+          if (!sheetHabit) return;
+          void registerHabit(sheetHabit, amount);
+        }}
+        onEditFull={(amount) => {
+          if (!sheetHabit) return;
+          openFullAdd(sheetHabit, amount);
+        }}
+      />
+    </>
   );
 }
 
@@ -151,7 +209,17 @@ const styles = StyleSheet.create({
     borderRadius: radii.md,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    minWidth: 140,
+    minWidth: 148,
+    maxWidth: 200,
+  },
+  chipBody: {
+    flex: 1,
+    gap: 2,
+  },
+  chipTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   dot: {
     width: 10,
@@ -162,10 +230,17 @@ const styles = StyleSheet.create({
     fontFamily: 'DMSans_600SemiBold',
     fontSize: 13,
     color: palette.ink,
+    flexShrink: 1,
+  },
+  antDot: {
+    marginLeft: 2,
+  },
+  antDotText: {
+    fontSize: 11,
   },
   chipAmount: {
-    fontFamily: 'Fraunces_600SemiBold',
-    fontSize: 15,
-    color: palette.ink,
+    fontFamily: 'DMSans_500Medium',
+    fontSize: 12,
+    color: palette.inkMuted,
   },
 });

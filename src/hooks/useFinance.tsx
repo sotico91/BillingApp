@@ -414,8 +414,8 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       if (existing.type === 'expense') {
         await pruneQuickTemplatesToExistingExpenses(
           nextTx
-            .filter((t) => t.type === 'expense')
-            .map((t) => ({ categoryId: t.categoryId, amount: t.amount }))
+            .filter((t) => t.type === 'expense' && t.categoryId)
+            .map((t) => ({ categoryId: t.categoryId! }))
         );
       }
     },

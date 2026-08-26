@@ -15,7 +15,7 @@ import Animated, {
 
 import { CategoryChip } from '@/src/components/CategoryChip';
 import { categoriesForKind } from '@/src/data/categories';
-import { spendSubsAsCategories } from '@/src/data/spendConcepts';
+import { findSpendSub, spendSubsAsCategories } from '@/src/data/spendConcepts';
 import { useFinance } from '@/src/hooks/useFinance';
 import { useMoney } from '@/src/hooks/useMoney';
 import { useSettings } from '@/src/hooks/useSettings';
@@ -34,6 +34,8 @@ export type SavedMovement = {
 
 type Props = {
   onSaved?: (result: SavedMovement) => void;
+  initialCategoryId?: string;
+  initialAmount?: string;
 };
 
 const TYPES: TransactionType[] = [
@@ -49,18 +51,23 @@ const METHODS: PaymentMethod[] = ['cash', 'debit', 'credit', 'transfer'];
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-export function ExpenseForm({ onSaved }: Props) {
+export function ExpenseForm({ onSaved, initialCategoryId, initialAmount }: Props) {
   const { t } = useLanguage();
   const { format, formatPlain, parse, currency } = useMoney();
   const { settings, updateQuickTemplate } = useSettings();
   const { addTransaction, totalForPeriod, accounts, debts } = useFinance();
   const spendConcepts = settings.spendConcepts ?? [];
 
-  const [amount, setAmount] = useState('');
+  const prefilledHit = initialCategoryId
+    ? findSpendSub(spendConcepts, initialCategoryId)
+    : null;
+  const [amount, setAmount] = useState(initialAmount ?? '');
   const [type, setType] = useState<TransactionType>('expense');
-  const [conceptId, setConceptId] = useState(spendConcepts[0]?.id ?? '');
+  const [conceptId, setConceptId] = useState(
+    prefilledHit?.concept.id ?? spendConcepts[0]?.id ?? ''
+  );
   const [categoryId, setCategoryId] = useState(
-    spendConcepts[0]?.subs[0]?.id ?? 'otros'
+    initialCategoryId ?? spendConcepts[0]?.subs[0]?.id ?? 'otros'
   );
   const [debtId, setDebtId] = useState<string | null>(debts[0]?.id ?? null);
   const [method, setMethod] = useState<PaymentMethod>('cash');

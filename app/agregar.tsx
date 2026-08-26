@@ -1,5 +1,5 @@
-import { router } from 'expo-router';
-import { useState } from 'react';
+import { router, useLocalSearchParams } from 'expo-router';
+import { useEffect, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -22,7 +22,24 @@ import { palette, radii } from '@/src/theme/colors';
 export default function AgregarScreen() {
   const { t } = useLanguage();
   const { format } = useMoney();
+  const params = useLocalSearchParams<{
+    categoryId?: string;
+    amount?: string;
+    mode?: string;
+  }>();
   const [mode, setMode] = useState<'friendly' | 'advanced'>('friendly');
+  const prefilledCategoryId =
+    typeof params.categoryId === 'string' ? params.categoryId : undefined;
+  const prefilledAmount =
+    typeof params.amount === 'string' && params.amount.trim()
+      ? params.amount.trim()
+      : undefined;
+
+  useEffect(() => {
+    if (params.mode === 'advanced' || prefilledCategoryId) {
+      setMode('advanced');
+    }
+  }, [params.mode, prefilledCategoryId]);
 
   function handleSaved(result: SavedMovement) {
     const messageKey =
@@ -87,7 +104,11 @@ export default function AgregarScreen() {
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
               contentContainerStyle={styles.advancedPad}>
-              <ExpenseForm onSaved={handleSaved} />
+              <ExpenseForm
+                onSaved={handleSaved}
+                initialCategoryId={prefilledCategoryId}
+                initialAmount={prefilledAmount}
+              />
             </ScrollView>
           )}
         </View>
