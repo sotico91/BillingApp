@@ -157,6 +157,10 @@ export function FloatingGlanceFab() {
                             {categoryLabel(item.categoryId, t, spendConcepts)}
                           </Text>
                           <Text style={styles.conceptMeta}>
+                            {t('insights.percentOfTotalShort', {
+                              percent: Math.round(item.percent),
+                            })}
+                            {' · '}
                             {item.count}{' '}
                             {item.count === 1
                               ? t('insights.expense')

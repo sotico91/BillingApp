@@ -14,6 +14,7 @@ import { useMoney } from '@/src/hooks/useMoney';
 import { useSettings } from '@/src/hooks/useSettings';
 import { useLanguage } from '@/src/i18n/LanguageContext';
 import { palette, radii } from '@/src/theme/colors';
+import { isGeneralSubName } from '@/src/data/spendConcepts';
 import { categoryLabel } from '@/src/utils/categoryLabel';
 import { toneFromBudgetRatio } from '@/src/utils/signalTone';
 
@@ -24,7 +25,12 @@ export default function PlanScreen() {
   const { budgetStatus, antForPeriod } = useFinance();
   const ant = antForPeriod('mes');
   const spendConcepts = settings.spendConcepts ?? [];
-  const [conceptsOpen, setConceptsOpen] = useState(false);
+  const needsSubSetup =
+    spendConcepts.length > 0 &&
+    spendConcepts.every(
+      (c) => c.subs.length === 1 && isGeneralSubName(c.subs[0].name)
+    );
+  const [conceptsOpen, setConceptsOpen] = useState(needsSubSetup);
   const [remindersOpen, setRemindersOpen] = useState(false);
   const [budgetsOpen, setBudgetsOpen] = useState(false);
   const [antOpen, setAntOpen] = useState(false);

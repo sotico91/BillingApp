@@ -590,8 +590,8 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       const concepts = settings.spendConcepts ?? [];
       const map = new Map<string, { total: number; count: number }>();
       for (const e of list) {
-        const hit = e.categoryId ? findSpendSub(concepts, e.categoryId) : null;
-        const key = hit?.concept.id ?? e.categoryId ?? '__none__';
+        // Key by subcategory so glance/insights can expand into real subs, not repeat the concept name.
+        const key = e.categoryId ?? '__none__';
         const cur = map.get(key) ?? { total: 0, count: 0 };
         cur.total += e.amount;
         cur.count += 1;

@@ -133,6 +133,8 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
       const concept = findConceptById(spendConcepts, conceptId);
       if (concept && concept.subs.length === 1) {
         setCategoryId(concept.subs[0].id);
+        setStep(paymentStep);
+        return;
       } else if (concept && !concept.subs.some((s) => s.id === categoryId)) {
         setCategoryId(concept.subs[0]?.id ?? categoryId);
       }
@@ -593,7 +595,20 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
 
       <View style={styles.footer}>
         {step > 0 ? (
-          <Pressable onPress={() => setStep((s) => s - 1)} style={styles.secondary}>
+          <Pressable
+            onPress={() => {
+              if (intent === 'spend' && step === paymentStep) {
+                const concept = conceptId
+                  ? findConceptById(spendConcepts, conceptId)
+                  : undefined;
+                if (concept?.subs.length === 1) {
+                  setStep(2);
+                  return;
+                }
+              }
+              setStep((s) => s - 1);
+            }}
+            style={styles.secondary}>
             <Text style={styles.secondaryText}>{t('flow.back')}</Text>
           </Pressable>
         ) : (

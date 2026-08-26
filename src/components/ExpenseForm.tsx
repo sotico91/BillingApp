@@ -323,7 +323,7 @@ export function ExpenseForm({ onSaved, initialCategoryId, initialAmount }: Props
             ))}
           </View>
         </>
-      ) : (
+      ) : type === 'expense' && categoryChoices.length === 1 ? null : (
         <>
           <Text style={styles.label}>
             {type === 'expense' ? t('flow.chooseSub') : t('add.category')}

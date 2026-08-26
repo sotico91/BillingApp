@@ -166,6 +166,11 @@ export function hasDuplicateSubName(
   );
 }
 
+/** True for the default placeholder sub created at onboarding / new concepts. */
+export function isGeneralSubName(name: string): boolean {
+  return name.trim().toLowerCase() === 'general';
+}
+
 /** Display label for a subcategory id (Concepto/Sub). */
 export function spendSubLabel(
   subId: string,
@@ -174,7 +179,12 @@ export function spendSubLabel(
 ): string {
   const hit = findSpendSub(concepts, subId);
   if (hit) {
-    if (hit.sub.name === hit.concept.name) return hit.concept.name;
+    if (
+      hit.sub.name === hit.concept.name ||
+      isGeneralSubName(hit.sub.name)
+    ) {
+      return hit.concept.name;
+    }
     return `${hit.concept.name}/${hit.sub.name}`;
   }
   return fallback?.(subId) ?? subId;

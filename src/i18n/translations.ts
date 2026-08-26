@@ -31,8 +31,9 @@ export const translations = {
     'home.quickConfirmChange': 'Change amount',
     'home.quickConfirmSave': 'Register this amount',
     'home.quickConfirmFull': 'Open full form (account, note…)',
+    'home.quickConfirmClose': 'Close',
     'home.quickConfirmHint':
-      'Same subcategory as before; only the amount updates when you change it. Ant 🐜 = marked as ant spend in Plan.',
+      'Tap outside the card to close. Same subcategory as before; amount updates when you change it. Ant 🐜 = marked in Plan.',
     'home.quickAntBadge': 'Ant spend',
     'home.income': 'Income',
     'home.expenses': 'Expenses',
@@ -704,8 +705,9 @@ export const translations = {
     'home.quickConfirmChange': 'Cambiar monto',
     'home.quickConfirmSave': 'Registrar este monto',
     'home.quickConfirmFull': 'Formulario completo (cuenta, nota…)',
+    'home.quickConfirmClose': 'Cerrar',
     'home.quickConfirmHint':
-      'Misma subcategoría de siempre; el monto se actualiza cuando lo cambias. Hormiga 🐜 = marcado en Plan.',
+      'Toca fuera de la tarjeta para cerrar. Misma subcategoría de siempre; el monto se actualiza cuando lo cambias. Hormiga 🐜 = marcado en Plan.',
     'home.quickAntBadge': 'Gasto hormiga',
     'home.income': 'Ingresos',
     'home.expenses': 'Gastos',

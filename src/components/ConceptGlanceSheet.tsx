@@ -172,6 +172,13 @@ export function ConceptGlanceSheet({ visible, onClose, kind, items, total }: Pro
                         <View style={{ flex: 1 }}>
                           <Text style={styles.conceptName}>{group.name}</Text>
                           <Text style={styles.conceptMeta}>
+                            {t(
+                              isExpense
+                                ? 'insights.percentOfTotalShort'
+                                : 'insights.percentOfIncomeShort',
+                              { percent: Math.round(group.percent) }
+                            )}
+                            {' · '}
                             {group.count}{' '}
                             {isExpense
                               ? group.count === 1
@@ -204,9 +211,32 @@ export function ConceptGlanceSheet({ visible, onClose, kind, items, total }: Pro
                           const subName =
                             hit?.sub.name ??
                             categoryLabel(sub.categoryId, t, spendConcepts);
+                          const subShare =
+                            displayTotal > 0
+                              ? Math.round((sub.total / displayTotal) * 100)
+                              : 0;
                           return (
                             <View key={sub.categoryId} style={styles.subRow}>
-                              <Text style={styles.subName}>{subName}</Text>
+                              <View style={{ flex: 1, paddingRight: 8 }}>
+                                <Text style={styles.subName}>{subName}</Text>
+                                <Text style={styles.subMeta}>
+                                  {t(
+                                    isExpense
+                                      ? 'insights.percentOfTotalShort'
+                                      : 'insights.percentOfIncomeShort',
+                                    { percent: subShare }
+                                  )}
+                                  {' · '}
+                                  {sub.count}{' '}
+                                  {isExpense
+                                    ? sub.count === 1
+                                      ? t('insights.expense')
+                                      : t('insights.expenses')
+                                    : sub.count === 1
+                                      ? t('insights.income')
+                                      : t('insights.incomes')}
+                                </Text>
+                              </View>
                               <MoneyText style={styles.subAmount}>{format(sub.total)}</MoneyText>
                             </View>
                           );
@@ -375,11 +405,15 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
   },
   subName: {
-    fontFamily: 'DMSans_400Regular',
+    fontFamily: 'DMSans_600SemiBold',
     fontSize: 13,
-    color: palette.inkMuted,
-    flex: 1,
-    paddingRight: 8,
+    color: palette.ink,
+  },
+  subMeta: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 11,
+    color: palette.inkSoft,
+    marginTop: 2,
   },
   subAmount: {
     fontFamily: 'DMSans_500Medium',
