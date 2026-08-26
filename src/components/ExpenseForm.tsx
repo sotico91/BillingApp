@@ -13,7 +13,7 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 
-import { CategoryChip } from '@/src/components/CategoryChip';
+import { InlineSubAdd } from '@/src/components/InlineSubAdd';
 import { categoriesForKind } from '@/src/data/categories';
 import { findSpendSub, spendSubsAsCategories } from '@/src/data/spendConcepts';
 import { useFinance } from '@/src/hooks/useFinance';
@@ -341,6 +341,13 @@ export function ExpenseForm({ onSaved, initialCategoryId, initialAmount }: Props
           </View>
         </>
       )}
+
+      {type === 'expense' && conceptId ? (
+        <InlineSubAdd
+          conceptId={conceptId}
+          onAdded={(subId) => setCategoryId(subId)}
+        />
+      ) : null}
 
       <Text style={styles.label}>{t('add.note')}</Text>
       <TextInput

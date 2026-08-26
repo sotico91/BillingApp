@@ -3,7 +3,7 @@ import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { MoneyText } from '@/src/components/MoneyText';
-import { findSpendSub } from '@/src/data/spendConcepts';
+import { findSpendSub, isGeneralSubName } from '@/src/data/spendConcepts';
 import { useMoney } from '@/src/hooks/useMoney';
 import { useSettings } from '@/src/hooks/useSettings';
 import { useLanguage } from '@/src/i18n/LanguageContext';
@@ -62,6 +62,20 @@ export function ConceptGlanceSheet({ visible, onClose, kind, items, total }: Pro
   const isExpense = displayKind === 'expense';
 
   const groups = useMemo((): GlanceGroup[] => {
+    if (!isExpense) {
+      return displayItems
+        .map((item) => ({
+          key: item.categoryId,
+          name: categoryLabel(item.categoryId, t, spendConcepts),
+          color: item.color,
+          total: item.total,
+          count: item.count,
+          percent: displayTotal > 0 ? (item.total / displayTotal) * 100 : 0,
+          subs: [] as GlanceConceptItem[],
+        }))
+        .sort((a, b) => b.total - a.total);
+    }
+
     const map = new Map<string, GlanceGroup>();
 
     for (const item of displayItems) {
@@ -91,14 +105,16 @@ export function ConceptGlanceSheet({ visible, onClose, kind, items, total }: Pro
         subs: [...g.subs].sort((a, b) => b.total - a.total),
       }))
       .sort((a, b) => b.total - a.total);
-  }, [displayItems, spendConcepts, t, displayTotal]);
+  }, [displayItems, spendConcepts, t, displayTotal, isExpense]);
 
   function hasExpandableSubs(group: GlanceGroup) {
-    return (
-      group.subs.length > 1 ||
-      (group.subs.length === 1 &&
-        findSpendSub(spendConcepts, group.subs[0].categoryId)?.sub.name !== group.name)
-    );
+    if (!isExpense) return false;
+    if (group.subs.length > 1) return true;
+    if (group.subs.length !== 1) return false;
+    const hit = findSpendSub(spendConcepts, group.subs[0].categoryId);
+    if (!hit) return false;
+    if (isGeneralSubName(hit.sub.name)) return false;
+    return hit.sub.name !== group.name;
   }
 
   return (
@@ -145,7 +161,7 @@ export function ConceptGlanceSheet({ visible, onClose, kind, items, total }: Pro
           <Text style={styles.section}>
             {t(isExpense ? 'home.glanceByConcept' : 'home.glanceByIncomeConcept')}
           </Text>
-          {groups.length > 0 ? (
+          {groups.length > 0 && isExpense ? (
             <Text style={styles.sectionHint}>{t('home.glanceTapConcept')}</Text>
           ) : null}
 

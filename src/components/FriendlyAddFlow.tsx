@@ -30,7 +30,7 @@ import { categoryLabel } from '@/src/utils/categoryLabel';
 import { incomeDestinationAccounts } from '@/src/utils/netWorth';
 import { notifyExpenseRegistered } from '@/src/utils/notifications';
 import { tapFeedback } from '@/src/utils/selectFeedback';
-import type { SavedMovement } from '@/src/components/ExpenseForm';
+import { InlineSubAdd } from '@/src/components/InlineSubAdd';
 
 type Props = {
   onSaved?: (result: SavedMovement) => void;
@@ -475,6 +475,12 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
                 );
               })}
             </View>
+            {conceptId ? (
+              <InlineSubAdd
+                conceptId={conceptId}
+                onAdded={(subId) => setCategoryId(subId)}
+              />
+            ) : null}
           </Animated.View>
         ) : null}
 

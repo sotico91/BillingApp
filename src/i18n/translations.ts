@@ -399,6 +399,8 @@ export const translations = {
     'flow.chooseCategory': 'Which concept fits best?',
     'flow.chooseConcept': 'Which concept?',
     'flow.chooseSub': 'Which subcategory?',
+    'flow.addSubInline': 'Or create a new subcategory',
+    'flow.addSubButton': 'Add',
     'flow.noConceptsTitle': 'No concepts yet',
     'flow.noConceptsBody': 'Create concepts and subcategories in Plan first (e.g. Bills → Power).',
     'flow.goToPlan': 'Go to Plan',
@@ -1074,6 +1076,8 @@ export const translations = {
     'flow.chooseCategory': '¿Qué categoría encaja mejor?',
     'flow.chooseConcept': '¿Qué concepto?',
     'flow.chooseSub': '¿Qué subcategoría?',
+    'flow.addSubInline': 'O crea una subcategoría nueva',
+    'flow.addSubButton': 'Agregar',
     'flow.noConceptsTitle': 'Aún no hay conceptos',
     'flow.noConceptsBody':
       'Primero crea conceptos y subcategorías en Plan (ej. Recibos → Luz).',
