@@ -13,6 +13,7 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 
+import { CategoryChip } from '@/src/components/CategoryChip';
 import { InlineSubAdd } from '@/src/components/InlineSubAdd';
 import { categoriesForKind } from '@/src/data/categories';
 import { findSpendSub, spendSubsAsCategories } from '@/src/data/spendConcepts';
