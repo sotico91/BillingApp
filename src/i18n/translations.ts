@@ -96,6 +96,9 @@ export const translations = {
     'about.developedBy': 'Developed by {name}',
     'about.copyright': '© {year} {name}',
     'about.allRights': 'All rights reserved.',
+    'about.privacyPolicy': 'Privacy policy',
+    'about.privacyErrorTitle': 'Privacy policy',
+    'about.privacyErrorBody': 'Could not open the privacy policy. Check your connection.',
 
     'history.title': 'Activity',
     'history.summaryTitle': 'Period summary',
@@ -772,6 +775,10 @@ export const translations = {
     'about.developedBy': 'Desarrollado por {name}',
     'about.copyright': '© {year} {name}',
     'about.allRights': 'Todos los derechos reservados.',
+    'about.privacyPolicy': 'Política de privacidad',
+    'about.privacyErrorTitle': 'Política de privacidad',
+    'about.privacyErrorBody':
+      'No se pudo abrir la política de privacidad. Revisa tu conexión.',
 
     'history.title': 'Actividad',
     'history.summaryTitle': 'Resumen del periodo',

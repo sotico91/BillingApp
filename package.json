@@ -54,6 +54,9 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "eas:android:preview": "eas build --platform android --profile preview",
-    "eas:android:production": "eas build --platform android --profile production"
+    "eas:android:production": "eas build --platform android --profile production",
+    "eas:ios:production": "eas build --platform ios --profile production",
+    "eas:submit:android": "eas submit --platform android --profile production",
+    "eas:submit:ios": "eas submit --platform ios --profile production"
   }
 }
