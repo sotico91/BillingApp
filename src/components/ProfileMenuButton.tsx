@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import {
   Alert,
-  Linking,
   Modal,
   Pressable,
   StyleSheet,
@@ -9,9 +8,9 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { PRIVACY_POLICY_FALLBACK_URL, PRIVACY_POLICY_URL } from '@/src/constants/store';
 import { useFinance } from '@/src/hooks/useFinance';
 import { useSettings } from '@/src/hooks/useSettings';
 import { useLanguage } from '@/src/i18n/LanguageContext';
@@ -176,14 +175,9 @@ export function ProfileMenuButton({ light = true }: Props) {
     ]);
   }
 
-  async function openPrivacyPolicy() {
+  function openPrivacyPolicy() {
     setMenuOpen(false);
-    try {
-      const can = await Linking.canOpenURL(PRIVACY_POLICY_URL);
-      await Linking.openURL(can ? PRIVACY_POLICY_URL : PRIVACY_POLICY_FALLBACK_URL);
-    } catch {
-      Alert.alert(t('about.privacyErrorTitle'), t('about.privacyErrorBody'));
-    }
+    router.push('/privacidad');
   }
 
   return (
@@ -254,7 +248,7 @@ export function ProfileMenuButton({ light = true }: Props) {
             <Pressable
               onPress={() => {
                 tapFeedback();
-                void openPrivacyPolicy();
+                openPrivacyPolicy();
               }}
               style={styles.menuItem}>
               <Text style={styles.menuItemText}>{t('about.privacyPolicy')}</Text>

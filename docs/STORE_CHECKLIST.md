@@ -4,10 +4,12 @@
 
 1. **Apple Developer Program** — Account → membership **Active** (not “Enroll Now”).
 2. **Google Play Console** — one-time US$25 developer registration.
-3. **GitHub Pages** — Settings → Pages → Deploy from branch `main` / folder `/docs`.
-   Confirm: https://sotico91.github.io/BillingApp/privacy-policy.html
+3. **GitHub Pages (required for store privacy URL)**  
+   Repo → **Settings → Pages** → Source: Deploy from branch **`main`** / folder **`/docs`**.  
+   Wait 1–2 minutes, then open: https://sotico91.github.io/BillingApp/privacy-policy.html  
+   (In-app privacy does **not** need this — it opens a local screen.)
 4. Create apps in **App Store Connect** and **Play Console** with package/bundle `com.billingapp.personal`.
-5. Paste privacy URL + support email `edavidvelascop@gmail.com` in both store listings.
+5. Paste that privacy URL + support email `edavidvelascop@gmail.com` in both store listings.
 6. Build production:
    - `npm run eas:ios:production`
    - `npm run eas:android:production`

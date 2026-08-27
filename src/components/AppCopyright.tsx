@@ -1,9 +1,6 @@
-import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { router } from 'expo-router';
 
-import {
-  PRIVACY_POLICY_FALLBACK_URL,
-  PRIVACY_POLICY_URL,
-} from '@/src/constants/store';
 import { useLanguage } from '@/src/i18n/LanguageContext';
 import { palette } from '@/src/theme/colors';
 import { tapFeedback } from '@/src/utils/selectFeedback';
@@ -15,14 +12,9 @@ const DEVELOPER = 'Sotico91';
 export function AppCopyright() {
   const { t } = useLanguage();
 
-  async function openPrivacy() {
+  function openPrivacy() {
     tapFeedback();
-    try {
-      const can = await Linking.canOpenURL(PRIVACY_POLICY_URL);
-      await Linking.openURL(can ? PRIVACY_POLICY_URL : PRIVACY_POLICY_FALLBACK_URL);
-    } catch {
-      /* ignore */
-    }
+    router.push('/privacidad');
   }
 
   return (
@@ -34,7 +26,7 @@ export function AppCopyright() {
         {t('about.copyright', { year: COPYRIGHT_YEAR, name: DEVELOPER })}
       </Text>
       <Text style={styles.rights}>{t('about.allRights')}</Text>
-      <Pressable onPress={() => void openPrivacy()} hitSlop={8} style={styles.privacyBtn}>
+      <Pressable onPress={openPrivacy} hitSlop={8} style={styles.privacyBtn}>
         <Text style={styles.privacy}>{t('about.privacyPolicy')}</Text>
       </Pressable>
     </View>

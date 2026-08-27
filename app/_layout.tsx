@@ -106,6 +106,14 @@ function RootNavigator() {
           headerLargeTitle: false,
         }}
       />
+      <Stack.Screen
+        name="privacidad"
+        options={{
+          presentation: 'modal',
+          title: t('about.privacyPolicy'),
+          headerLargeTitle: false,
+        }}
+      />
     </Stack>
   );
 }
