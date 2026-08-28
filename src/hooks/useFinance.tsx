@@ -12,7 +12,12 @@ import {
   DEFAULT_SUBSCRIPTIONS,
   getCategoryById,
 } from '@/src/data/financeDefaults';
-import { findSpendSub, resolveConceptColor } from '@/src/data/spendConcepts';
+import {
+  findSpendSub,
+  flattenSpendSubs,
+  pruneBudgetsToSpendSubs,
+  resolveConceptColor,
+} from '@/src/data/spendConcepts';
 import {
   loadAccounts,
   loadBudgets,
@@ -243,6 +248,18 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       mounted = false;
     };
   }, [settingsReady]);
+
+  // Drop budget caps for deleted or legacy subcategories.
+  useEffect(() => {
+    if (!settingsReady || loading) return;
+    const spendConcepts = settings.spendConcepts ?? [];
+    setBudgets((current) => {
+      const next = pruneBudgetsToSpendSubs(current, spendConcepts);
+      if (next.length === current.length) return current;
+      void saveBudgets(next);
+      return next;
+    });
+  }, [settingsReady, loading, settings.spendConcepts]);
 
   // Backfill ownership so legacy rows belong to this singular person.
   useEffect(() => {
@@ -655,11 +672,16 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
     [accounts, debts]
   );
 
+  const validBudgetSubIds = useMemo(
+    () => new Set(flattenSpendSubs(settings.spendConcepts ?? []).map((s) => s.id)),
+    [settings.spendConcepts]
+  );
+
   const budgetStatus = useMemo(() => {
     const month = transactionsForPeriod('mes', 'mine').filter(
       (t) => t.type === 'expense' || t.type === 'debt_payment'
     );
-    return budgets.map((b) => {
+    return budgets.filter((b) => validBudgetSubIds.has(b.categoryId)).map((b) => {
       const spent = month
         .filter((t) => t.categoryId === b.categoryId)
         .reduce((s, t) => s + t.amount, 0);
@@ -672,7 +694,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
         ratio: b.limit > 0 ? spent / b.limit : 0,
       };
     });
-  }, [budgets, transactionsForPeriod]);
+  }, [budgets, transactionsForPeriod, validBudgetSubIds]);
 
   const addExpense = useCallback(
     async (input: {

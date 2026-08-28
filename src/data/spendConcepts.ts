@@ -1,5 +1,5 @@
 import { CATEGORIES, expenseCategories, getCategoryById } from '@/src/data/financeDefaults';
-import type { Category } from '@/src/types/finance';
+import type { Budget, Category } from '@/src/types/finance';
 import type { CustomConcept, SpendConcept, SpendSub } from '@/src/types/settings';
 
 export const CREDITS_CONCEPT_ID = 'concept-creditos';
@@ -119,6 +119,15 @@ export function createSpendSub(conceptId: string, name: string): SpendSub {
 
 export function flattenSpendSubs(concepts: SpendConcept[]): SpendSub[] {
   return concepts.flatMap((c) => c.subs);
+}
+
+/** Drop budget rows whose subcategory no longer exists in the concept tree. */
+export function pruneBudgetsToSpendSubs(
+  budgets: Budget[],
+  concepts: SpendConcept[]
+): Budget[] {
+  const allowed = new Set(flattenSpendSubs(concepts).map((s) => s.id));
+  return budgets.filter((b) => allowed.has(b.categoryId));
 }
 
 export function findSpendSub(
