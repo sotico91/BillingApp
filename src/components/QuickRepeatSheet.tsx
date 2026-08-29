@@ -5,6 +5,7 @@ import {
   Modal,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -26,8 +27,8 @@ type Props = {
   parse: (raw: string) => number | null;
   busy?: boolean;
   onClose: () => void;
-  onConfirm: (amount: number) => void;
-  onEditFull: (amount: number) => void;
+  onConfirm: (amount: number, note: string) => void;
+  onEditFull: (amount: number, note: string) => void;
 };
 
 export function QuickRepeatSheet({
@@ -35,7 +36,6 @@ export function QuickRepeatSheet({
   habit,
   label,
   format,
-  currency,
   parse,
   busy,
   onClose,
@@ -46,17 +46,21 @@ export function QuickRepeatSheet({
   const { t } = useLanguage();
   const [editing, setEditing] = useState(false);
   const [amountText, setAmountText] = useState('');
+  const [noteText, setNoteText] = useState('');
 
   useEffect(() => {
     if (!visible || !habit) return;
     setEditing(false);
     setAmountText(String(habit.amount));
-  }, [visible, habit?.categoryId, habit?.amount]);
+    setNoteText(habit.note ?? '');
+  }, [visible, habit?.categoryId, habit?.amount, habit?.note]);
 
   if (!habit) return null;
 
+  const lastAmount = habit.amount;
   const parsed = parse(amountText);
   const canConfirm = parsed != null && parsed > 0 && !busy;
+  const resolvedNote = noteText.trim();
 
   function handleClose() {
     if (busy) return;
@@ -68,7 +72,13 @@ export function QuickRepeatSheet({
   function handleConfirm() {
     if (!canConfirm || parsed == null) return;
     tapFeedback();
-    onConfirm(parsed);
+    onConfirm(parsed, resolvedNote);
+  }
+
+  function currentAmount() {
+    if (!editing) return lastAmount;
+    const amt = parse(amountText);
+    return amt != null && amt > 0 ? amt : lastAmount;
   }
 
   return (
@@ -94,97 +104,116 @@ export function QuickRepeatSheet({
           ]}
           pointerEvents="box-none">
           <View style={styles.sheet} onStartShouldSetResponder={() => true}>
-            <View style={styles.headerRow}>
-              <Text style={styles.eyebrow}>{t('home.quickConfirmTitle')}</Text>
-              <Pressable
-                onPress={handleClose}
-                disabled={busy}
-                hitSlop={12}
-                style={styles.closeBtn}
-                accessibilityRole="button"
-                accessibilityLabel={t('home.quickConfirmClose')}>
-                <Text style={styles.closeBtnText}>✕</Text>
-              </Pressable>
-            </View>
-            <Text style={styles.label}>{label}</Text>
-            {habit.isAnt ? (
-              <View style={styles.antBadge}>
-                <Text style={styles.antBadgeText}>{t('home.quickAntBadge')}</Text>
+            <ScrollView
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="interactive"
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.sheetInner}>
+              <View style={styles.headerRow}>
+                <Text style={styles.eyebrow}>{t('home.quickConfirmTitle')}</Text>
+                <Pressable
+                  onPress={handleClose}
+                  disabled={busy}
+                  hitSlop={12}
+                  style={styles.closeBtn}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('home.quickConfirmClose')}>
+                  <Text style={styles.closeBtnText}>✕</Text>
+                </Pressable>
               </View>
-            ) : null}
+              <Text style={styles.label}>{label}</Text>
+              {habit.isAnt ? (
+                <View style={styles.antBadge}>
+                  <Text style={styles.antBadgeText}>{t('home.quickAntBadge')}</Text>
+                </View>
+              ) : null}
 
-            {editing ? (
-              <>
-                <Text style={styles.fieldLabel}>{t('home.quickConfirmAmount')}</Text>
-                <TextInput
-                  value={amountText}
-                  onChangeText={setAmountText}
-                  keyboardType="decimal-pad"
-                  autoFocus
-                  placeholder="0"
-                  placeholderTextColor={palette.inkSoft}
-                  style={styles.input}
-                />
-              </>
-            ) : (
-              <Text style={styles.amount}>{format(habit.amount)}</Text>
-            )}
-
-            <Text style={styles.hint}>{t('home.quickConfirmHint')}</Text>
-
-            <View style={styles.actions}>
-              {!editing ? (
+              {editing ? (
                 <>
-                  <Pressable
-                    onPress={handleConfirm}
-                    disabled={!canConfirm}
-                    style={[styles.primaryBtn, !canConfirm && styles.btnDisabled]}>
-                    <Text style={styles.primaryText}>{t('home.quickConfirmYes')}</Text>
-                  </Pressable>
-                  <Pressable
-                    onPress={() => {
-                      tapFeedback();
-                      setEditing(true);
-                    }}
-                    style={styles.secondaryBtn}>
-                    <Text style={styles.secondaryText}>{t('home.quickConfirmChange')}</Text>
-                  </Pressable>
+                  <Text style={styles.fieldLabel}>{t('home.quickConfirmAmount')}</Text>
+                  <TextInput
+                    value={amountText}
+                    onChangeText={setAmountText}
+                    keyboardType="decimal-pad"
+                    autoFocus
+                    placeholder="0"
+                    placeholderTextColor={palette.inkSoft}
+                    style={styles.input}
+                  />
                 </>
               ) : (
-                <>
-                  <Pressable
-                    onPress={handleConfirm}
-                    disabled={!canConfirm}
-                    style={[styles.primaryBtn, !canConfirm && styles.btnDisabled]}>
-                    <Text style={styles.primaryText}>{t('home.quickConfirmSave')}</Text>
-                  </Pressable>
-                  <Pressable
-                    onPress={() => {
-                      tapFeedback();
-                      setEditing(false);
-                      setAmountText(String(habit.amount));
-                    }}
-                    style={styles.secondaryBtn}>
-                    <Text style={styles.secondaryText}>{t('onboard.back')}</Text>
-                  </Pressable>
-                </>
+                <Text style={styles.amount}>{format(habit.amount)}</Text>
               )}
-              <Pressable
-                onPress={() => {
-                  tapFeedback();
-                  const amt = editing ? parse(amountText) ?? habit.amount : habit.amount;
-                  onEditFull(amt > 0 ? amt : habit.amount);
-                }}
-                style={styles.linkBtn}>
-                <Text style={styles.linkText}>{t('home.quickConfirmFull')}</Text>
-              </Pressable>
-              <Pressable
-                onPress={handleClose}
-                disabled={busy}
-                style={styles.cancelBtn}>
-                <Text style={styles.cancelText}>{t('home.quickConfirmClose')}</Text>
-              </Pressable>
-            </View>
+
+              <Text style={styles.fieldLabel}>{t('home.quickConfirmNote')}</Text>
+              <TextInput
+                value={noteText}
+                onChangeText={setNoteText}
+                placeholder={t('add.notePlaceholder')}
+                placeholderTextColor={palette.inkSoft}
+                style={styles.noteInput}
+                multiline
+                returnKeyType="done"
+                blurOnSubmit
+              />
+
+              <Text style={styles.hint}>{t('home.quickConfirmHint')}</Text>
+
+              <View style={styles.actions}>
+                {!editing ? (
+                  <>
+                    <Pressable
+                      onPress={handleConfirm}
+                      disabled={!canConfirm}
+                      style={[styles.primaryBtn, !canConfirm && styles.btnDisabled]}>
+                      <Text style={styles.primaryText}>{t('home.quickConfirmYes')}</Text>
+                    </Pressable>
+                    <Pressable
+                      onPress={() => {
+                        tapFeedback();
+                        setEditing(true);
+                      }}
+                      style={styles.secondaryBtn}>
+                      <Text style={styles.secondaryText}>
+                        {t('home.quickConfirmChange')}
+                      </Text>
+                    </Pressable>
+                  </>
+                ) : (
+                  <>
+                    <Pressable
+                      onPress={handleConfirm}
+                      disabled={!canConfirm}
+                      style={[styles.primaryBtn, !canConfirm && styles.btnDisabled]}>
+                      <Text style={styles.primaryText}>{t('home.quickConfirmSave')}</Text>
+                    </Pressable>
+                    <Pressable
+                      onPress={() => {
+                        tapFeedback();
+                        setEditing(false);
+                        setAmountText(String(habit.amount));
+                      }}
+                      style={styles.secondaryBtn}>
+                      <Text style={styles.secondaryText}>{t('onboard.back')}</Text>
+                    </Pressable>
+                  </>
+                )}
+                <Pressable
+                  onPress={() => {
+                    tapFeedback();
+                    onEditFull(currentAmount(), resolvedNote);
+                  }}
+                  style={styles.linkBtn}>
+                  <Text style={styles.linkText}>{t('home.quickConfirmFull')}</Text>
+                </Pressable>
+                <Pressable
+                  onPress={handleClose}
+                  disabled={busy}
+                  style={styles.cancelBtn}>
+                  <Text style={styles.cancelText}>{t('home.quickConfirmClose')}</Text>
+                </Pressable>
+              </View>
+            </ScrollView>
           </View>
         </KeyboardAvoidingView>
       </View>
@@ -199,9 +228,14 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.45)',
   },
   backdropTap: {
-    ...StyleSheet.absoluteFillObject,
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
   },
   keyboardWrap: {
+    flex: 1,
     justifyContent: 'flex-end',
     paddingHorizontal: 16,
     width: '100%',
@@ -209,10 +243,13 @@ const styles = StyleSheet.create({
   sheet: {
     backgroundColor: palette.surfaceSolid,
     borderRadius: radii.lg,
-    padding: 20,
-    gap: 10,
+    maxHeight: '88%',
     borderWidth: 1,
     borderColor: palette.border,
+  },
+  sheetInner: {
+    padding: 20,
+    gap: 10,
   },
   headerRow: {
     flexDirection: 'row',
@@ -283,6 +320,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
     backgroundColor: '#F7FAFC',
+  },
+  noteInput: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
+    color: palette.ink,
+    borderWidth: 1,
+    borderColor: palette.border,
+    borderRadius: radii.md,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    backgroundColor: '#F7FAFC',
+    minHeight: 48,
   },
   hint: {
     fontFamily: 'DMSans_400Regular',

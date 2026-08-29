@@ -122,7 +122,12 @@ export default function HistorialScreen() {
 
   return (
     <ScreenBackground>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="interactive"
+        automaticallyAdjustKeyboardInsets
+        showsVerticalScrollIndicator={false}>
         <FadeInBlock>
           <RaisedText style={styles.pageTitle}>{t('history.title')}</RaisedText>
           <PeriodToggle

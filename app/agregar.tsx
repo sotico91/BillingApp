@@ -10,6 +10,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ExpenseForm, type SavedMovement } from '@/src/components/ExpenseForm';
 import { RaisedText } from '@/src/components/RaisedText';
@@ -22,9 +23,11 @@ import { palette, radii } from '@/src/theme/colors';
 export default function AgregarScreen() {
   const { t } = useLanguage();
   const { format } = useMoney();
+  const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{
     categoryId?: string;
     amount?: string;
+    note?: string;
     mode?: string;
   }>();
   const [mode, setMode] = useState<'friendly' | 'advanced'>('friendly');
@@ -34,6 +37,8 @@ export default function AgregarScreen() {
     typeof params.amount === 'string' && params.amount.trim()
       ? params.amount.trim()
       : undefined;
+  const prefilledNote =
+    typeof params.note === 'string' ? params.note : undefined;
 
   useEffect(() => {
     if (params.mode === 'advanced' || prefilledCategoryId) {
@@ -73,7 +78,8 @@ export default function AgregarScreen() {
     <ScreenBackground edges="none">
       <KeyboardAvoidingView
         style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top + 12 : 0}>
         <View style={styles.content}>
           <RaisedText style={styles.title}>{t('add.title')}</RaisedText>
 
@@ -102,12 +108,15 @@ export default function AgregarScreen() {
           ) : (
             <ScrollView
               keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="interactive"
+              automaticallyAdjustKeyboardInsets
               showsVerticalScrollIndicator={false}
               contentContainerStyle={styles.advancedPad}>
               <ExpenseForm
                 onSaved={handleSaved}
                 initialCategoryId={prefilledCategoryId}
                 initialAmount={prefilledAmount}
+                initialNote={prefilledNote}
               />
             </ScrollView>
           )}
@@ -157,6 +166,6 @@ const styles = StyleSheet.create({
     fontFamily: 'DMSans_600SemiBold',
   },
   advancedPad: {
-    paddingBottom: 24,
+    paddingBottom: 120,
   },
 });

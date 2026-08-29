@@ -113,7 +113,12 @@ export default function InsightsScreen() {
 
   return (
     <ScreenBackground>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="interactive"
+        automaticallyAdjustKeyboardInsets
+        showsVerticalScrollIndicator={false}>
         <FadeInBlock>
           <View style={styles.heroRow}>
             <View style={styles.heroCopy}>

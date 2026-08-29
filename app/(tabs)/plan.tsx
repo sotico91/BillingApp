@@ -43,7 +43,7 @@ export default function PlanScreen() {
 
   return (
     <ScreenBackground>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" automaticallyAdjustKeyboardInsets showsVerticalScrollIndicator={false}>
         <FadeInBlock>
           <RaisedText style={styles.title}>{t('plan.title')}</RaisedText>
           <Text style={styles.subtitle}>{t('plan.subtitle')}</Text>

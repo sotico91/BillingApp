@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import {
   Alert,
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -265,6 +267,9 @@ export function ProfileMenuButton({ light = true }: Props) {
         transparent
         animationType="slide"
         onRequestClose={() => setEditOpen(false)}>
+        <KeyboardAvoidingView
+          style={styles.flex}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <View
           style={[
             styles.editBackdrop,
@@ -301,12 +306,14 @@ export function ProfileMenuButton({ light = true }: Props) {
             </View>
           </View>
         </View>
+        </KeyboardAvoidingView>
       </Modal>
     </>
   );
 }
 
 const styles = StyleSheet.create({
+  flex: { flex: 1 },
   dotsBtn: {
     width: 36,
     height: 36,

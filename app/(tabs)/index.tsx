@@ -135,6 +135,9 @@ export default function HomeScreen() {
       <ScrollView
         style={styles.screen}
         contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="interactive"
+        automaticallyAdjustKeyboardInsets
         showsVerticalScrollIndicator={false}>
         <FadeInBlock>
           <View style={styles.heroRow}>

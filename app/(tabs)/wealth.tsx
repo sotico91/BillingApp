@@ -194,6 +194,8 @@ export default function WealthScreen() {
       <ScrollView
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="interactive"
+        automaticallyAdjustKeyboardInsets
         showsVerticalScrollIndicator={false}>
         <FadeInBlock>
           <RaisedText style={styles.title}>{t('wealth.title')}</RaisedText>

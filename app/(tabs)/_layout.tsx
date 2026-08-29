@@ -6,11 +6,13 @@ import { Platform, StyleSheet, View } from 'react-native';
 import { AmountPrivacyToggle } from '@/src/components/AmountPrivacyToggle';
 import { FloatingGlanceFab } from '@/src/components/FloatingGlanceFab';
 import { useLanguage } from '@/src/i18n/LanguageContext';
+import { useKeyboardVisible } from '@/src/hooks/useKeyboardVisible';
 import { palette } from '@/src/theme/colors';
 import { tapFeedback } from '@/src/utils/selectFeedback';
 
 export default function TabLayout() {
   const { t } = useLanguage();
+  const keyboardVisible = useKeyboardVisible();
 
   return (
     <View style={styles.root}>
@@ -22,10 +24,12 @@ export default function TabLayout() {
         }}
         screenOptions={{
           headerShown: false,
+          tabBarHideOnKeyboard: true,
           tabBarActiveTintColor: palette.accent,
           tabBarInactiveTintColor: 'rgba(255,255,255,0.55)',
           tabBarStyle: {
             position: 'absolute',
+            display: keyboardVisible ? 'none' : 'flex',
             backgroundColor: Platform.OS === 'ios' ? 'transparent' : '#163642',
             borderTopWidth: 0,
             elevation: 0,

@@ -58,24 +58,25 @@ export function QuickAddBar() {
     ? categoryLabel(sheetHabit.categoryId, t, spendConcepts)
     : '';
 
-  async function registerHabit(habit: OneTapHabit, amount: number) {
+  async function registerHabit(habit: OneTapHabit, amount: number, note: string) {
     if (busyLock.current) return;
 
     busyLock.current = true;
     setBusyId(habit.id);
+    const resolvedNote = note.trim() || undefined;
     try {
       await addTransaction({
         type: 'expense',
         amount,
         categoryId: habit.categoryId,
-        note: habit.note,
+        note: resolvedNote,
         paymentMethod: habit.paymentMethod ?? 'debit',
         accountId: habit.accountId ?? 'cash',
       });
       await updateQuickTemplate({
         categoryId: habit.categoryId,
         amount,
-        note: habit.note,
+        note: resolvedNote,
       });
 
       if (settings.notifyOnExpense) {
@@ -94,13 +95,14 @@ export function QuickAddBar() {
     }
   }
 
-  function openFullAdd(habit: OneTapHabit, amount?: number) {
+  function openFullAdd(habit: OneTapHabit, amount?: number, note?: string) {
     setSheetHabit(null);
     router.push({
       pathname: '/agregar',
       params: {
         categoryId: habit.categoryId,
         amount: String(amount ?? habit.amount),
+        note: note ?? habit.note ?? '',
         mode: 'advanced',
       },
     });
@@ -163,13 +165,13 @@ export function QuickAddBar() {
         parse={parse}
         busy={busyId != null}
         onClose={() => setSheetHabit(null)}
-        onConfirm={(amount) => {
+        onConfirm={(amount, note) => {
           if (!sheetHabit) return;
-          void registerHabit(sheetHabit, amount);
+          void registerHabit(sheetHabit, amount, note);
         }}
-        onEditFull={(amount) => {
+        onEditFull={(amount, note) => {
           if (!sheetHabit) return;
-          openFullAdd(sheetHabit, amount);
+          openFullAdd(sheetHabit, amount, note);
         }}
       />
     </>

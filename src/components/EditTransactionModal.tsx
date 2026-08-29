@@ -1,7 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -14,6 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { categoriesForKind } from '@/src/data/categories';
 import { spendSubsAsCategories } from '@/src/data/spendConcepts';
 import { useFinance } from '@/src/hooks/useFinance';
+import { useKeyboardVisible } from '@/src/hooks/useKeyboardVisible';
 import { useMoney } from '@/src/hooks/useMoney';
 import { useSettings } from '@/src/hooks/useSettings';
 import { useLanguage } from '@/src/i18n/LanguageContext';
@@ -46,6 +49,7 @@ export function EditTransactionModal({ transaction, visible, onClose }: Props) {
   const { format, parse, currency } = useMoney();
   const { settings } = useSettings();
   const { updateTransaction, accounts } = useFinance();
+  const keyboardVisible = useKeyboardVisible();
 
   const [amount, setAmount] = useState('');
   const [type, setType] = useState<TransactionType>('expense');
@@ -55,6 +59,7 @@ export function EditTransactionModal({ transaction, visible, onClose }: Props) {
   const [toAccountId, setToAccountId] = useState('savings');
   const [note, setNote] = useState('');
   const [saving, setSaving] = useState(false);
+  const scrollRef = useRef<ScrollView>(null);
 
   const categoryChoices = useMemo(() => {
     if (type === 'income') {
@@ -120,16 +125,21 @@ export function EditTransactionModal({ transaction, visible, onClose }: Props) {
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      <View style={[styles.backdrop, { paddingTop: insets.top + 8, paddingBottom: insets.bottom + 8 }]}>
-        <View style={styles.sheet}>
-          <Text style={styles.title}>{t('history.editTitle')}</Text>
-          <Text style={styles.copy}>{t('history.editBody')}</Text>
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <View style={[styles.backdrop, { paddingTop: insets.top + 8, paddingBottom: insets.bottom + 8 }]}>
+          <View style={styles.sheet}>
+            <Text style={styles.title}>{t('history.editTitle')}</Text>
+            <Text style={styles.copy}>{t('history.editBody')}</Text>
 
-          <ScrollView
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.body}>
-            <Text style={styles.label}>{t('flow.summaryAmount')}</Text>
+            <ScrollView
+              ref={scrollRef}
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="interactive"
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.body}>
+              <Text style={styles.label}>{t('flow.summaryAmount')}</Text>
             <View style={styles.amountRow}>
               <Text style={styles.currency}>$</Text>
               <TextInput
@@ -240,9 +250,17 @@ export function EditTransactionModal({ transaction, visible, onClose }: Props) {
               placeholder={t('add.notePlaceholder')}
               placeholderTextColor={palette.inkSoft}
               style={styles.note}
+              returnKeyType="done"
+              blurOnSubmit
+              onFocus={() => {
+                setTimeout(() => {
+                  scrollRef.current?.scrollToEnd({ animated: true });
+                }, 280);
+              }}
             />
           </ScrollView>
 
+          {keyboardVisible ? null : (
           <View style={styles.actions}>
             <Pressable onPress={onClose} style={styles.secondary}>
               <Text style={styles.secondaryText}>{t('history.cancel')}</Text>
@@ -256,13 +274,16 @@ export function EditTransactionModal({ transaction, visible, onClose }: Props) {
               </Text>
             </Pressable>
           </View>
+          )}
         </View>
-      </View>
+        </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
+  flex: { flex: 1 },
   backdrop: {
     flex: 1,
     backgroundColor: 'rgba(8,20,28,0.72)',
@@ -287,7 +308,7 @@ const styles = StyleSheet.create({
     color: palette.inkMuted,
     marginBottom: 10,
   },
-  body: { gap: 10, paddingBottom: 12 },
+  body: { gap: 10, paddingBottom: 28 },
   label: {
     fontFamily: 'DMSans_600SemiBold',
     fontSize: 12,

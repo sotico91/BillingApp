@@ -31,6 +31,8 @@ import { incomeDestinationAccounts } from '@/src/utils/netWorth';
 import { notifyExpenseRegistered } from '@/src/utils/notifications';
 import { tapFeedback } from '@/src/utils/selectFeedback';
 import { InlineSubAdd } from '@/src/components/InlineSubAdd';
+import { useKeyboardVisible } from '@/src/hooks/useKeyboardVisible';
+import type { SavedMovement } from '@/src/components/ExpenseForm';
 
 type Props = {
   onSaved?: (result: SavedMovement) => void;
@@ -44,10 +46,10 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
   const { format, formatPlain, parse, currency } = useMoney();
   const { settings, updateQuickTemplate } = useSettings();
   const { addTransaction, totalForPeriod, accounts, debts } = useFinance();
+  const keyboardVisible = useKeyboardVisible();
 
   const spendConcepts = settings.spendConcepts ?? [];
   const incomeAccounts = useMemo(() => incomeDestinationAccounts(accounts), [accounts]);
-  const accountChoices = intent === 'earn' ? incomeAccounts : accounts;
 
   const [step, setStep] = useState(0);
   const [intent, setIntent] = useState<FriendlyIntent>('spend');
@@ -60,6 +62,9 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
   const [note, setNote] = useState('');
   const [saving, setSaving] = useState(false);
   const savingLock = useRef(false);
+  const scrollRef = useRef<ScrollView>(null);
+
+  const accountChoices = intent === 'earn' ? incomeAccounts : accounts;
 
   const incomeChoices = useMemo(
     () => categoriesForKind('income', settings.enabledCategoryIds),
@@ -236,7 +241,9 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
       </Text>
 
       <ScrollView
+        ref={scrollRef}
         keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="interactive"
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.body}>
         {step === 0 ? (
@@ -594,11 +601,19 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
               placeholder={t('add.notePlaceholder')}
               placeholderTextColor={palette.inkSoft}
               style={styles.noteInput}
+              returnKeyType="done"
+              blurOnSubmit
+              onFocus={() => {
+                setTimeout(() => {
+                  scrollRef.current?.scrollToEnd({ animated: true });
+                }, 280);
+              }}
             />
           </Animated.View>
         ) : null}
       </ScrollView>
 
+      {keyboardVisible ? null : (
       <View style={styles.footer}>
         {step > 0 ? (
           <Pressable
@@ -640,6 +655,7 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
           </Pressable>
         )}
       </View>
+      )}
     </View>
   );
 }
@@ -661,7 +677,6 @@ const styles = StyleSheet.create({
     padding: 18,
     borderWidth: 1,
     borderColor: palette.border,
-    minHeight: 520,
   },
   progressTrack: {
     height: 8,
@@ -684,7 +699,7 @@ const styles = StyleSheet.create({
   },
   body: {
     paddingTop: 12,
-    paddingBottom: 16,
+    paddingBottom: 48,
     gap: 12,
   },
   block: { gap: 12 },

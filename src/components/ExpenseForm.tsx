@@ -37,6 +37,7 @@ type Props = {
   onSaved?: (result: SavedMovement) => void;
   initialCategoryId?: string;
   initialAmount?: string;
+  initialNote?: string;
 };
 
 const TYPES: TransactionType[] = [
@@ -52,7 +53,12 @@ const METHODS: PaymentMethod[] = ['cash', 'debit', 'credit', 'transfer'];
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-export function ExpenseForm({ onSaved, initialCategoryId, initialAmount }: Props) {
+export function ExpenseForm({
+  onSaved,
+  initialCategoryId,
+  initialAmount,
+  initialNote,
+}: Props) {
   const { t } = useLanguage();
   const { format, formatPlain, parse, currency } = useMoney();
   const { settings, updateQuickTemplate } = useSettings();
@@ -74,7 +80,7 @@ export function ExpenseForm({ onSaved, initialCategoryId, initialAmount }: Props
   const [method, setMethod] = useState<PaymentMethod>('cash');
   const [accountId, setAccountId] = useState(accounts[0]?.id ?? 'cash');
   const [toAccountId, setToAccountId] = useState('savings');
-  const [note, setNote] = useState('');
+  const [note, setNote] = useState(initialNote ?? '');
   const [saving, setSaving] = useState(false);
   const savingLock = useRef(false);
 
@@ -357,6 +363,8 @@ export function ExpenseForm({ onSaved, initialCategoryId, initialAmount }: Props
         placeholder={t('add.notePlaceholder')}
         placeholderTextColor={palette.inkSoft}
         style={styles.noteInput}
+        returnKeyType="done"
+        blurOnSubmit
       />
 
       <AnimatedPressable

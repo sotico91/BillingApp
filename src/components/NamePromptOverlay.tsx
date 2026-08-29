@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import {
   Alert,
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -42,6 +44,9 @@ export function NamePromptOverlay() {
 
   return (
     <Modal visible={visible} animationType="fade" transparent>
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View
         style={[
           styles.backdrop,
@@ -70,11 +75,13 @@ export function NamePromptOverlay() {
           </Pressable>
         </Animated.View>
       </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
+  flex: { flex: 1 },
   backdrop: {
     flex: 1,
     backgroundColor: 'rgba(8,20,28,0.72)',

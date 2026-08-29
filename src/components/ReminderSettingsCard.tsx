@@ -2,7 +2,9 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   FlatList,
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -279,6 +281,9 @@ export function ReminderSettingsCard() {
         animationType="slide"
         transparent
         onRequestClose={() => setPickerOpen(false)}>
+        <KeyboardAvoidingView
+          style={styles.flex}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <Pressable style={styles.modalBackdrop} onPress={() => setPickerOpen(false)}>
           <Pressable style={styles.modalSheet} onPress={(e) => e.stopPropagation()}>
             <Text style={styles.modalTitle}>{t('reminder.pickSubs')}</Text>
@@ -316,12 +321,14 @@ export function ReminderSettingsCard() {
             </Pressable>
           </Pressable>
         </Pressable>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  flex: { flex: 1 },
   card: {
     backgroundColor: palette.surfaceSolid,
     borderRadius: radii.md,

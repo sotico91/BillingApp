@@ -13,6 +13,7 @@ import Animated, { FadeInDown, ZoomIn } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useFinance } from '@/src/hooks/useFinance';
+import { useKeyboardVisible } from '@/src/hooks/useKeyboardVisible';
 import { useMoney } from '@/src/hooks/useMoney';
 import { useSettings } from '@/src/hooks/useSettings';
 import { useLanguage } from '@/src/i18n/LanguageContext';
@@ -35,6 +36,7 @@ export function FloatingGlanceFab() {
   } = useFinance();
   const [open, setOpen] = useState(false);
   const [resetting, setResetting] = useState(false);
+  const keyboardVisible = useKeyboardVisible();
 
   const concepts = useMemo(() => insightsForPeriod('mes', 'expense'), [insightsForPeriod]);
   const expenses = totalForPeriod('mes', 'expense');
@@ -74,6 +76,7 @@ export function FloatingGlanceFab() {
 
   return (
     <>
+      {keyboardVisible ? null : (
       <Animated.View
         entering={ZoomIn.springify()}
         style={[styles.fabWrap, { bottom: Math.max(insets.bottom, 12) + 78 }]}>
@@ -87,6 +90,7 @@ export function FloatingGlanceFab() {
           <Text style={styles.fabGlyph}>◎</Text>
         </Pressable>
       </Animated.View>
+      )}
 
       <Modal
         visible={open}

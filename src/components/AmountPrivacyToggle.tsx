@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAmountPrivacy } from '@/src/hooks/useAmountPrivacy';
+import { useKeyboardVisible } from '@/src/hooks/useKeyboardVisible';
 import { useLanguage } from '@/src/i18n/LanguageContext';
 import { palette } from '@/src/theme/colors';
 import { tapFeedback } from '@/src/utils/selectFeedback';
@@ -17,6 +18,7 @@ export function AmountPrivacyToggle({ inline = false, light = false }: Props) {
   const insets = useSafeAreaInsets();
   const { t } = useLanguage();
   const { amountsVisible, toggleAmountsVisible } = useAmountPrivacy();
+  const keyboardVisible = useKeyboardVisible();
 
   const tint =
     amountsVisible || light || !inline ? palette.white : palette.ink;
@@ -52,6 +54,7 @@ export function AmountPrivacyToggle({ inline = false, light = false }: Props) {
   );
 
   if (inline) return button;
+  if (keyboardVisible) return null;
 
   // Left side so it never fights the glance FAB on the right — visible on every tab.
   return (
