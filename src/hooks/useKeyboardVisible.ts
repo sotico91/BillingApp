@@ -1,24 +1,42 @@
 import { useEffect, useState } from 'react';
-import { Keyboard, Platform } from 'react-native';
+import { Keyboard, Platform, type KeyboardEvent } from 'react-native';
 
-/** True while the software keyboard is on screen. */
-export function useKeyboardVisible() {
-  const [visible, setVisible] = useState(false);
+/** Keyboard height in px. Prefer this inside Android Dialog/Modal (they do not resize). */
+export function useKeyboardHeight() {
+  const [height, setHeight] = useState(0);
 
   useEffect(() => {
+    const apply = (e: KeyboardEvent) => {
+      setHeight(Math.max(0, Math.round(e.endCoordinates.height)));
+    };
+    const hide = () => setHeight(0);
+
     const show = Keyboard.addListener(
       Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
-      () => setVisible(true)
+      apply
     );
-    const hide = Keyboard.addListener(
+    const hideSub = Keyboard.addListener(
       Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
-      () => setVisible(false)
+      hide
+    );
+    const change = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillChangeFrame' : 'keyboardDidChangeFrame',
+      (e) => {
+        const next = Math.max(0, Math.round(e.endCoordinates.height));
+        setHeight(next);
+      }
     );
     return () => {
       show.remove();
-      hide.remove();
+      hideSub.remove();
+      change.remove();
     };
   }, []);
 
-  return visible;
+  return height;
+}
+
+/** True while the software keyboard is on screen. */
+export function useKeyboardVisible() {
+  return useKeyboardHeight() > 0;
 }

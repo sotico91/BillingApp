@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
+  Dimensions,
   Keyboard,
-  KeyboardAvoidingView,
   Modal,
   Platform,
   Pressable,
@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useKeyboardHeight } from '@/src/hooks/useKeyboardVisible';
 import { useLanguage } from '@/src/i18n/LanguageContext';
 import { palette, radii } from '@/src/theme/colors';
 import type { OneTapHabit } from '@/src/utils/oneTapHabits';
@@ -44,6 +45,10 @@ export function QuickRepeatSheet({
 }: Props) {
   const insets = useSafeAreaInsets();
   const { t } = useLanguage();
+  const keyboardHeight = useKeyboardHeight();
+  const scrollRef = useRef<ScrollView>(null);
+  const noteOffsetY = useRef(0);
+  const focusedField = useRef<'amount' | 'note' | null>(null);
   const [editing, setEditing] = useState(false);
   const [amountText, setAmountText] = useState('');
   const [noteText, setNoteText] = useState('');
@@ -53,7 +58,23 @@ export function QuickRepeatSheet({
     setEditing(false);
     setAmountText(String(habit.amount));
     setNoteText(habit.note ?? '');
+    focusedField.current = null;
   }, [visible, habit?.categoryId, habit?.amount, habit?.note]);
+
+  useEffect(() => {
+    if (keyboardHeight <= 0) return;
+    const id = setTimeout(() => {
+      if (focusedField.current === 'amount') {
+        scrollRef.current?.scrollTo({ y: 0, animated: true });
+        return;
+      }
+      scrollRef.current?.scrollTo({
+        y: Math.max(0, noteOffsetY.current - 12),
+        animated: true,
+      });
+    }, Platform.OS === 'android' ? 50 : 0);
+    return () => clearTimeout(id);
+  }, [keyboardHeight]);
 
   if (!habit) return null;
 
@@ -81,6 +102,12 @@ export function QuickRepeatSheet({
     return amt != null && amt > 0 ? amt : lastAmount;
   }
 
+  const keyboardOpen = keyboardHeight > 0;
+  const bottomPad = keyboardOpen ? keyboardHeight + 8 : Math.max(insets.bottom, 16);
+  const sheetMaxHeight = keyboardOpen
+    ? Math.max(240, Dimensions.get('window').height - keyboardHeight - 16)
+    : Dimensions.get('window').height * 0.88;
+
   return (
     <Modal
       visible={visible}
@@ -96,15 +123,14 @@ export function QuickRepeatSheet({
           accessibilityRole="button"
           accessibilityLabel={t('home.quickConfirmClose')}
         />
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          style={[
-            styles.keyboardWrap,
-            { paddingBottom: Math.max(insets.bottom, 16) },
-          ]}
+        <View
+          style={[styles.keyboardWrap, { paddingBottom: bottomPad }]}
           pointerEvents="box-none">
-          <View style={styles.sheet} onStartShouldSetResponder={() => true}>
+          <View
+            style={[styles.sheet, { maxHeight: sheetMaxHeight }]}
+            onStartShouldSetResponder={() => true}>
             <ScrollView
+              ref={scrollRef}
               keyboardShouldPersistTaps="handled"
               keyboardDismissMode="interactive"
               showsVerticalScrollIndicator={false}
@@ -139,25 +165,38 @@ export function QuickRepeatSheet({
                     placeholder="0"
                     placeholderTextColor={palette.inkSoft}
                     style={styles.input}
+                    onFocus={() => {
+                      focusedField.current = 'amount';
+                    }}
                   />
                 </>
               ) : (
                 <Text style={styles.amount}>{format(habit.amount)}</Text>
               )}
 
-              <Text style={styles.fieldLabel}>{t('home.quickConfirmNote')}</Text>
-              <TextInput
-                value={noteText}
-                onChangeText={setNoteText}
-                placeholder={t('add.notePlaceholder')}
-                placeholderTextColor={palette.inkSoft}
-                style={styles.noteInput}
-                multiline
-                returnKeyType="done"
-                blurOnSubmit
-              />
+              <View
+                onLayout={(e) => {
+                  noteOffsetY.current = e.nativeEvent.layout.y;
+                }}>
+                <Text style={styles.fieldLabel}>{t('home.quickConfirmNote')}</Text>
+                <TextInput
+                  value={noteText}
+                  onChangeText={setNoteText}
+                  placeholder={t('add.notePlaceholder')}
+                  placeholderTextColor={palette.inkSoft}
+                  style={styles.noteInput}
+                  multiline
+                  returnKeyType="done"
+                  blurOnSubmit
+                  onFocus={() => {
+                    focusedField.current = 'note';
+                  }}
+                />
+              </View>
 
-              <Text style={styles.hint}>{t('home.quickConfirmHint')}</Text>
+              {keyboardOpen ? null : (
+                <Text style={styles.hint}>{t('home.quickConfirmHint')}</Text>
+              )}
 
               <View style={styles.actions}>
                 {!editing ? (
@@ -215,7 +254,7 @@ export function QuickRepeatSheet({
               </View>
             </ScrollView>
           </View>
-        </KeyboardAvoidingView>
+        </View>
       </View>
     </Modal>
   );
@@ -243,7 +282,6 @@ const styles = StyleSheet.create({
   sheet: {
     backgroundColor: palette.surfaceSolid,
     borderRadius: radii.lg,
-    maxHeight: '88%',
     borderWidth: 1,
     borderColor: palette.border,
   },
