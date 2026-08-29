@@ -11,6 +11,7 @@ import {
   createSpendConcept,
   createSpendSub,
   ensureCreditSub,
+  ensureSpendConceptSub,
   hasDuplicateSubName,
 } from '@/src/data/spendConcepts';
 import {
@@ -57,6 +58,17 @@ type SettingsContextValue = {
   addSpendConcept: (name: string, color?: string) => Promise<SpendConcept | null>;
   updateSpendConceptColor: (conceptId: string, color: string) => Promise<void>;
   addSpendSub: (conceptId: string, name: string) => Promise<string | null>;
+  /**
+   * Create or reuse a spend concept + subcategory (add-flow templates).
+   * Returns null if names are empty.
+   */
+  ensureSpendConceptSub: (input: {
+    conceptId?: string;
+    conceptName: string;
+    subName: string;
+    color?: string;
+    isAnt?: boolean;
+  }) => Promise<{ conceptId: string; subId: string } | null>;
   updateSpendSubAnt: (
     conceptId: string,
     subId: string,
@@ -268,6 +280,24 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     [settings, persist]
   );
 
+  const ensureSpendPath = useCallback(
+    async (input: {
+      conceptId?: string;
+      conceptName: string;
+      subName: string;
+      color?: string;
+      isAnt?: boolean;
+    }) => {
+      if (!input.conceptName.trim() && !input.subName.trim()) return null;
+      const result = ensureSpendConceptSub(settings.spendConcepts ?? [], input);
+      if (result.concepts !== settings.spendConcepts) {
+        await persist({ ...settings, spendConcepts: result.concepts });
+      }
+      return { conceptId: result.conceptId, subId: result.subId };
+    },
+    [settings, persist]
+  );
+
   const updateSpendSubAnt = useCallback(
     async (conceptId: string, subId: string, isAnt: boolean) => {
       await persist({
@@ -459,6 +489,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       addSpendConcept,
       updateSpendConceptColor,
       addSpendSub,
+      ensureSpendConceptSub: ensureSpendPath,
       updateSpendSubAnt,
       removeSpendConcept,
       removeSpendSub,
@@ -482,6 +513,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       addSpendConcept,
       updateSpendConceptColor,
       addSpendSub,
+      ensureSpendPath,
       updateSpendSubAnt,
       removeSpendConcept,
       removeSpendSub,

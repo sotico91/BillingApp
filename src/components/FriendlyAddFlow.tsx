@@ -18,7 +18,7 @@ import {
   type FriendlyIntent,
 } from '@/src/data/friendlyTemplates';
 import { categoriesForKind, defaultCategoryIdForKind } from '@/src/data/categories';
-import { findConceptById, findSpendSub } from '@/src/data/spendConcepts';
+import { findConceptById } from '@/src/data/spendConcepts';
 import { useFinance } from '@/src/hooks/useFinance';
 import { useMoney } from '@/src/hooks/useMoney';
 import { useSettings } from '@/src/hooks/useSettings';
@@ -44,7 +44,7 @@ const METHODS: PaymentMethod[] = ['cash', 'debit', 'credit', 'transfer'];
 export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
   const { t } = useLanguage();
   const { format, formatPlain, parse, currency } = useMoney();
-  const { settings, updateQuickTemplate } = useSettings();
+  const { settings, updateQuickTemplate, ensureSpendConceptSub } = useSettings();
   const { addTransaction, totalForPeriod, accounts, debts } = useFinance();
   const keyboardVisible = useKeyboardVisible();
 
@@ -61,6 +61,8 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
   const [accountId, setAccountId] = useState(accounts[0]?.id ?? 'cash');
   const [note, setNote] = useState('');
   const [saving, setSaving] = useState(false);
+  const [fromTemplate, setFromTemplate] = useState(false);
+  const [applyingTemplate, setApplyingTemplate] = useState(false);
   const savingLock = useRef(false);
   const scrollRef = useRef<ScrollView>(null);
 
@@ -76,16 +78,7 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
     [conceptId, spendConcepts]
   );
 
-  const templates = useMemo(
-    () =>
-      FRIENDLY_TEMPLATES.filter(
-        (tpl) =>
-          tpl.intent !== 'spend' ||
-          settings.enabledCategoryIds.includes(tpl.categoryId) ||
-          findSpendSub(spendConcepts, tpl.categoryId) != null
-      ),
-    [settings.enabledCategoryIds, spendConcepts]
-  );
+  const templates = FRIENDLY_TEMPLATES;
 
   const asksPaymentMethod = intent === 'spend' || intent === 'move' || intent === 'debt';
   const totalSteps = intent === 'spend' ? 6 : 5;
@@ -93,25 +86,47 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
   const paymentStep = intent === 'spend' ? 4 : 3;
   const reviewStep = intent === 'spend' ? 5 : 4;
 
-  function applyTemplate(id: string) {
+  async function applyTemplate(id: string) {
     const tpl = FRIENDLY_TEMPLATES.find((x) => x.id === id);
-    if (!tpl) return;
-    setIntent(tpl.intent);
-    setCategoryId(tpl.categoryId);
-    if (tpl.intent === 'spend') {
-      const hit = findSpendSub(spendConcepts, tpl.categoryId);
-      setConceptId(hit?.concept.id ?? null);
-    } else {
-      setConceptId(null);
+    if (!tpl || applyingTemplate) return;
+    tapFeedback();
+    setApplyingTemplate(true);
+    try {
+      setIntent(tpl.intent);
+      if (tpl.amountHint) setAmount(String(tpl.amountHint));
+      if (tpl.intent === 'move') {
+        setAccountId('bank-main');
+      }
+      if (tpl.intent === 'earn') {
+        setAccountId(
+          accounts.find((a) => a.type === 'bank')?.id ?? accounts[0]?.id ?? 'cash'
+        );
+      }
+
+      if (tpl.intent === 'spend' && tpl.spend) {
+        const path = await ensureSpendConceptSub({
+          conceptId: tpl.spend.conceptId,
+          conceptName: t(tpl.spend.conceptNameKey),
+          subName: t(tpl.titleKey as TranslationKey),
+          color: tpl.spend.color,
+          isAnt: tpl.spend.isAnt,
+        });
+        if (!path) {
+          Alert.alert(t('flow.chooseConcept'), t('flow.noConceptsBody'));
+          return;
+        }
+        setConceptId(path.conceptId);
+        setCategoryId(path.subId);
+        setFromTemplate(true);
+      } else {
+        setConceptId(null);
+        setCategoryId(tpl.categoryId ?? 'otros');
+        setFromTemplate(false);
+      }
+      setStep(1);
+    } finally {
+      setApplyingTemplate(false);
     }
-    if (tpl.amountHint) setAmount(String(tpl.amountHint));
-    if (tpl.intent === 'move') {
-      setAccountId('bank-main');
-    }
-    if (tpl.intent === 'earn') {
-      setAccountId(accounts.find((a) => a.type === 'bank')?.id ?? accounts[0]?.id ?? 'cash');
-    }
-    setStep(1);
   }
 
   function goNext() {
@@ -119,6 +134,15 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
       const parsed = parse(amount);
       if (!parsed) {
         Alert.alert(t('add.invalidTitle'), t('add.invalidMessage'));
+        return;
+      }
+      if (
+        fromTemplate &&
+        intent === 'spend' &&
+        conceptId &&
+        categoryId
+      ) {
+        setStep(paymentStep);
         return;
       }
     }
@@ -255,6 +279,7 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
                   key={item.id}
                   onPress={() => {
                     tapFeedback();
+                    setFromTemplate(false);
                     setIntent(item.id);
                     if (item.id === 'earn') {
                       setConceptId(null);
@@ -299,8 +324,9 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
               {templates.map((tpl) => (
                 <Pressable
                   key={tpl.id}
-                  onPress={() => applyTemplate(tpl.id)}
-                  style={styles.tplCard}>
+                  onPress={() => void applyTemplate(tpl.id)}
+                  disabled={applyingTemplate}
+                  style={[styles.tplCard, applyingTemplate && { opacity: 0.6 }]}>
                   <Text style={styles.emoji}>{tpl.emoji}</Text>
                   <View style={{ flex: 1 }}>
                     <Text style={styles.tplTitle}>
@@ -619,6 +645,10 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
           <Pressable
             onPress={() => {
               if (intent === 'spend' && step === paymentStep) {
+                if (fromTemplate) {
+                  setStep(1);
+                  return;
+                }
                 const concept = conceptId
                   ? findConceptById(spendConcepts, conceptId)
                   : undefined;

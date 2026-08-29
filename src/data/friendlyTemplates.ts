@@ -3,11 +3,24 @@ export type FriendlyIntent = 'spend' | 'earn' | 'move' | 'debt';
 export type FriendlyTemplate = {
   id: string;
   intent: FriendlyIntent;
-  categoryId: string;
-  amountHint?: number;
   emoji: string;
   titleKey: string;
   subtitleKey: string;
+  amountHint?: number;
+  /** Income / transfer category id (legacy catalog). */
+  categoryId?: string;
+  /**
+   * Spend templates create or reuse this concept (category) + the
+   * template title as subcategory.
+   */
+  spend?: {
+    conceptId: string;
+    conceptNameKey:
+      | 'onboard.concept.alimentacion'
+      | 'onboard.concept.transporte';
+    color: string;
+    isAnt?: boolean;
+  };
 };
 
 export const FRIENDLY_INTENTS: {
@@ -46,34 +59,53 @@ export const FRIENDLY_TEMPLATES: FriendlyTemplate[] = [
   {
     id: 'tpl-coffee',
     intent: 'spend',
-    categoryId: 'cafe',
     emoji: '☕',
     titleKey: 'flow.tpl.coffee',
     subtitleKey: 'flow.tpl.coffeeSub',
+    spend: {
+      conceptId: 'concept-alimentacion',
+      conceptNameKey: 'onboard.concept.alimentacion',
+      color: '#E07A5F',
+      isAnt: true,
+    },
   },
   {
     id: 'tpl-delivery',
     intent: 'spend',
-    categoryId: 'delivery',
     emoji: '🛵',
     titleKey: 'flow.tpl.delivery',
     subtitleKey: 'flow.tpl.deliverySub',
+    spend: {
+      conceptId: 'concept-alimentacion',
+      conceptNameKey: 'onboard.concept.alimentacion',
+      color: '#E07A5F',
+      isAnt: true,
+    },
   },
   {
     id: 'tpl-transport',
     intent: 'spend',
-    categoryId: 'transporte',
     emoji: '🚌',
     titleKey: 'flow.tpl.transport',
     subtitleKey: 'flow.tpl.transportSub',
+    spend: {
+      conceptId: 'concept-transporte',
+      conceptNameKey: 'onboard.concept.transporte',
+      color: '#2EC4B6',
+    },
   },
   {
     id: 'tpl-snack',
     intent: 'spend',
-    categoryId: 'snacks',
     emoji: '🍪',
     titleKey: 'flow.tpl.snack',
     subtitleKey: 'flow.tpl.snackSub',
+    spend: {
+      conceptId: 'concept-alimentacion',
+      conceptNameKey: 'onboard.concept.alimentacion',
+      color: '#E07A5F',
+      isAnt: true,
+    },
   },
   {
     id: 'tpl-salary',

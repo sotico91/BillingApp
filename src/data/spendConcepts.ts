@@ -95,10 +95,15 @@ export function makeSpendSubId(conceptId: string, subName: string): string {
 
 export function createSpendConcept(
   name: string,
-  opts?: { color?: string; subs?: SpendSub[]; existing?: SpendConcept[] }
+  opts?: {
+    id?: string;
+    color?: string;
+    subs?: SpendSub[];
+    existing?: SpendConcept[];
+  }
 ): SpendConcept {
   const trimmed = name.trim();
-  const id = slugId('concept-', trimmed);
+  const id = opts?.id ?? slugId('concept-', trimmed);
   const color = opts?.color ?? nextConceptColor(opts?.existing ?? []);
   const subs = opts?.subs;
   return {
@@ -310,6 +315,70 @@ export function migrateToSpendConcepts(input: {
   }
 
   return ensureConceptColors(concepts);
+}
+
+/**
+ * Find or create a spend concept + subcategory (used by add-flow templates).
+ * Reuses an existing concept by preferred id or display name.
+ */
+export function ensureSpendConceptSub(
+  concepts: SpendConcept[],
+  input: {
+    conceptId?: string;
+    conceptName: string;
+    subName: string;
+    color?: string;
+    isAnt?: boolean;
+  }
+): { concepts: SpendConcept[]; conceptId: string; subId: string } {
+  const conceptName = input.conceptName.trim();
+  const subName = input.subName.trim();
+  const conceptNeedle = conceptName.toLowerCase();
+  const subNeedle = subName.toLowerCase();
+
+  const parent =
+    (input.conceptId
+      ? concepts.find((c) => c.id === input.conceptId)
+      : undefined) ??
+    concepts.find((c) => c.name.trim().toLowerCase() === conceptNeedle);
+
+  if (!parent) {
+    const id = input.conceptId ?? slugId('concept-', conceptName);
+    const sub: SpendSub = {
+      ...createSpendSub(id, subName || conceptName),
+      ...(input.isAnt ? { isAnt: true } : {}),
+    };
+    const concept = createSpendConcept(conceptName || subName, {
+      id,
+      color: input.color,
+      existing: concepts,
+      subs: [sub],
+    });
+    return {
+      concepts: [...concepts, concept],
+      conceptId: concept.id,
+      subId: sub.id,
+    };
+  }
+
+  const same = parent.subs.find(
+    (s) => s.name.trim().toLowerCase() === subNeedle
+  );
+  if (same) {
+    return { concepts, conceptId: parent.id, subId: same.id };
+  }
+
+  const sub: SpendSub = {
+    ...createSpendSub(parent.id, subName || parent.name),
+    ...(input.isAnt ? { isAnt: true } : {}),
+  };
+  return {
+    concepts: concepts.map((c) =>
+      c.id === parent.id ? { ...c, subs: [...c.subs, sub] } : c
+    ),
+    conceptId: parent.id,
+    subId: sub.id,
+  };
 }
 
 /** Ensure a Créditos concept exists; add/return a sub for the debt name. */

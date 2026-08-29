@@ -397,7 +397,7 @@ export const translations = {
 
     'flow.stepOf': 'Step {current} of {total}',
     'flow.whatHappened': 'What happened with your money?',
-    'flow.pickTemplate': 'Or start from a ready template',
+    'flow.pickTemplate': 'Or start from a template — it creates the concept / subcategory',
     'flow.howMuch': 'How much was it?',
     'flow.suggested': 'Suggested',
     'flow.chooseCategory': 'Which concept fits best?',
@@ -1079,7 +1079,8 @@ export const translations = {
 
     'flow.stepOf': 'Paso {current} de {total}',
     'flow.whatHappened': '¿Qué pasó con tu dinero?',
-    'flow.pickTemplate': 'O empieza con una plantilla lista',
+    'flow.pickTemplate':
+      'O empieza con una plantilla — crea el concepto / subcategoría',
     'flow.howMuch': '¿De cuánto fue?',
     'flow.suggested': 'Sugerido',
     'flow.chooseCategory': '¿Qué categoría encaja mejor?',
