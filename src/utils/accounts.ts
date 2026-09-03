@@ -146,21 +146,92 @@ export function isSpendableLiquid(type: AccountType): boolean {
   );
 }
 
+function liquidWithFunds(accounts: Account[], minBalance: number): Account[] {
+  return accounts
+    .filter((a) => isSpendableLiquid(a.type) && a.balance >= minBalance)
+    .sort((a, b) => b.balance - a.balance);
+}
+
+function accountCovers(
+  acc: Account | undefined,
+  amount?: number
+): acc is Account {
+  if (!acc || !isSpendableLiquid(acc.type)) return false;
+  if (amount != null && amount > 0) return acc.balance >= amount;
+  return acc.balance > 0;
+}
+
+/**
+ * Prefer the pocket the user last used only if it can pay. Otherwise use leftover
+ * in wallets/savings (or any liquid pocket that still has money).
+ */
+export function resolveSpendAccountId(
+  accounts: Account[],
+  preferredId: string | undefined,
+  amount?: number
+): string {
+  const preferred = preferredId
+    ? accounts.find((a) => a.id === preferredId)
+    : undefined;
+  if (accountCovers(preferred, amount)) return preferred.id;
+
+  const need = amount != null && amount > 0 ? amount : 0.01;
+  const enough = liquidWithFunds(accounts, need);
+  if (enough[0]) return enough[0].id;
+  const any = liquidWithFunds(accounts, 0.01);
+  if (any[0]) return any[0].id;
+  return preferred?.id ?? defaultIncomeAccountId(accounts);
+}
+
 export function defaultSpendAccountId(
   accounts: Account[],
-  opts?: { lastAccountId?: string }
+  opts?: { lastAccountId?: string; amount?: number }
 ): string {
-  const last = opts?.lastAccountId
-    ? accounts.find((a) => a.id === opts.lastAccountId)
-    : undefined;
-  if (last) return last.id;
+  return resolveSpendAccountId(accounts, opts?.lastAccountId, opts?.amount);
+}
 
-  const liquid = accounts.filter((a) => isSpendableLiquid(a.type));
-  const withMoney = [...liquid]
-    .filter((a) => a.balance > 0)
-    .sort((a, b) => b.balance - a.balance);
-  if (withMoney[0]) return withMoney[0].id;
-  return defaultIncomeAccountId(accounts);
+/**
+ * Don't leave cash/bank in the red while wallets or savings still have leftover.
+ * Covers overdrafts from secondary pockets first, then other liquid accounts.
+ */
+export function settleLiquidOverdrafts(accounts: Account[]): {
+  accounts: Account[];
+  changed: boolean;
+} {
+  const next = accounts.map((a) => ({ ...a }));
+  const liquid = next.filter((a) => isSpendableLiquid(a.type));
+  let changed = false;
+
+  const overs = liquid
+    .filter((a) => a.balance < 0)
+    .sort((a, b) => {
+      const pa = isPrincipalLiquid(a.type) ? 0 : 1;
+      const pb = isPrincipalLiquid(b.type) ? 0 : 1;
+      return pa - pb;
+    });
+
+  for (const over of overs) {
+    let need = -over.balance;
+    const donors = liquid
+      .filter((a) => a.id !== over.id && a.balance > 0)
+      .sort((a, b) => {
+        const sa = isSecondaryLiquid(a.type) ? 1 : 0;
+        const sb = isSecondaryLiquid(b.type) ? 1 : 0;
+        if (sa !== sb) return sb - sa;
+        return b.balance - a.balance;
+      });
+    for (const donor of donors) {
+      if (need <= 0) break;
+      const give = Math.min(donor.balance, need);
+      if (give <= 0) continue;
+      donor.balance -= give;
+      over.balance += give;
+      need -= give;
+      changed = true;
+    }
+  }
+
+  return { accounts: next, changed };
 }
 
 export function defaultTransferDestinationId(

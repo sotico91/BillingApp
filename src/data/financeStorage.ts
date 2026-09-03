@@ -5,7 +5,7 @@ import {
   DEFAULT_DEBTS,
   DEFAULT_SUBSCRIPTIONS,
 } from '@/src/data/financeDefaults';
-import { mergeDefaultAccounts } from '@/src/utils/accounts';
+import { mergeDefaultAccounts, settleLiquidOverdrafts } from '@/src/utils/accounts';
 import type {
   Account,
   Budget,
@@ -60,10 +60,11 @@ export async function saveTransactions(items: Transaction[]): Promise<void> {
 export async function loadAccounts(): Promise<Account[]> {
   const stored = await loadJson<Account[] | null>(ACCOUNTS_KEY, null);
   const { accounts, changed } = mergeDefaultAccounts(stored);
-  if (changed) {
-    await saveAccounts(accounts);
+  const settled = settleLiquidOverdrafts(accounts);
+  if (changed || settled.changed) {
+    await saveAccounts(settled.accounts);
   }
-  return accounts;
+  return settled.accounts;
 }
 
 export async function saveAccounts(items: Account[]): Promise<void> {

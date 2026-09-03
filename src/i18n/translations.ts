@@ -13,7 +13,7 @@ export const translations = {
     'home.week': 'Week',
     'home.month': 'Month',
     'home.noExpensesToday': 'No expenses logged today yet.',
-    'home.monthFresh': 'New month: expenses start at {amount}. Log what you spend from today.',
+    'home.monthFresh': 'New month: this month’s expenses start at {amount}. Money already in wallets, savings, cash or bank is still there.',
     'home.todayList': 'Today — tap Edit to fix a mistake',
     'home.transactionsToday': '{count} movement today',
     'home.transactionsToday_other': '{count} movements today',
@@ -54,7 +54,7 @@ export const translations = {
     'home.savings': 'This month’s result',
     'home.savingsCaption': 'Income − spend this month (only what you logged)',
     'home.availableInfoBody':
-      'Money you can spend right now. Main accounts are cash and your bank. Virtual wallets (each with its own balance) and savings are secondary pockets — a small spend can leave any of them.',
+      'Money you can spend right now — including leftover from past months in wallets and savings. Main accounts are cash and your bank. A spend uses a pocket that has money, so cash or bank won’t go red while wallets or savings can cover it.',
     'home.availableInfoCompare':
       'This is today’s stock, not the month in History. Pick the pocket the money actually left so that line goes down. Bonus or salary is the kind of income; it lands in the account you chose.',
     'home.availableByAccount': 'Where it is',
@@ -174,7 +174,7 @@ export const translations = {
     'insights.searchPlaceholder': 'How much did I spend on delivery {when}?',
     'insights.searchAsk': 'Ask',
     'insights.searchHint':
-      'Ask about concepts, income %, savings, card, ant expenses or limits — answers use your data.',
+      'Ask about a month (August), a year, yesterday, a day, a concept, income % or which pocket money left.',
     'insights.searchSuggestions': 'Try one of these',
     'insights.searchAnswer': 'Answer',
     'insights.searchClear': 'Clear',
@@ -416,7 +416,7 @@ export const translations = {
     'flow.howPaid': 'How did you pay?',
     'flow.whichAccount': 'Which account?',
     'flow.whichAccountSpend':
-      'Which pocket did it leave? Cash, savings, or a virtual wallet — pick which one.',
+      'Pocket for this habit — we’ll reuse the last one if it still has money.',
     'flow.walletAdd': 'Add another virtual wallet',
     'flow.walletNamePlaceholder': 'Name (Nequi, Daviplata…)',
     'flow.whichAccountIncome': 'Which account did it land in?',
@@ -663,7 +663,7 @@ export const translations = {
     'search.answerUnclear':
       'I could not match that question to your data. Try something like: {examples}',
     'search.examples':
-      '“How much did I pay in installments?”, “How much on Credit?”, “What % of my income did I spend?”',
+      '“How much in August?”, “How much this year?”, “What did I spend yesterday?”, “Which pocket did gym leave?”',
     'search.answerTopWithIncome':
       'Your biggest expense ({period}) is {label}: {amount} ({percent}% of income {income}) across {count} movements.',
     'search.answerNoIncome':
@@ -683,6 +683,12 @@ export const translations = {
     'search.labelFood': 'Food / restaurants',
     'search.periodLastMonth': 'Last month',
     'search.periodYear': 'This year',
+    'search.answerExpensesDetail':
+      'Your expenses ({period}): {amount} across {count} movements. Highest: {detail}.',
+    'search.answerByAccount':
+      '{label} ({period}): {amount} in {count} movements. Left from: {detail}.',
+    'search.answerComparePeriods':
+      '{period}: you spent {amount} {direction} than {compare} ({now} vs {prev}).',
     'search.more': 'more',
     'search.less': 'less',
     'search.answerTop':
@@ -710,7 +716,7 @@ export const translations = {
     'home.week': 'Semana',
     'home.month': 'Mes',
     'home.noExpensesToday': 'Todavía no registraste nada hoy.',
-    'home.monthFresh': 'Mes nuevo: los gastos empiezan en {amount}. Registra desde hoy.',
+    'home.monthFresh': 'Mes nuevo: los gastos de este mes empiezan en {amount}. El dinero que ya tenías en billeteras, ahorros, efectivo o banco sigue ahí.',
     'home.todayList': 'Hoy — toca Editar si te equivocaste',
     'home.transactionsToday': '{count} movimiento hoy',
     'home.transactionsToday_other': '{count} movimientos hoy',
@@ -751,7 +757,7 @@ export const translations = {
     'home.savings': 'Resultado del mes',
     'home.savingsCaption': 'Ingresos − gastos de este mes (solo lo que registraste)',
     'home.availableInfoBody':
-      'Dinero que puedes gastar ahora. Las cuentas principales son efectivo y tu banco. Las billeteras virtuales (cada una con su saldo) y los ahorros son bolsillos secundarios: un gasto hormiga puede salir de cualquiera.',
+      'Dinero que puedes gastar ahora, incluido lo que quedó de meses anteriores en billeteras o ahorros. Las cuentas principales son efectivo y tu banco. Un gasto sale de un bolsillo con saldo: no deja efectivo o banco en rojo si hay de dónde cubrirlo.',
     'home.availableInfoCompare':
       'Es el saldo de hoy, no el mes en Historial. Elige el bolsillo del que realmente salió para que esa línea baje. Bonos o salario es el tipo de ingreso; queda en la cuenta que elegiste.',
     'home.availableByAccount': 'Dónde está',
@@ -872,7 +878,7 @@ export const translations = {
     'insights.searchPlaceholder': '¿Cuánto gasté en domicilio {when}?',
     'insights.searchAsk': 'Preguntar',
     'insights.searchHint':
-      'Pregunta por conceptos, % del ingreso, ahorro, tarjeta, hormigas o topes — usa tus datos.',
+      'Pregunta por un mes (agosto), el año, ayer, un día, un concepto, % del ingreso o de qué bolsillo salió.',
     'insights.searchSuggestions': 'Prueba una de estas',
     'insights.searchAnswer': 'Respuesta',
     'insights.searchClear': 'Limpiar',
@@ -1117,7 +1123,7 @@ export const translations = {
     'flow.howPaid': '¿Cómo pagaste?',
     'flow.whichAccount': '¿Desde qué cuenta?',
     'flow.whichAccountSpend':
-      '¿De qué bolsillo salió? Efectivo, ahorros o una billetera virtual — elige cuál.',
+      'Bolsillo de este hábito — reusamos el último si aún tiene saldo.',
     'flow.walletAdd': 'Agregar otra billetera virtual',
     'flow.walletNamePlaceholder': 'Nombre (Nequi, Daviplata…)',
     'flow.whichAccountIncome': '¿En qué cuenta entró?',
@@ -1366,7 +1372,7 @@ export const translations = {
     'search.answerUnclear':
       'No pude relacionar esa pregunta con tus datos. Prueba algo como: {examples}',
     'search.examples':
-      '“¿Cuánto pagué en cuotas?”, “¿Cuánto gasté en Créditos?”, “¿Qué % de mi ingreso gasté?”',
+      '“¿Cuánto gasté en agosto?”, “¿Cuánto este año?”, “¿Cuánto ayer?”, “¿De qué bolsillo salió el ejercicio?”',
     'search.answerTopWithIncome':
       'Tu mayor gasto ({period}) es {label}: {amount} ({percent}% del ingreso {income}) en {count} movimientos.',
     'search.answerNoIncome':
@@ -1386,6 +1392,12 @@ export const translations = {
     'search.labelFood': 'Comida / restaurantes',
     'search.periodLastMonth': 'Mes pasado',
     'search.periodYear': 'Este año',
+    'search.answerExpensesDetail':
+      'Tus gastos ({period}): {amount} en {count} movimientos. Lo más alto: {detail}.',
+    'search.answerByAccount':
+      '{label} ({period}): {amount} en {count} movimientos. Salió de: {detail}.',
+    'search.answerComparePeriods':
+      '{period}: gastaste {amount} {direction} que {compare} ({now} vs {prev}).',
     'search.more': 'más',
     'search.less': 'menos',
     'search.answerTop':

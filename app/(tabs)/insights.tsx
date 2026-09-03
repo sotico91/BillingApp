@@ -37,7 +37,7 @@ export default function InsightsScreen() {
   const { format } = useMoney();
   const { settings } = useSettings();
   const spendConcepts = settings.spendConcepts ?? [];
-  const { insightsForPeriod, totalForPeriod, transactions, budgetStatus, debts, availableCash } =
+  const { insightsForPeriod, totalForPeriod, transactions, budgetStatus, debts, availableCash, accounts } =
     useFinance();
   const [period, setPeriod] = useState<Period>('mes');
   const [query, setQuery] = useState('');
@@ -101,6 +101,8 @@ export default function InsightsScreen() {
         availableCash,
         spendConcepts,
         budgetStatus,
+        language: language === 'es' ? 'es' : 'en',
+        accounts,
       })
     );
   }

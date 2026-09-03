@@ -52,7 +52,7 @@ import {
   sumByType,
   type PredictedSpend,
 } from '@/src/utils/financeMath';
-import { mapLiquidAccounts, mergeDefaultAccounts, ensureWalletAccount } from '@/src/utils/accounts';
+import { mapLiquidAccounts, mergeDefaultAccounts, ensureWalletAccount, resolveSpendAccountId, settleLiquidOverdrafts } from '@/src/utils/accounts';
 import { computeNetWorth } from '@/src/utils/netWorth';
 import {
   filterByPersonScope,
@@ -320,10 +320,22 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
         registeredById: settings.personId || undefined,
         registeredByName: settings.userName.trim() || undefined,
       };
+      if (
+        tx.type === 'expense' ||
+        tx.type === 'withdrawal' ||
+        tx.type === 'debt_payment'
+      ) {
+        tx.accountId = resolveSpendAccountId(
+          accounts,
+          tx.accountId,
+          tx.amount
+        );
+      }
       const nextTx = [tx, ...transactions].sort((a, b) =>
         b.createdAt.localeCompare(a.createdAt)
       );
-      const nextAccounts = applyAccountDelta(accounts, tx);
+      const applied = applyAccountDelta(accounts, tx);
+      const { accounts: nextAccounts } = settleLiquidOverdrafts(applied);
       let nextDebts = debts;
       if (tx.type === 'debt_payment' && tx.debtId) {
         nextDebts = debts.map((d) => {
@@ -498,12 +510,25 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
             : existing.note,
       };
 
+      let nextAccounts = applyAccountDelta(accounts, existing, -1);
+      if (
+        updated.type === 'expense' ||
+        updated.type === 'withdrawal' ||
+        updated.type === 'debt_payment'
+      ) {
+        updated.accountId = resolveSpendAccountId(
+          nextAccounts,
+          updated.accountId,
+          updated.amount
+        );
+      }
+
       const nextTx = transactions
         .map((t) => (t.id === id ? updated : t))
         .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
-      let nextAccounts = applyAccountDelta(accounts, existing, -1);
       nextAccounts = applyAccountDelta(nextAccounts, updated, 1);
+      nextAccounts = settleLiquidOverdrafts(nextAccounts).accounts;
 
       setTransactions(nextTx);
       setAccounts(nextAccounts);
@@ -550,7 +575,9 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
         b.createdAt.localeCompare(a.createdAt)
       );
       setTransactions(nextTx);
-      const { accounts: nextAccounts } = mergeDefaultAccounts(backup.accounts);
+      const { accounts: nextAccounts } = settleLiquidOverdrafts(
+        mergeDefaultAccounts(backup.accounts).accounts
+      );
       setAccounts(nextAccounts);
       setBudgets(backup.budgets);
       setDebts(backup.debts);
@@ -743,9 +770,9 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
         note: input.note,
         createdAt: input.createdAt,
         paymentMethod: 'cash',
-        accountId: 'cash',
+        accountId: resolveSpendAccountId(accounts, undefined, input.amount),
       }),
-    [addTransaction]
+    [addTransaction, accounts]
   );
 
   const value = useMemo(

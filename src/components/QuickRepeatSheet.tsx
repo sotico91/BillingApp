@@ -65,7 +65,7 @@ export function QuickRepeatSheet({
     setAmountText(String(habit.amount));
     setNoteText(habit.note ?? '');
     setAccountId(
-      defaultSpendAccountId(accounts, { lastAccountId: habit.accountId })
+      defaultSpendAccountId(accounts, { lastAccountId: habit.accountId, amount: habit.amount })
     );
     focusedField.current = null;
   }, [visible, habit?.categoryId, habit?.amount, habit?.note, habit?.accountId, accounts]);

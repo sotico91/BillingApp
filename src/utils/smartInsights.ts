@@ -6,11 +6,13 @@ import {
   findConceptById,
 } from '@/src/data/spendConcepts';
 import type { TranslationKey } from '@/src/i18n/translations';
-import type { Period, Transaction, Debt } from '@/src/types/finance';
+import type { Account, Period, Transaction, Debt } from '@/src/types/finance';
 import type { SpendConcept } from '@/src/types/settings';
 import { categoryLabel as resolveCategoryLabel } from '@/src/utils/categoryLabel';
+import { accountDisplayName } from '@/src/utils/accounts';
 import {
   antExpenseBreakdown,
+  calendarMonthRange,
   filterBetween,
   filterByPeriod,
   previousMonthRange,
@@ -33,6 +35,8 @@ type AskOptions = {
   spendConcepts?: SpendConcept[];
   budgetStatus?: { categoryId: string; ratio: number; limit: number }[];
   debts?: Debt[];
+  language?: 'en' | 'es';
+  accounts?: Account[];
 };
 
 const CATEGORY_ALIASES: Record<string, string[]> = {
@@ -76,8 +80,19 @@ const CATEGORY_ALIASES: Record<string, string[]> = {
     'plan datos',
     'phone',
   ],
-  suscripciones: ['suscripciones', 'subscriptions', 'netflix', 'spotify', 'gym', 'gimnasio'],
-  salud: ['salud', 'health', 'medico', 'médico', 'farmacia'],
+  suscripciones: ['suscripciones', 'subscriptions', 'netflix', 'spotify'],
+  salud: [
+    'salud',
+    'health',
+    'medico',
+    'médico',
+    'farmacia',
+    'ejercicio',
+    'gym',
+    'gimnasio',
+    'deporte',
+    'entrenamiento',
+  ],
   educacion: ['educacion', 'educación', 'colegio', 'universidad', 'curso'],
   salario: ['salario', 'sueldo', 'nomina', 'nómina', 'payroll', 'salary'],
   freelance: ['freelance', 'independiente', 'honorarios', 'consultoria', 'consultoría'],
@@ -338,43 +353,289 @@ function previousAnalogRange(period: 'hoy' | 'semana', now = new Date()) {
   return { from, to };
 }
 
+const MONTHS_ES = [
+  'enero',
+  'febrero',
+  'marzo',
+  'abril',
+  'mayo',
+  'junio',
+  'julio',
+  'agosto',
+  'septiembre',
+  'octubre',
+  'noviembre',
+  'diciembre',
+] as const;
+
+const MONTHS_EN = [
+  'january',
+  'february',
+  'march',
+  'april',
+  'may',
+  'june',
+  'july',
+  'august',
+  'september',
+  'october',
+  'november',
+  'december',
+] as const;
+
+const MONTH_INDEX: Record<string, number> = {
+  enero: 0,
+  january: 0,
+  febrero: 1,
+  february: 1,
+  marzo: 2,
+  march: 2,
+  abril: 3,
+  april: 3,
+  mayo: 4,
+  may: 4,
+  junio: 5,
+  june: 5,
+  julio: 6,
+  july: 6,
+  agosto: 7,
+  august: 7,
+  septiembre: 8,
+  setiembre: 8,
+  september: 8,
+  octubre: 9,
+  october: 9,
+  noviembre: 10,
+  november: 10,
+  diciembre: 11,
+  december: 11,
+};
+
+type QueryPeriod = {
+  label: string;
+  from: Date;
+  to: Date;
+  analog: 'day' | 'week' | 'month' | 'year' | 'range';
+};
+
+function startOfDay(date: Date): Date {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function addDays(date: Date, days: number): Date {
+  const d = new Date(date);
+  d.setDate(d.getDate() + days);
+  return d;
+}
+
+function monthLabel(monthIndex: number, language: 'en' | 'es'): string {
+  const i = ((monthIndex % 12) + 12) % 12;
+  const name = language === 'es' ? MONTHS_ES[i] : MONTHS_EN[i];
+  return name.charAt(0).toUpperCase() + name.slice(1);
+}
+
+function parseYearToken(raw: string | undefined, fallback: number): number {
+  if (!raw) return fallback;
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return fallback;
+  if (n < 100) return n >= 70 ? 1900 + n : 2000 + n;
+  return n;
+}
+
+function dayPeriod(day: Date, language: 'en' | 'es'): QueryPeriod {
+  const from = startOfDay(day);
+  const to = addDays(from, 1);
+  const label =
+    language === 'es'
+      ? `${from.getDate()} de ${monthLabel(from.getMonth(), 'es').toLowerCase()} ${from.getFullYear()}`
+      : `${monthLabel(from.getMonth(), 'en')} ${from.getDate()}, ${from.getFullYear()}`;
+  return { label, from, to, analog: 'day' };
+}
+
+function monthPeriod(
+  year: number,
+  monthIndex: number,
+  language: 'en' | 'es'
+): QueryPeriod {
+  const { from, to } = calendarMonthRange(year, monthIndex);
+  return {
+    label: `${monthLabel(monthIndex, language)} ${year}`,
+    from,
+    to,
+    analog: 'month',
+  };
+}
+
+function yearPeriod(year: number, language: 'en' | 'es'): QueryPeriod {
+  return {
+    label: language === 'es' ? `el año ${year}` : `${year}`,
+    from: new Date(year, 0, 1),
+    to: new Date(year + 1, 0, 1),
+    analog: 'year',
+  };
+}
+
+function presetPeriod(
+  preset: Period | 'anio' | 'mesPasado',
+  language: 'en' | 'es',
+  t: TFn,
+  now = new Date()
+): QueryPeriod {
+  if (preset === 'mesPasado') {
+    const { from, to } = previousMonthRange(now);
+    return {
+      label: t('search.periodLastMonth'),
+      from,
+      to,
+      analog: 'month',
+    };
+  }
+  if (preset === 'anio') {
+    return yearPeriod(now.getFullYear(), language);
+  }
+  if (preset === 'hoy') {
+    const from = startOfDay(now);
+    return {
+      label: t('period.hoy'),
+      from,
+      to: addDays(from, 1),
+      analog: 'day',
+    };
+  }
+  if (preset === 'semana') {
+    const from = startOfDay(now);
+    const day = from.getDay();
+    const diff = day === 0 ? 6 : day - 1;
+    from.setDate(from.getDate() - diff);
+    return {
+      label: t('period.semana'),
+      from,
+      to: addDays(startOfDay(now), 1),
+      analog: 'week',
+    };
+  }
+  const { from, to } = calendarMonthRange(now.getFullYear(), now.getMonth());
+  return { label: t('period.mes'), from, to, analog: 'month' };
+}
+
+function analogRange(period: QueryPeriod): { from: Date; to: Date } {
+  if (period.analog === 'month') {
+    const prev = new Date(period.from);
+    prev.setMonth(prev.getMonth() - 1);
+    return calendarMonthRange(prev.getFullYear(), prev.getMonth());
+  }
+  if (period.analog === 'year') {
+    const y = period.from.getFullYear() - 1;
+    return { from: new Date(y, 0, 1), to: new Date(y + 1, 0, 1) };
+  }
+  const ms = Math.max(period.to.getTime() - period.from.getTime(), 24 * 60 * 60 * 1000);
+  return {
+    from: new Date(period.from.getTime() - ms),
+    to: new Date(period.from.getTime()),
+  };
+}
+
 function resolvePeriod(
   q: string,
-  defaultPeriod: Period
-): { key: 'hoy' | 'semana' | 'mes' | 'anio' | 'mesPasado'; labelKey: TranslationKey } {
+  defaultPeriod: Period,
+  language: 'en' | 'es',
+  t: TFn,
+  now = new Date()
+): QueryPeriod {
+  const yearNow = now.getFullYear();
+  const monthAlt = 'septiembre|setiembre';
+  const months =
+    `enero|febrero|marzo|abril|mayo|junio|julio|agosto|${monthAlt}|octubre|noviembre|diciembre|` +
+    'january|february|march|april|may|june|july|august|september|october|november|december';
+
+  const dayMonth = q.match(
+    new RegExp(
+      `\\b(\\d{1,2})\\s+de\\s+(${months})(?:\\s+(?:de\\s+)?(\\d{4}))?\\b`
+    )
+  );
+  if (dayMonth) {
+    const monthIndex = MONTH_INDEX[dayMonth[2]];
+    const year = parseYearToken(dayMonth[3], yearNow);
+    const day = Number(dayMonth[1]);
+    if (monthIndex != null && day >= 1 && day <= 31) {
+      return dayPeriod(new Date(year, monthIndex, day), language);
+    }
+  }
+
+  const numeric = q.match(/\b(\d{1,2})[\/\-.](\d{1,2})(?:[\/\-.](\d{2,4}))?\b/);
+  if (numeric) {
+    const a = Number(numeric[1]);
+    const b = Number(numeric[2]);
+    const year = parseYearToken(numeric[3], yearNow);
+    const dayFirst = language === 'es' || a > 12;
+    const day = dayFirst ? a : b;
+    const monthIndex = (dayFirst ? b : a) - 1;
+    if (monthIndex >= 0 && monthIndex <= 11 && day >= 1 && day <= 31) {
+      return dayPeriod(new Date(year, monthIndex, day), language);
+    }
+  }
+
+  const namedMonth = q.match(
+    new RegExp(`\\b(?:en\\s+)?(${months})(?:\\s+(?:de\\s+)?(\\d{4}))?\\b`)
+  );
+  if (namedMonth) {
+    const monthIndex = MONTH_INDEX[namedMonth[1]];
+    if (monthIndex != null) {
+      return monthPeriod(
+        parseYearToken(namedMonth[2], yearNow),
+        monthIndex,
+        language
+      );
+    }
+  }
+
+  if (includesAny(q, ['anteayer', 'day before yesterday'])) {
+    return dayPeriod(addDays(now, -2), language);
+  }
+  if (includesAny(q, ['ayer', 'yesterday'])) {
+    return dayPeriod(addDays(now, -1), language);
+  }
   if (includesAny(q, ['mes pasado', 'last month', 'el mes anterior', 'mes anterior'])) {
-    return { key: 'mesPasado', labelKey: 'search.periodLastMonth' };
+    return presetPeriod('mesPasado', language, t, now);
   }
-  if (includesAny(q, ['hoy', 'today', 'este dia', 'el dia', 'esta manana', 'esta mañana'])) {
-    return { key: 'hoy', labelKey: 'period.hoy' };
+  if (includesAny(q, ['ano pasado', 'año pasado', 'el ano pasado', 'el año pasado', 'last year'])) {
+    return yearPeriod(yearNow - 1, language);
   }
-  if (includesAny(q, ['esta semana', 'semana', 'week', 'this week'])) {
-    return { key: 'semana', labelKey: 'period.semana' };
+  if (includesAny(q, ['hoy', 'today', 'esta manana', 'esta mañana'])) {
+    return presetPeriod('hoy', language, t, now);
   }
-  if (includesAny(q, ['este ano', 'este año', 'ano', 'año', 'year', 'anual', 'this year'])) {
-    return { key: 'anio', labelKey: 'search.periodYear' };
+  if (includesAny(q, ['esta semana', 'this week'])) {
+    return presetPeriod('semana', language, t, now);
   }
-  if (includesAny(q, ['este mes', 'mes', 'month', 'this month'])) {
-    return { key: 'mes', labelKey: 'period.mes' };
+  if (includesAny(q, ['este ano', 'este año', 'this year', 'en el ano', 'en el año'])) {
+    return presetPeriod('anio', language, t, now);
   }
-  if (defaultPeriod === 'hoy') return { key: 'hoy', labelKey: 'period.hoy' };
-  if (defaultPeriod === 'semana') return { key: 'semana', labelKey: 'period.semana' };
-  return { key: 'mes', labelKey: 'period.mes' };
+  const onlyYear = q.match(/\b(?:en\s+|del\s+|de\s+)?(20\d{2})\b/);
+  if (onlyYear) {
+    return yearPeriod(Number(onlyYear[1]), language);
+  }
+  if (includesAny(q, ['este mes', 'this month'])) {
+    return presetPeriod('mes', language, t, now);
+  }
+  if (includesAny(q, ['semana', 'week']) && !includesAny(q, ['fin de semana', 'weekend'])) {
+    return presetPeriod('semana', language, t, now);
+  }
+  if (includesAny(q, ['ano', 'año', 'year', 'anual'])) {
+    return presetPeriod('anio', language, t, now);
+  }
+  if (includesAny(q, ['mes', 'month'])) {
+    return presetPeriod('mes', language, t, now);
+  }
+  return presetPeriod(defaultPeriod, language, t, now);
 }
 
 function txsForPeriod(
   transactions: Transaction[],
-  periodKey: 'hoy' | 'semana' | 'mes' | 'anio' | 'mesPasado'
+  period: QueryPeriod
 ): Transaction[] {
-  if (periodKey === 'mesPasado') {
-    const { from, to } = previousMonthRange();
-    return filterBetween(transactions, from, to);
-  }
-  if (periodKey === 'anio') {
-    const year = new Date().getFullYear();
-    return transactions.filter((x) => new Date(x.createdAt).getFullYear() === year);
-  }
-  return filterByPeriod(transactions, periodKey);
+  return filterBetween(transactions, period.from, period.to);
 }
 
 const STOPWORDS = new Set([
@@ -715,6 +976,48 @@ function expenseTotalsByConcept(
   return map;
 }
 
+function rankingDetail(
+  list: Transaction[],
+  spendConcepts: SpendConcept[],
+  format: (n: number) => string,
+  limit = 3
+): string {
+  const totals = [...expenseTotalsByConcept(list, spendConcepts).entries()].sort(
+    (a, b) => b[1].amount - a[1].amount
+  );
+  return totals
+    .slice(0, limit)
+    .map(([id, v]) => {
+      const concept = findConceptById(spendConcepts, id);
+      const hit = findSpendSub(spendConcepts, id);
+      const label = concept?.name ?? hit?.concept.name ?? id;
+      return `${label} ${format(v.amount)}`;
+    })
+    .join(' · ');
+}
+
+function accountSpendDetail(
+  list: Transaction[],
+  accounts: Account[] | undefined,
+  t: TFn,
+  format: (n: number) => string
+): string {
+  const map = new Map<string, number>();
+  for (const tx of list) {
+    if (tx.type !== 'expense' && tx.type !== 'debt_payment') continue;
+    const id = tx.accountId ?? 'cash';
+    map.set(id, (map.get(id) ?? 0) + tx.amount);
+  }
+  return [...map.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .map(([id, amount]) => {
+      const acc = accounts?.find((a) => a.id === id);
+      const label = acc ? accountDisplayName(acc, t) : id;
+      return `${label} ${format(amount)}`;
+    })
+    .join(' · ');
+}
+
 function resolveCategoryDisplayName(
   categoryId: string,
   spendConcepts: SpendConcept[],
@@ -987,9 +1290,8 @@ export function buildSearchSuggestions(
           ? 'this week'
           : 'this month';
 
-  const periodTxs = options.transactions
-    ? filterByPeriod(options.transactions, period)
-    : [];
+  const allTxs = options.transactions ?? [];
+  const periodTxs = filterByPeriod(allTxs, period);
   const spentBySub = new Map<string, number>();
   for (const tx of periodTxs) {
     if ((tx.type !== 'expense' && tx.type !== 'debt_payment') || !tx.categoryId) continue;
@@ -1015,10 +1317,39 @@ export function buildSearchSuggestions(
   const hasDebtPayments = periodTxs.some((t) => t.type === 'debt_payment');
   const hasDebts = (options.debts?.length ?? 0) > 0;
   const creditsConcept = spendConcepts.find((c) => c.id === CREDITS_CONCEPT_ID);
+  const topSub = featuredSubs[0]?.sub;
+  const topHit = topSub ? findSpendSub(spendConcepts, topSub.id) : undefined;
+  const topName = topHit ? `${topHit.concept.name}/${topSub!.name}` : topSub?.name;
+
+  const now = new Date();
+  const pastMonthKeys = new Set<string>();
+  for (const tx of allTxs) {
+    if (tx.type !== 'expense' && tx.type !== 'debt_payment') continue;
+    const d = new Date(tx.createdAt);
+    if (d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth()) continue;
+    pastMonthKeys.add(`${d.getFullYear()}-${d.getMonth()}`);
+  }
+  const pastMonth = [...pastMonthKeys]
+    .map((key) => {
+      const [y, m] = key.split('-').map(Number);
+      return { year: y, monthIndex: m };
+    })
+    .sort((a, b) => b.year - a.year || b.monthIndex - a.monthIndex)[0];
+  const pastMonthName = pastMonth
+    ? language === 'es'
+      ? `${MONTHS_ES[pastMonth.monthIndex]} ${pastMonth.year}`
+      : `${monthLabel(pastMonth.monthIndex, 'en')} ${pastMonth.year}`
+    : null;
 
   if (language === 'es') {
     prompts.push(`¿Qué % de mi ingreso gasté ${when}?`);
     prompts.push(`¿Cuánto gasté ${when}?`);
+    prompts.push('¿Cuánto gasté el mes pasado?');
+    prompts.push('¿Cuánto gasté este año?');
+    if (pastMonthName) {
+      prompts.push(`¿Cuánto gasté en ${pastMonthName}?`);
+    }
+    if (period !== 'hoy') prompts.push('¿Cuánto gasté ayer?');
     if (hasDebtPayments || hasDebts) {
       prompts.push(`¿Cuánto pagué en cuotas ${when}?`);
       if (creditsConcept) {
@@ -1036,12 +1367,22 @@ export function buildSearchSuggestions(
       const name = hit ? `${hit.concept.name}/${sub.name}` : sub.name;
       prompts.push(`¿Cuánto gasté en ${name} ${when}?`);
     }
+    if (topName) {
+      prompts.push(`¿De qué bolsillo salió ${topName} ${when}?`);
+    }
     prompts.push(`¿En qué gasté más ${when}?`);
+    prompts.push(`¿Gasté más ${when} que el mes pasado?`);
     prompts.push('¿Cuánto tengo disponible?');
     if (hasDebts) prompts.push('¿Cuánto debo en deudas?');
   } else {
     prompts.push(`What % of my income did I spend ${when}?`);
     prompts.push(`How much did I spend ${when}?`);
+    prompts.push('How much did I spend last month?');
+    prompts.push('How much did I spend this year?');
+    if (pastMonthName) {
+      prompts.push(`How much did I spend in ${pastMonthName}?`);
+    }
+    if (period !== 'hoy') prompts.push('How much did I spend yesterday?');
     if (hasDebtPayments || hasDebts) {
       prompts.push(`How much did I pay in installments ${when}?`);
       if (creditsConcept) {
@@ -1059,11 +1400,15 @@ export function buildSearchSuggestions(
       const name = hit ? `${hit.concept.name}/${sub.name}` : sub.name;
       prompts.push(`How much on ${name} ${when}?`);
     }
+    if (topName) {
+      prompts.push(`Which pocket did ${topName} leave ${when}?`);
+    }
     prompts.push(`Where did I spend the most ${when}?`);
+    prompts.push(`Did I spend more ${when} than last month?`);
     prompts.push('How much available cash do I have?');
     if (hasDebts) prompts.push('How much do I still owe?');
   }
-  return prompts.slice(0, 10);
+  return prompts.slice(0, 14);
 }
 
 /**
@@ -1081,13 +1426,14 @@ export function answerFinanceQuery(
   if (!raw) return t('search.needQuestion');
 
   const q = normalize(raw);
-  const period = resolvePeriod(q, options.defaultPeriod ?? 'mes');
+  const language = options.language ?? 'es';
+  const period = resolvePeriod(q, options.defaultPeriod ?? 'mes', language, t);
   const list = withAccruedInstallments(
-    txsForPeriod(transactions, period.key),
+    txsForPeriod(transactions, period),
     options.debts,
-    period.key
+    period.label
   );
-  const periodLabel = t(period.labelKey);
+  const periodLabel = period.label;
 
   const wantsCount = includesAny(q, [
     'cuantas',
@@ -1194,7 +1540,25 @@ export function answerFinanceQuery(
     'respecto',
     'contra el mes',
   ]);
-  const wantsTransfer = includesAny(q, ['transferencia', 'transferencias', 'transfer', 'envie', 'envié']);
+  const wantsOrigin = includesAny(q, [
+    'de que cuenta',
+    'de qué cuenta',
+    'de que bolsillo',
+    'de qué bolsillo',
+    'de donde salio',
+    'de dónde salió',
+    'de donde sale',
+    'which account',
+    'which pocket',
+    'from which',
+  ]);
+  const wantsTransfer = includesAny(q, [
+    'transferencia',
+    'transferencias',
+    'transfer',
+    'envie',
+    'envié',
+  ]);
   const wantsTop = includesAny(q, [
     'mas gaste',
     'más gasté',
@@ -1410,6 +1774,18 @@ export function answerFinanceQuery(
         period: periodLabel,
       });
     }
+    if (wantsOrigin) {
+      const detail = accountSpendDetail(matched, options.accounts, t, format);
+      if (detail) {
+        return t('search.answerByAccount', {
+          label,
+          amount: format(amount),
+          period: periodLabel,
+          count: matched.length,
+          detail,
+        });
+      }
+    }
     return t('search.answerCategory', {
       label,
       amount: format(amount),
@@ -1435,14 +1811,26 @@ export function answerFinanceQuery(
   }
 
   if (wantsCompare) {
-    const { from, to } = previousMonthRange();
-    const prev = filterBetween(transactions, from, to);
-    const nowSpend = sumSpendOut(filterByPeriod(transactions, 'mes'));
+    const prevRange = analogRange(period);
+    const prev = filterBetween(transactions, prevRange.from, prevRange.to);
+    const nowSpend = sumSpendOut(list);
     const prevSpend = sumSpendOut(prev);
     const diff = nowSpend - prevSpend;
-    return t('search.answerCompare', {
+    const compareLabel =
+      period.analog === 'month'
+        ? `${monthLabel(prevRange.from.getMonth(), language)} ${prevRange.from.getFullYear()}`
+        : period.analog === 'year'
+          ? language === 'es'
+            ? `el año ${prevRange.from.getFullYear()}`
+            : String(prevRange.from.getFullYear())
+          : t('search.periodLastMonth');
+    return t('search.answerComparePeriods', {
+      period: periodLabel,
+      compare: compareLabel,
       amount: format(Math.abs(diff)),
       direction: diff >= 0 ? t('search.more') : t('search.less'),
+      now: format(nowSpend),
+      prev: format(prevSpend),
     });
   }
 
@@ -1554,6 +1942,15 @@ export function answerFinanceQuery(
         count,
         label: t('home.expenses'),
         period: periodLabel,
+      });
+    }
+    const detail = rankingDetail(expenses, spendConcepts, format);
+    if (detail) {
+      return t('search.answerExpensesDetail', {
+        amount: format(amount),
+        period: periodLabel,
+        count,
+        detail,
       });
     }
     return t('search.answerExpenses', {

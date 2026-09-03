@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   Pressable,
@@ -111,6 +111,19 @@ export function ExpenseForm({
     [type, accounts]
   );
 
+  useEffect(() => {
+    if (type === 'income' || type === 'transfer' || type === 'investment') return;
+    const parsed = parse(amount);
+    const current = accounts.find((a) => a.id === accountId);
+    const need = parsed ?? 0;
+    const covers =
+      current &&
+      (need > 0 ? current.balance >= need : current.balance > 0);
+    if (covers) return;
+    const next = defaultSpendAccountId(accounts, { amount: need || undefined });
+    if (next !== accountId) setAccountId(next);
+  }, [accounts, accountId, type, amount, parse]);
+
   const scale = useSharedValue(1);
   const buttonStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -125,7 +138,7 @@ export function ExpenseForm({
       const first = spendConcepts[0];
       setConceptId(first?.id ?? '');
       setCategoryId(first?.subs[0]?.id ?? 'otros');
-      setAccountId(defaultSpendAccountId(accounts));
+      setAccountId(defaultSpendAccountId(accounts, { amount: parse(amount) ?? undefined }));
     } else if (next === 'debt_payment') {
       setDebtId(debts[0]?.id ?? null);
       setCategoryId(debts[0]?.categoryId ?? 'otros');

@@ -78,19 +78,54 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
   const savingLock = useRef(false);
   const scrollRef = useRef<ScrollView>(null);
 
-  const lastSpendAccountId = useMemo(
-    () => transactions.find((tx) => tx.type === 'expense' && tx.accountId)?.accountId,
-    [transactions]
-  );
+  const lastSpendAccountId = useMemo(() => {
+    if (categoryId) {
+      const forCat = transactions.find(
+        (tx) =>
+          tx.type === 'expense' && tx.categoryId === categoryId && tx.accountId
+      );
+      if (forCat?.accountId) return forCat.accountId;
+    }
+    return transactions.find((tx) => tx.type === 'expense' && tx.accountId)
+      ?.accountId;
+  }, [transactions, categoryId]);
 
   useEffect(() => {
-    if (accounts.some((a) => a.id === accountId)) return;
-    setAccountId(
-      intent === 'earn'
-        ? defaultIncomeAccountId(accounts)
-        : defaultSpendAccountId(accounts, { lastAccountId: lastSpendAccountId })
-    );
-  }, [accounts, accountId, intent, lastSpendAccountId]);
+    if (intent === 'earn') {
+      if (!accounts.some((a) => a.id === accountId)) {
+        setAccountId(defaultIncomeAccountId(accounts));
+      }
+      return;
+    }
+    if (intent === 'move') {
+      if (!accounts.some((a) => a.id === accountId)) {
+        setAccountId(defaultIncomeAccountId(accounts));
+      }
+      return;
+    }
+    const parsed = parse(amount);
+    const current = accounts.find((a) => a.id === accountId);
+    const need = parsed ?? 0;
+    const covers =
+      current &&
+      (need > 0 ? current.balance >= need : current.balance > 0);
+    if (covers) return;
+    const next = defaultSpendAccountId(accounts, {
+      lastAccountId: lastSpendAccountId,
+      amount: need || undefined,
+    });
+    if (next !== accountId) setAccountId(next);
+  }, [accounts, accountId, intent, lastSpendAccountId, amount, parse]);
+
+  useEffect(() => {
+    if (intent !== 'spend' && intent !== 'debt') return;
+    const parsed = parse(amount);
+    const next = defaultSpendAccountId(accounts, {
+      lastAccountId: lastSpendAccountId,
+      amount: parsed ?? undefined,
+    });
+    if (next !== accountId) setAccountId(next);
+  }, [categoryId]);
 
   const accountChoices = intent === 'earn' ? incomeAccounts : accounts;
 
@@ -133,7 +168,10 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
       }
       if (tpl.intent === 'spend') {
         setAccountId(
-          defaultSpendAccountId(accounts, { lastAccountId: lastSpendAccountId })
+          defaultSpendAccountId(accounts, {
+            lastAccountId: lastSpendAccountId,
+            amount: tpl.amountHint,
+          })
         );
       }
 
@@ -325,6 +363,7 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
                       setAccountId(
                         defaultSpendAccountId(accounts, {
                           lastAccountId: lastSpendAccountId,
+                          amount: parse(amount) ?? undefined,
                         })
                       );
                     }
@@ -582,7 +621,7 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
             <Text
               style={[
                 styles.title,
-                asksPaymentMethod ? { marginTop: 18, fontSize: 24 } : null,
+                asksPaymentMethod ? { marginTop: 18, fontSize: 22 } : null,
               ]}>
               {intent === 'earn'
                 ? t('flow.whichAccountIncome')
@@ -591,7 +630,7 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
                   : t('flow.whichAccount')}
             </Text>
             <AccountChoiceChips
-              variant="card"
+              variant={intent === 'move' ? 'card' : 'chip'}
               accounts={accountChoices}
               selectedId={accountId}
               onSelect={setAccountId}
