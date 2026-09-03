@@ -25,6 +25,7 @@ import { palette, radii } from '@/src/theme/colors';
 import type { PaymentMethod, Transaction, TransactionType } from '@/src/types/finance';
 import { categoryLabel } from '@/src/utils/categoryLabel';
 import { incomeDestinationAccounts } from '@/src/utils/netWorth';
+import { AccountChoiceChips } from '@/src/components/AccountChoiceChips';
 
 type Props = {
   transaction: Transaction | null;
@@ -209,37 +210,26 @@ export function EditTransactionModal({ transaction, visible, onClose }: Props) {
             ) : null}
 
             <Text style={styles.label}>
-              {type === 'income' ? t('flow.whichAccountIncome') : t('flow.whichAccount')}
+              {type === 'income'
+                ? t('flow.whichAccountIncome')
+                : type === 'expense'
+                  ? t('flow.whichAccountSpend')
+                  : t('flow.whichAccount')}
             </Text>
-            <View style={styles.wrap}>
-              {accountChoices.map((acc) => (
-                <Pressable
-                  key={acc.id}
-                  onPress={() => setAccountId(acc.id)}
-                  style={[styles.chip, accountId === acc.id && styles.chipOn]}>
-                  <Text style={[styles.chipText, accountId === acc.id && styles.chipTextOn]}>
-                    {t(acc.nameKey as TranslationKey)}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
+            <AccountChoiceChips
+              accounts={accountChoices}
+              selectedId={accountId}
+              onSelect={setAccountId}
+            />
 
             {needsDestination ? (
               <>
-                <Text style={styles.label}>{t('history.editToAccount')}</Text>
-                <View style={styles.wrap}>
-                  {accounts.map((acc) => (
-                    <Pressable
-                      key={acc.id}
-                      onPress={() => setToAccountId(acc.id)}
-                      style={[styles.chip, toAccountId === acc.id && styles.chipOn]}>
-                      <Text
-                        style={[styles.chipText, toAccountId === acc.id && styles.chipTextOn]}>
-                        {t(acc.nameKey as TranslationKey)}
-                      </Text>
-                    </Pressable>
-                  ))}
-                </View>
+                <Text style={styles.label}>{t('flow.whichAccountTo')}</Text>
+                <AccountChoiceChips
+                  accounts={accounts.filter((a) => a.id !== accountId)}
+                  selectedId={toAccountId}
+                  onSelect={setToAccountId}
+                />
               </>
             ) : null}
 

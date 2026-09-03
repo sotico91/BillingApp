@@ -25,6 +25,7 @@ import { palette, radii } from '@/src/theme/colors';
 import type { Debt } from '@/src/types/finance';
 import { categoryLabel } from '@/src/utils/categoryLabel';
 import { tapFeedback } from '@/src/utils/selectFeedback';
+import { accountRoleKey } from '@/src/utils/accounts';
 
 function clampPayDay(raw: number): number | null {
   if (!Number.isFinite(raw)) return null;
@@ -221,6 +222,7 @@ export default function WealthScreen() {
             {accounts.map((acc) => (
               <View key={acc.id} style={styles.card}>
                 <Text style={styles.cardTitle}>{t(acc.nameKey as TranslationKey)}</Text>
+                <Text style={styles.meta}>{t(accountRoleKey(acc.type))}</Text>
                 <MoneyText
                   style={[
                     styles.amount,

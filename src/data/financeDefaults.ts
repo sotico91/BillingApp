@@ -39,6 +39,7 @@ export const DEFAULT_ACCOUNTS: Account[] = [
   { id: 'cash', nameKey: 'account.cash', type: 'cash', balance: 0 },
   { id: 'bank-main', nameKey: 'account.bankMain', type: 'bank', balance: 0 },
   { id: 'credit-card', nameKey: 'account.creditCard', type: 'credit', balance: 0 },
+  { id: 'wallet', nameKey: 'account.wallet', type: 'wallet', balance: 0 },
   { id: 'savings', nameKey: 'account.savings', type: 'savings', balance: 0 },
   { id: 'investments', nameKey: 'account.investments', type: 'investment', balance: 0 },
 ];

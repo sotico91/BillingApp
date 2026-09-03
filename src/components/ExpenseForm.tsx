@@ -15,6 +15,7 @@ import Animated, {
 
 import { CategoryChip } from '@/src/components/CategoryChip';
 import { InlineSubAdd } from '@/src/components/InlineSubAdd';
+import { AccountChoiceChips } from '@/src/components/AccountChoiceChips';
 import { categoriesForKind } from '@/src/data/categories';
 import { findSpendSub, spendSubsAsCategories } from '@/src/data/spendConcepts';
 import { useFinance } from '@/src/hooks/useFinance';
@@ -26,6 +27,11 @@ import { palette, radii } from '@/src/theme/colors';
 import type { PaymentMethod, TransactionType } from '@/src/types/finance';
 import { categoryLabel } from '@/src/utils/categoryLabel';
 import { incomeDestinationAccounts } from '@/src/utils/netWorth';
+import {
+  defaultIncomeAccountId,
+  defaultSpendAccountId,
+  defaultTransferDestinationId,
+} from '@/src/utils/accounts';
 import { notifyExpenseRegistered } from '@/src/utils/notifications';
 
 export type SavedMovement = {
@@ -78,8 +84,12 @@ export function ExpenseForm({
   );
   const [debtId, setDebtId] = useState<string | null>(debts[0]?.id ?? null);
   const [method, setMethod] = useState<PaymentMethod>('cash');
-  const [accountId, setAccountId] = useState(accounts[0]?.id ?? 'cash');
-  const [toAccountId, setToAccountId] = useState('savings');
+  const [accountId, setAccountId] = useState(() =>
+    defaultSpendAccountId(accounts)
+  );
+  const [toAccountId, setToAccountId] = useState(() =>
+    defaultTransferDestinationId(accounts)
+  );
   const [note, setNote] = useState(initialNote ?? '');
   const [saving, setSaving] = useState(false);
   const savingLock = useRef(false);
@@ -110,15 +120,12 @@ export function ExpenseForm({
     setType(next);
     if (next === 'income') {
       setCategoryId('salario');
-      setAccountId(
-        incomeDestinationAccounts(accounts).find((a) => a.type === 'bank')?.id ??
-          incomeDestinationAccounts(accounts)[0]?.id ??
-          'cash'
-      );
+      setAccountId(defaultIncomeAccountId(accounts));
     } else if (next === 'expense') {
       const first = spendConcepts[0];
       setConceptId(first?.id ?? '');
       setCategoryId(first?.subs[0]?.id ?? 'otros');
+      setAccountId(defaultSpendAccountId(accounts));
     } else if (next === 'debt_payment') {
       setDebtId(debts[0]?.id ?? null);
       setCategoryId(debts[0]?.categoryId ?? 'otros');
@@ -162,6 +169,11 @@ export function ExpenseForm({
         });
       }
 
+      const resolvedCategoryId =
+        type === 'debt_payment'
+          ? selectedDebt?.categoryId ?? categoryId
+          : categoryId;
+
       if (
         settings.notifyOnExpense &&
         (type === 'expense' || type === 'income')
@@ -171,9 +183,7 @@ export function ExpenseForm({
           t('notify.body', {
             amount: formatPlain(parsed),
             category: categoryLabel(
-              type === 'debt_payment'
-                ? selectedDebt?.categoryId ?? categoryId
-                : categoryId,
+              type === 'expense' ? resolvedCategoryId : categoryId,
               t,
               spendConcepts
             ),
@@ -249,42 +259,26 @@ export function ExpenseForm({
       ) : null}
 
       <Text style={styles.label}>
-        {type === 'income' ? t('flow.whichAccountIncome') : t('add.account')}
+        {type === 'income'
+          ? t('flow.whichAccountIncome')
+          : type === 'expense'
+            ? t('flow.whichAccountSpend')
+            : t('add.account')}
       </Text>
-      <View style={styles.chips}>
-        {accountChoices.map((acc) => (
-          <Pressable
-            key={acc.id}
-            onPress={() => setAccountId(acc.id)}
-            style={[styles.pill, accountId === acc.id && styles.pillOn]}>
-            <Text style={[styles.pillText, accountId === acc.id && styles.pillTextOn]}>
-              {t(acc.nameKey as TranslationKey)}
-            </Text>
-          </Pressable>
-        ))}
-      </View>
+      <AccountChoiceChips
+        accounts={accountChoices}
+        selectedId={accountId}
+        onSelect={setAccountId}
+      />
 
       {(type === 'transfer' || type === 'investment') && (
         <>
-          <Text style={styles.label}>→</Text>
-          <View style={styles.chips}>
-            {accounts
-              .filter((a) => a.id !== accountId)
-              .map((acc) => (
-                <Pressable
-                  key={acc.id}
-                  onPress={() => setToAccountId(acc.id)}
-                  style={[styles.pill, toAccountId === acc.id && styles.pillOn]}>
-                  <Text
-                    style={[
-                      styles.pillText,
-                      toAccountId === acc.id && styles.pillTextOn,
-                    ]}>
-                    {t(acc.nameKey as TranslationKey)}
-                  </Text>
-                </Pressable>
-              ))}
-          </View>
+          <Text style={styles.label}>{t('flow.whichAccountTo')}</Text>
+          <AccountChoiceChips
+            accounts={accounts.filter((a) => a.id !== accountId)}
+            selectedId={toAccountId}
+            onSelect={setToAccountId}
+          />
         </>
       )}
 

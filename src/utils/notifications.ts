@@ -48,13 +48,17 @@ export async function ensureNotificationPermission(): Promise<boolean> {
   const current = await Notifications.getPermissionsAsync();
   if (current.granted) return true;
 
-  const requested = await Notifications.requestPermissionsAsync({
-    ios: {
-      allowAlert: true,
-      allowBadge: true,
-      allowSound: true,
-    },
-  });
+  const requested = await Notifications.requestPermissionsAsync(
+    Platform.OS === 'ios'
+      ? {
+          ios: {
+            allowAlert: true,
+            allowBadge: true,
+            allowSound: true,
+          },
+        }
+      : undefined
+  );
   return requested.granted;
 }
 
@@ -219,9 +223,9 @@ export async function syncCategoryReminders(opts: {
         // Show “1” (or refresh) on the home-screen icon when the reminder fires.
         badge: 1,
         data: {
-          categoryId: item.categoryId,
+          categoryId: String(item.categoryId),
           type: 'expense-reminder',
-          dayOfMonth: day ?? null,
+          dayOfMonth: day != null ? String(day) : '',
         },
         // iOS: system default sound. Android: channel controls sound (no custom file).
         ...(Platform.OS === 'ios' ? { sound: true } : null),

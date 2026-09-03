@@ -1,11 +1,11 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import {
-  DEFAULT_ACCOUNTS,
   DEFAULT_BUDGETS,
   DEFAULT_DEBTS,
   DEFAULT_SUBSCRIPTIONS,
 } from '@/src/data/financeDefaults';
+import { mergeDefaultAccounts } from '@/src/utils/accounts';
 import type {
   Account,
   Budget,
@@ -58,7 +58,12 @@ export async function saveTransactions(items: Transaction[]): Promise<void> {
 }
 
 export async function loadAccounts(): Promise<Account[]> {
-  return loadJson(ACCOUNTS_KEY, DEFAULT_ACCOUNTS);
+  const stored = await loadJson<Account[] | null>(ACCOUNTS_KEY, null);
+  const { accounts, changed } = mergeDefaultAccounts(stored);
+  if (changed) {
+    await saveAccounts(accounts);
+  }
+  return accounts;
 }
 
 export async function saveAccounts(items: Account[]): Promise<void> {

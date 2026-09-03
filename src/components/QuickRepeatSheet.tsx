@@ -16,8 +16,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useKeyboardHeight } from '@/src/hooks/useKeyboardVisible';
 import { useLanguage } from '@/src/i18n/LanguageContext';
 import { palette, radii } from '@/src/theme/colors';
+import type { Account } from '@/src/types/finance';
 import type { OneTapHabit } from '@/src/utils/oneTapHabits';
+import { defaultSpendAccountId } from '@/src/utils/accounts';
 import { tapFeedback } from '@/src/utils/selectFeedback';
+import { AccountChoiceChips } from '@/src/components/AccountChoiceChips';
 
 type Props = {
   visible: boolean;
@@ -27,8 +30,9 @@ type Props = {
   currency: string;
   parse: (raw: string) => number | null;
   busy?: boolean;
+  accounts: Account[];
   onClose: () => void;
-  onConfirm: (amount: number, note: string) => void;
+  onConfirm: (amount: number, note: string, accountId: string) => void;
   onEditFull: (amount: number, note: string) => void;
 };
 
@@ -39,6 +43,7 @@ export function QuickRepeatSheet({
   format,
   parse,
   busy,
+  accounts,
   onClose,
   onConfirm,
   onEditFull,
@@ -52,14 +57,18 @@ export function QuickRepeatSheet({
   const [editing, setEditing] = useState(false);
   const [amountText, setAmountText] = useState('');
   const [noteText, setNoteText] = useState('');
+  const [accountId, setAccountId] = useState('cash');
 
   useEffect(() => {
     if (!visible || !habit) return;
     setEditing(false);
     setAmountText(String(habit.amount));
     setNoteText(habit.note ?? '');
+    setAccountId(
+      defaultSpendAccountId(accounts, { lastAccountId: habit.accountId })
+    );
     focusedField.current = null;
-  }, [visible, habit?.categoryId, habit?.amount, habit?.note]);
+  }, [visible, habit?.categoryId, habit?.amount, habit?.note, habit?.accountId, accounts]);
 
   useEffect(() => {
     if (keyboardHeight <= 0) return;
@@ -93,7 +102,7 @@ export function QuickRepeatSheet({
   function handleConfirm() {
     if (!canConfirm || parsed == null) return;
     tapFeedback();
-    onConfirm(parsed, resolvedNote);
+    onConfirm(parsed, resolvedNote, accountId);
   }
 
   function currentAmount() {
@@ -153,6 +162,13 @@ export function QuickRepeatSheet({
                   <Text style={styles.antBadgeText}>{t('home.quickAntBadge')}</Text>
                 </View>
               ) : null}
+
+              <Text style={styles.fieldLabel}>{t('home.quickConfirmAccount')}</Text>
+              <AccountChoiceChips
+                accounts={accounts}
+                selectedId={accountId}
+                onSelect={setAccountId}
+              />
 
               {editing ? (
                 <>

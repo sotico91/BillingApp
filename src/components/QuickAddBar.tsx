@@ -30,7 +30,7 @@ export function QuickAddBar() {
   const { t } = useLanguage();
   const { format, formatPlain, parse, currency } = useMoney();
   const { settings, updateQuickTemplate } = useSettings();
-  const { addTransaction, transactions } = useFinance();
+  const { addTransaction, transactions, accounts } = useFinance();
   const [busyId, setBusyId] = useState<string | null>(null);
   const [sheetHabit, setSheetHabit] = useState<OneTapHabit | null>(null);
   const busyLock = useRef(false);
@@ -58,7 +58,7 @@ export function QuickAddBar() {
     ? categoryLabel(sheetHabit.categoryId, t, spendConcepts)
     : '';
 
-  async function registerHabit(habit: OneTapHabit, amount: number, note: string) {
+  async function registerHabit(habit: OneTapHabit, amount: number, note: string, accountId: string) {
     if (busyLock.current) return;
 
     busyLock.current = true;
@@ -71,7 +71,7 @@ export function QuickAddBar() {
         categoryId: habit.categoryId,
         note: resolvedNote,
         paymentMethod: habit.paymentMethod ?? 'debit',
-        accountId: habit.accountId ?? 'cash',
+        accountId,
       });
       await updateQuickTemplate({
         categoryId: habit.categoryId,
@@ -164,10 +164,11 @@ export function QuickAddBar() {
         currency={currency}
         parse={parse}
         busy={busyId != null}
+        accounts={accounts}
         onClose={() => setSheetHabit(null)}
-        onConfirm={(amount, note) => {
+        onConfirm={(amount, note, accountId) => {
           if (!sheetHabit) return;
-          void registerHabit(sheetHabit, amount, note);
+          void registerHabit(sheetHabit, amount, note, accountId);
         }}
         onEditFull={(amount, note) => {
           if (!sheetHabit) return;

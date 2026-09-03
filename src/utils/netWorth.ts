@@ -17,7 +17,7 @@ export function incomeDestinationAccounts(accounts: Account[]): Account[] {
 /**
  * Net worth from account balances + installment debts.
  * - Assets: positive balances (incl. prepaid credit)
- * - Liabilities: credit card debt, overdraft on cash/bank/savings, plus debts list
+ * - Liabilities: credit card debt, overdraft on cash/bank/savings/wallet, plus debts list
  */
 export function computeNetWorth(
   accounts: Account[],

@@ -44,6 +44,8 @@ export default function HomeScreen() {
     loading,
     availableCash,
     availableByAccount,
+    secondaryCash,
+    secondaryByAccount,
     netWorth,
     debts,
     antForPeriod,
@@ -184,6 +186,11 @@ export default function HomeScreen() {
               label={t('home.available')}
               value={format(availableCash)}
               tone={availableCash < expenses * 0.2 && expenses > 0 ? 'warn' : 'neutral'}
+              hint={
+                secondaryCash !== 0
+                  ? t('home.availableSecondaryHint', { amount: format(secondaryCash) })
+                  : undefined
+              }
               onPress={() => setMoneyInfo('available')}
             />
             <DashTile
@@ -394,7 +401,7 @@ export default function HomeScreen() {
             {moneyInfo === 'available' ? (
               <View style={styles.availableBreakdown}>
                 <Text style={styles.availableBreakdownTitle}>
-                  {t('home.availableByAccount')}
+                  {t('home.availablePrincipal')}
                 </Text>
                 {availableByAccount.map((acc) => (
                   <View key={acc.id} style={styles.availableRow}>
@@ -404,6 +411,27 @@ export default function HomeScreen() {
                     <Text style={styles.availableRowValue}>{format(acc.balance)}</Text>
                   </View>
                 ))}
+                <Text
+                  style={[
+                    styles.availableBreakdownTitle,
+                    styles.availableBreakdownTitleGap,
+                  ]}>
+                  {t('home.availableSecondary')}
+                </Text>
+                {secondaryByAccount.map((acc) => (
+                  <View key={acc.id} style={styles.availableRow}>
+                    <Text style={styles.availableRowLabel}>
+                      {t(acc.nameKey as TranslationKey)}
+                    </Text>
+                    <Text style={styles.availableRowValue}>{format(acc.balance)}</Text>
+                  </View>
+                ))}
+                <View style={[styles.availableRow, styles.availableRowTotal]}>
+                  <Text style={styles.availableTotalLabel}>
+                    {t('home.availableSecondaryTotal')}
+                  </Text>
+                  <Text style={styles.availableRowValue}>{format(secondaryCash)}</Text>
+                </View>
                 <View style={[styles.availableRow, styles.availableRowTotal]}>
                   <Text style={styles.availableTotalLabel}>{t('home.availableTotal')}</Text>
                   <Text style={styles.availableTotalValue}>{format(availableCash)}</Text>
@@ -643,6 +671,9 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     color: palette.inkSoft,
     marginBottom: 2,
+  },
+  availableBreakdownTitleGap: {
+    marginTop: 12,
   },
   availableRow: {
     flexDirection: 'row',

@@ -52,6 +52,7 @@ import {
   sumByType,
   type PredictedSpend,
 } from '@/src/utils/financeMath';
+import { mapLiquidAccounts, mergeDefaultAccounts } from '@/src/utils/accounts';
 import { computeNetWorth } from '@/src/utils/netWorth';
 import {
   filterByPersonScope,
@@ -148,8 +149,16 @@ type FinanceContextValue = {
   recurringTransactions: Transaction[];
   predictedThisMonth: PredictedSpend[];
   availableCash: number;
-  /** Liquid accounts that make up availableCash (cash / bank / savings). */
+  /** Principal liquid accounts (cash / main bank). */
   availableByAccount: Array<{
+    id: string;
+    type: Account['type'];
+    balance: number;
+    nameKey: string;
+  }>;
+  /** Secondary pockets (Nequi / wallet / savings) — also spendable, not the main bank. */
+  secondaryCash: number;
+  secondaryByAccount: Array<{
     id: string;
     type: Account['type'];
     balance: number;
@@ -524,14 +533,15 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
         b.createdAt.localeCompare(a.createdAt)
       );
       setTransactions(nextTx);
-      setAccounts(backup.accounts);
+      const { accounts: nextAccounts } = mergeDefaultAccounts(backup.accounts);
+      setAccounts(nextAccounts);
       setBudgets(backup.budgets);
       setDebts(backup.debts);
       setSubscriptions(backup.subscriptions);
       setAttributed(true);
       await Promise.all([
         saveTransactions(nextTx),
-        saveAccounts(backup.accounts),
+        saveAccounts(nextAccounts),
         saveBudgets(backup.budgets),
         saveDebts(backup.debts),
         saveSubscriptions(backup.subscriptions),
@@ -650,21 +660,27 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
   }, [transactions, debts, now, monthKey, settings.personId]);
 
   const availableByAccount = useMemo(
-    () =>
-      accounts
-        .filter((a) => a.type === 'cash' || a.type === 'bank' || a.type === 'savings')
-        .map((a) => ({
-          id: a.id,
-          type: a.type,
-          balance: Math.max(a.balance, 0),
-          nameKey: a.nameKey,
-        })),
+    () => mapLiquidAccounts(accounts, 'principal'),
+    [accounts]
+  );
+
+  const secondaryByAccount = useMemo(
+    () => mapLiquidAccounts(accounts, 'secondary'),
     [accounts]
   );
 
   const availableCash = useMemo(
-    () => availableByAccount.reduce((s, a) => s + a.balance, 0),
-    [availableByAccount]
+    () =>
+      [...availableByAccount, ...secondaryByAccount].reduce(
+        (s, a) => s + a.balance,
+        0
+      ),
+    [availableByAccount, secondaryByAccount]
+  );
+
+  const secondaryCash = useMemo(
+    () => secondaryByAccount.reduce((s, a) => s + a.balance, 0),
+    [secondaryByAccount]
   );
 
   const netWorth = useMemo(
@@ -743,6 +759,8 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       predictedThisMonth,
       availableCash,
       availableByAccount,
+      secondaryCash,
+      secondaryByAccount,
       netWorth,
       budgetStatus,
       expenses: filterByPersonScope(transactions, 'mine', settings.personId).filter(
@@ -778,6 +796,8 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       predictedThisMonth,
       availableCash,
       availableByAccount,
+      secondaryCash,
+      secondaryByAccount,
       netWorth,
       budgetStatus,
       addExpense,

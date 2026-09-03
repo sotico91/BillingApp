@@ -12,7 +12,14 @@ export type TransactionType =
 
 export type PaymentMethod = 'cash' | 'debit' | 'credit' | 'transfer';
 
-export type AccountType = 'bank' | 'cash' | 'credit' | 'savings' | 'investment' | 'other';
+export type AccountType =
+  | 'bank'
+  | 'cash'
+  | 'credit'
+  | 'savings'
+  | 'wallet'
+  | 'investment'
+  | 'other';
 
 export type CategoryKind = 'expense' | 'income';
 

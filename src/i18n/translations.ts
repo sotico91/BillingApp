@@ -34,7 +34,8 @@ export const translations = {
     'home.quickConfirmFull': 'Open full form (account, note…)',
     'home.quickConfirmClose': 'Close',
     'home.quickConfirmHint':
-      'Tap outside to close. Same subcategory as last time — you can change the amount and the note. Ant 🐜 = marked in Plan.',
+      'Tap outside to close. Same subcategory as last time — you can change the amount, the note and which pocket it left (cash, savings or a wallet). Ant 🐜 = marked in Plan.',
+    'home.quickConfirmAccount': 'Which pocket did it leave?',
     'home.quickAntBadge': 'Ant spend',
     'home.income': 'Income',
     'home.expenses': 'Expenses',
@@ -49,14 +50,18 @@ export const translations = {
     'home.glanceExpensesEmpty': 'No expenses logged this month yet.',
     'home.glanceIncomeEmpty': 'No income logged this month yet.',
     'home.available': 'Available now',
-    'home.availableCaption': 'Cash in hand today (cash + bank + savings accounts)',
+    'home.availableCaption': 'Spendable today: cash, main bank, savings and wallets',
     'home.savings': 'This month’s result',
     'home.savingsCaption': 'Income − spend this month (only what you logged)',
     'home.availableInfoBody':
-      'Total you can spend right now, split by where it sits: cash, bank, and savings — the same accounts you pick when you spend.',
+      'Money you can spend right now. Main accounts are cash and your bank. Nequi, other wallets and savings are secondary pockets — a small spend can leave any of them.',
     'home.availableInfoCompare':
-      'Bonus or salary is the kind of income; the money lands in the account you chose. To fix a wrong place: edit that income and change “Which account did it land in?”',
+      'This is today’s stock, not the month in History. Pick the pocket the money actually left so that line goes down. Bonus or salary is the kind of income; it lands in the account you chose.',
     'home.availableByAccount': 'Where it is',
+    'home.availablePrincipal': 'Main accounts',
+    'home.availableSecondary': 'Secondary — Nequi, wallets, savings',
+    'home.availableSecondaryTotal': 'In secondary pockets',
+    'home.availableSecondaryHint': 'Of that, {amount} is in Nequi / savings',
     'home.availableTotal': 'Total available',
     'home.savingsInfoBody':
       'This calendar month: income minus expenses and debt payments you actually logged. Installments in Wealth stay as reminders until you register the payment — they do not inflate this number.',
@@ -184,7 +189,7 @@ export const translations = {
     'home.savingsBad': 'You’re behind this month',
     'home.savingsHint': 'Income − expenses this month (only logged movements)',
     'home.moneyLegend':
-      'Available now = what’s in your accounts today. This month’s result = whether this month’s income covered this month’s spend — it resets every new month.',
+      'Available now = cash, main bank, savings and wallets today. This month’s result = whether this month’s income covered this month’s spend — it resets every new month.',
     'home.frequentAlert': 'Most frequent: {category} ({count} times)',
     'home.antAlert': 'Ant expenses are eating your month',
     'home.antOk': 'Ant expenses look manageable',
@@ -410,7 +415,10 @@ export const translations = {
     'flow.goToPlan': 'Go to Plan',
     'flow.howPaid': 'How did you pay?',
     'flow.whichAccount': 'Which account?',
+    'flow.whichAccountSpend':
+      'Which pocket did it leave? Cash, savings, Nequi or another wallet — not always the wallet.',
     'flow.whichAccountIncome': 'Which account did it land in?',
+    'flow.whichAccountTo': 'To which account?',
     'flow.review': 'Does this look right?',
     'flow.save': 'Yes, save it',
     'flow.back': 'Back',
@@ -422,6 +430,7 @@ export const translations = {
     'flow.summaryMethod': 'Payment',
     'flow.summaryAccount': 'Account',
     'flow.summaryAccountIncome': 'Received in',
+    'flow.summaryAccountTo': 'To',
     'flow.summaryAmount': 'Amount',
     'flow.noteOptional': 'Add a short note (optional)',
     'flow.intent.spend': 'I spent',
@@ -464,8 +473,12 @@ export const translations = {
     'account.cash': 'Cash',
     'account.bankMain': 'Main bank',
     'account.creditCard': 'Credit card',
+    'account.wallet': 'Nequi / wallet',
     'account.savings': 'Savings',
     'account.investments': 'Investments',
+    'account.role.principal': 'Main',
+    'account.role.secondary': 'Secondary',
+    'account.role.other': 'Other',
 
     'debt.mainCard': 'Main credit card',
     'sub.streaming': 'Streaming',
@@ -641,7 +654,8 @@ export const translations = {
       'Matches for “{label}” ({period}): {amount} in {count} movements.',
     'search.answerCount': 'You have {count} movements in {label} ({period}).',
     'search.answerDebt': 'Current debt balance: {amount}.',
-    'search.answerAvailable': 'Available cash across accounts: {amount}.',
+    'search.answerAvailable':
+      'Spendable now: {amount} (cash + main bank + savings + wallets).',
     'search.needQuestion': 'Type a question first — for example about coffee, salary or this month.',
     'search.answerUnclear':
       'I could not match that question to your data. Try something like: {examples}',
@@ -714,7 +728,8 @@ export const translations = {
     'home.quickConfirmFull': 'Formulario completo (cuenta, nota…)',
     'home.quickConfirmClose': 'Cerrar',
     'home.quickConfirmHint':
-      'Toca fuera para cerrar. Misma subcategoría de siempre: puedes cambiar el monto y la observación. Hormiga 🐜 = marcado en Plan.',
+      'Toca fuera para cerrar. Misma subcategoría de siempre: puedes cambiar el monto, la observación y de qué bolsillo salió (efectivo, ahorros o una billetera). Hormiga 🐜 = marcado en Plan.',
+    'home.quickConfirmAccount': '¿De qué bolsillo salió?',
     'home.quickAntBadge': 'Gasto hormiga',
     'home.income': 'Ingresos',
     'home.expenses': 'Gastos',
@@ -729,14 +744,18 @@ export const translations = {
     'home.glanceExpensesEmpty': 'Aún no hay gastos este mes.',
     'home.glanceIncomeEmpty': 'Aún no hay ingresos este mes.',
     'home.available': 'Disponible hoy',
-    'home.availableCaption': 'Lo que tienes ahora (efectivo + banco + ahorro)',
+    'home.availableCaption': 'Lo que puedes gastar ahora: efectivo, banco, ahorros y billeteras',
     'home.savings': 'Resultado del mes',
     'home.savingsCaption': 'Ingresos − gastos de este mes (solo lo que registraste)',
     'home.availableInfoBody':
-      'Total que puedes gastar ahora, separado por dónde está: efectivo, banco y ahorro — las mismas cuentas que eliges al gastar.',
+      'Dinero que puedes gastar ahora. Las cuentas principales son efectivo y tu banco. Nequi, otras billeteras y ahorros son bolsillos secundarios: un gasto hormiga puede salir de cualquiera.',
     'home.availableInfoCompare':
-      'Bonos o salario es el tipo de ingreso; el dinero queda en la cuenta que elegiste. Si cayó mal: edita ese ingreso y cambia “¿En qué cuenta entró?”',
+      'Es el saldo de hoy, no el mes en Historial. Elige el bolsillo del que realmente salió para que esa línea baje. Bonos o salario es el tipo de ingreso; queda en la cuenta que elegiste.',
     'home.availableByAccount': 'Dónde está',
+    'home.availablePrincipal': 'Cuentas principales',
+    'home.availableSecondary': 'Secundarias — Nequi, billeteras, ahorros',
+    'home.availableSecondaryTotal': 'En bolsillos secundarios',
+    'home.availableSecondaryHint': 'De eso, {amount} está en Nequi / ahorros',
     'home.availableTotal': 'Total disponible',
     'home.savingsInfoBody':
       'Este mes calendario: ingresos menos gastos y pagos de deuda que sí registraste. Las cuotas en Patrimonio son recordatorio hasta que registres el pago — no inflan este número.',
@@ -865,7 +884,7 @@ export const translations = {
     'home.savingsBad': 'Este mes vas en rojo',
     'home.savingsHint': 'Ingresos − gastos del mes (solo movimientos registrados)',
     'home.moneyLegend':
-      'Disponible hoy = lo que hay en tus cuentas ahora. Resultado del mes = si lo que entró este mes cubrió lo que salió — se reinicia cada mes nuevo.',
+      'Disponible hoy = efectivo, banco, ahorros y billeteras ahora. Resultado del mes = si lo que entró este mes cubrió lo que salió — se reinicia cada mes nuevo.',
     'home.frequentAlert': 'Más frecuente: {category} ({count} veces)',
     'home.antAlert': 'Los gastos hormiga se están comiendo el mes',
     'home.antOk': 'Los gastos hormiga se ven manejables',
@@ -1094,7 +1113,10 @@ export const translations = {
     'flow.goToPlan': 'Ir a Plan',
     'flow.howPaid': '¿Cómo pagaste?',
     'flow.whichAccount': '¿Desde qué cuenta?',
+    'flow.whichAccountSpend':
+      '¿De qué bolsillo salió? Efectivo, ahorros, Nequi u otra billetera — no siempre la billetera.',
     'flow.whichAccountIncome': '¿En qué cuenta entró?',
+    'flow.whichAccountTo': '¿A qué cuenta?',
     'flow.review': '¿Se ve bien?',
     'flow.save': 'Sí, guardar',
     'flow.back': 'Atrás',
@@ -1106,6 +1128,7 @@ export const translations = {
     'flow.summaryMethod': 'Pago',
     'flow.summaryAccount': 'Cuenta',
     'flow.summaryAccountIncome': 'Entró en',
+    'flow.summaryAccountTo': 'Hacia',
     'flow.summaryAmount': 'Monto',
     'flow.noteOptional': 'Agrega una nota corta (opcional)',
     'flow.intent.spend': 'Gasté',
@@ -1148,8 +1171,12 @@ export const translations = {
     'account.cash': 'Efectivo',
     'account.bankMain': 'Banco principal',
     'account.creditCard': 'Tarjeta de crédito',
+    'account.wallet': 'Nequi / billetera',
     'account.savings': 'Ahorros',
     'account.investments': 'Inversiones',
+    'account.role.principal': 'Principal',
+    'account.role.secondary': 'Secundaria',
+    'account.role.other': 'Otra',
 
     'debt.mainCard': 'Tarjeta principal',
     'sub.streaming': 'Streaming',
@@ -1326,7 +1353,8 @@ export const translations = {
       'Coincidencias de “{label}” ({period}): {amount} en {count} movimientos.',
     'search.answerCount': 'Tienes {count} movimientos de {label} ({period}).',
     'search.answerDebt': 'Saldo actual de deudas: {amount}.',
-    'search.answerAvailable': 'Dinero disponible en cuentas: {amount}.',
+    'search.answerAvailable':
+      'Disponible ahora: {amount} (efectivo + banco principal + ahorros + billeteras).',
     'search.needQuestion':
       'Escribe una pregunta primero — por ejemplo sobre café, salario o este mes.',
     'search.answerUnclear':
