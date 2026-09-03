@@ -35,6 +35,8 @@ export type Category = {
 export type Account = {
   id: string;
   nameKey: string;
+  /** Custom label for extra wallets (Nequi, Daviplata…). */
+  name?: string;
   type: AccountType;
   balance: number;
 };

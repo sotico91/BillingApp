@@ -54,14 +54,14 @@ export const translations = {
     'home.savings': 'This month’s result',
     'home.savingsCaption': 'Income − spend this month (only what you logged)',
     'home.availableInfoBody':
-      'Money you can spend right now. Main accounts are cash and your bank. Nequi, other wallets and savings are secondary pockets — a small spend can leave any of them.',
+      'Money you can spend right now. Main accounts are cash and your bank. Virtual wallets (each with its own balance) and savings are secondary pockets — a small spend can leave any of them.',
     'home.availableInfoCompare':
       'This is today’s stock, not the month in History. Pick the pocket the money actually left so that line goes down. Bonus or salary is the kind of income; it lands in the account you chose.',
     'home.availableByAccount': 'Where it is',
     'home.availablePrincipal': 'Main accounts',
-    'home.availableSecondary': 'Secondary — Nequi, wallets, savings',
+    'home.availableSecondary': 'Secondary — wallets and savings',
     'home.availableSecondaryTotal': 'In secondary pockets',
-    'home.availableSecondaryHint': 'Of that, {amount} is in Nequi / savings',
+    'home.availableSecondaryHint': 'Of that, {amount} is in wallets or savings',
     'home.availableTotal': 'Total available',
     'home.savingsInfoBody':
       'This calendar month: income minus expenses and debt payments you actually logged. Installments in Wealth stay as reminders until you register the payment — they do not inflate this number.',
@@ -323,7 +323,7 @@ export const translations = {
 
     'wealth.title': 'Wealth',
     'wealth.subtitle':
-      'Net worth = what you have in accounts minus debts. Income raises the account you chose (cash/bank/savings), not a separate “bonus” pot.',
+      'Net worth = what you have in accounts minus debts. Income raises the account you chose (cash, bank, savings or a virtual wallet), not a separate “bonus” pot.',
     'wealth.accounts': 'Accounts',
     'wealth.accountsCollapsed': '{count} accounts — tap to open',
     'wealth.assets': 'Assets',
@@ -416,7 +416,9 @@ export const translations = {
     'flow.howPaid': 'How did you pay?',
     'flow.whichAccount': 'Which account?',
     'flow.whichAccountSpend':
-      'Which pocket did it leave? Cash, savings, Nequi or another wallet — not always the wallet.',
+      'Which pocket did it leave? Cash, savings, or a virtual wallet — pick which one.',
+    'flow.walletAdd': 'Add another virtual wallet',
+    'flow.walletNamePlaceholder': 'Name (Nequi, Daviplata…)',
     'flow.whichAccountIncome': 'Which account did it land in?',
     'flow.whichAccountTo': 'To which account?',
     'flow.review': 'Does this look right?',
@@ -473,11 +475,12 @@ export const translations = {
     'account.cash': 'Cash',
     'account.bankMain': 'Main bank',
     'account.creditCard': 'Credit card',
-    'account.wallet': 'Nequi / wallet',
+    'account.wallet': 'Virtual wallet',
     'account.savings': 'Savings',
     'account.investments': 'Investments',
     'account.role.principal': 'Main',
     'account.role.secondary': 'Secondary',
+    'account.role.wallet': 'Wallet',
     'account.role.other': 'Other',
 
     'debt.mainCard': 'Main credit card',
@@ -748,14 +751,14 @@ export const translations = {
     'home.savings': 'Resultado del mes',
     'home.savingsCaption': 'Ingresos − gastos de este mes (solo lo que registraste)',
     'home.availableInfoBody':
-      'Dinero que puedes gastar ahora. Las cuentas principales son efectivo y tu banco. Nequi, otras billeteras y ahorros son bolsillos secundarios: un gasto hormiga puede salir de cualquiera.',
+      'Dinero que puedes gastar ahora. Las cuentas principales son efectivo y tu banco. Las billeteras virtuales (cada una con su saldo) y los ahorros son bolsillos secundarios: un gasto hormiga puede salir de cualquiera.',
     'home.availableInfoCompare':
       'Es el saldo de hoy, no el mes en Historial. Elige el bolsillo del que realmente salió para que esa línea baje. Bonos o salario es el tipo de ingreso; queda en la cuenta que elegiste.',
     'home.availableByAccount': 'Dónde está',
     'home.availablePrincipal': 'Cuentas principales',
-    'home.availableSecondary': 'Secundarias — Nequi, billeteras, ahorros',
+    'home.availableSecondary': 'Secundarias — billeteras y ahorros',
     'home.availableSecondaryTotal': 'En bolsillos secundarios',
-    'home.availableSecondaryHint': 'De eso, {amount} está en Nequi / ahorros',
+    'home.availableSecondaryHint': 'De eso, {amount} está en billeteras o ahorros',
     'home.availableTotal': 'Total disponible',
     'home.savingsInfoBody':
       'Este mes calendario: ingresos menos gastos y pagos de deuda que sí registraste. Las cuotas en Patrimonio son recordatorio hasta que registres el pago — no inflan este número.',
@@ -1019,7 +1022,7 @@ export const translations = {
 
     'wealth.title': 'Patrimonio',
     'wealth.subtitle':
-      'Patrimonio = lo que hay en tus cuentas menos deudas. Un ingreso sube la cuenta que elegiste (efectivo/banco/ahorro); Bonos es solo el tipo de ingreso.',
+      'Patrimonio = lo que hay en tus cuentas menos deudas. Un ingreso sube la cuenta que elegiste (efectivo, banco, ahorro o una billetera virtual). Bonos es solo el tipo de ingreso.',
     'wealth.accounts': 'Cuentas',
     'wealth.accountsCollapsed': '{count} cuentas — toca para abrir',
     'wealth.assets': 'Activos',
@@ -1114,7 +1117,9 @@ export const translations = {
     'flow.howPaid': '¿Cómo pagaste?',
     'flow.whichAccount': '¿Desde qué cuenta?',
     'flow.whichAccountSpend':
-      '¿De qué bolsillo salió? Efectivo, ahorros, Nequi u otra billetera — no siempre la billetera.',
+      '¿De qué bolsillo salió? Efectivo, ahorros o una billetera virtual — elige cuál.',
+    'flow.walletAdd': 'Agregar otra billetera virtual',
+    'flow.walletNamePlaceholder': 'Nombre (Nequi, Daviplata…)',
     'flow.whichAccountIncome': '¿En qué cuenta entró?',
     'flow.whichAccountTo': '¿A qué cuenta?',
     'flow.review': '¿Se ve bien?',
@@ -1171,11 +1176,12 @@ export const translations = {
     'account.cash': 'Efectivo',
     'account.bankMain': 'Banco principal',
     'account.creditCard': 'Tarjeta de crédito',
-    'account.wallet': 'Nequi / billetera',
+    'account.wallet': 'Billetera virtual',
     'account.savings': 'Ahorros',
     'account.investments': 'Inversiones',
     'account.role.principal': 'Principal',
     'account.role.secondary': 'Secundaria',
+    'account.role.wallet': 'Billetera',
     'account.role.other': 'Otra',
 
     'debt.mainCard': 'Tarjeta principal',

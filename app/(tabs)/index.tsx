@@ -24,6 +24,7 @@ import { palette, radii } from '@/src/theme/colors';
 import type { Transaction } from '@/src/types/finance';
 import { categoryLabel } from '@/src/utils/categoryLabel';
 import { tapFeedback } from '@/src/utils/selectFeedback';
+import { accountDisplayName } from '@/src/utils/accounts';
 import {
   toneFromExpensePressure,
   toneFromSavings,
@@ -406,7 +407,7 @@ export default function HomeScreen() {
                 {availableByAccount.map((acc) => (
                   <View key={acc.id} style={styles.availableRow}>
                     <Text style={styles.availableRowLabel}>
-                      {t(acc.nameKey as TranslationKey)}
+                      {accountDisplayName(acc, t)}
                     </Text>
                     <Text style={styles.availableRowValue}>{format(acc.balance)}</Text>
                   </View>
@@ -421,7 +422,7 @@ export default function HomeScreen() {
                 {secondaryByAccount.map((acc) => (
                   <View key={acc.id} style={styles.availableRow}>
                     <Text style={styles.availableRowLabel}>
-                      {t(acc.nameKey as TranslationKey)}
+                      {accountDisplayName(acc, t)}
                     </Text>
                     <Text style={styles.availableRowValue}>{format(acc.balance)}</Text>
                   </View>

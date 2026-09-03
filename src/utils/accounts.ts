@@ -14,14 +14,93 @@ export function accountRoleKey(
   type: AccountType
 ): Extract<
   TranslationKey,
-  'account.role.principal' | 'account.role.secondary' | 'account.role.other'
+  | 'account.role.principal'
+  | 'account.role.secondary'
+  | 'account.role.wallet'
+  | 'account.role.other'
 > {
   if (isPrincipalLiquid(type)) return 'account.role.principal';
-  if (isSecondaryLiquid(type)) return 'account.role.secondary';
+  if (type === 'wallet') return 'account.role.wallet';
+  if (type === 'savings') return 'account.role.secondary';
   return 'account.role.other';
 }
 
-/** Add newly introduced default accounts (e.g. Nequi/wallet) without wiping balances. */
+export function accountDisplayName(
+  acc: Pick<Account, 'nameKey' | 'name'>,
+  t: (key: TranslationKey) => string
+): string {
+  const custom = acc.name?.trim();
+  if (custom) return custom;
+  const label = t(acc.nameKey as TranslationKey);
+  return label && label !== acc.nameKey ? label : acc.nameKey;
+}
+
+/** Common Colombian wallets — tap to add; each keeps its own balance. */
+export const WALLET_PRESETS = ['Nequi', 'Daviplata'] as const;
+
+export function slugWalletId(name: string): string {
+  const slug = name
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 40);
+  return `wallet-${slug || 'custom'}`;
+}
+
+export function findWalletByName(accounts: Account[], name: string): Account | undefined {
+  const wanted = name.trim().toLowerCase();
+  if (!wanted) return undefined;
+  const id = slugWalletId(name);
+  return accounts.find(
+    (a) =>
+      a.type === 'wallet' &&
+      (a.id === id || (a.name ?? '').trim().toLowerCase() === wanted)
+  );
+}
+
+export function ensureWalletAccount(
+  accounts: Account[],
+  name: string
+): { accounts: Account[]; account: Account; created: boolean } {
+  const trimmed = name.trim();
+  const existing = findWalletByName(accounts, trimmed);
+  if (existing) return { accounts, account: existing, created: false };
+
+  // Empty placeholder becomes the first named wallet so we don't leave a duplicate $0 pocket.
+  const unnamedDefault = accounts.find(
+    (a) =>
+      a.id === 'wallet' &&
+      a.type === 'wallet' &&
+      !(a.name ?? '').trim() &&
+      a.balance === 0
+  );
+  if (unnamedDefault) {
+    const account: Account = { ...unnamedDefault, name: trimmed };
+    return {
+      accounts: accounts.map((a) => (a.id === unnamedDefault.id ? account : a)),
+      account,
+      created: true,
+    };
+  }
+
+  let id = slugWalletId(trimmed);
+  if (accounts.some((a) => a.id === id)) {
+    id = `${id}-${Date.now().toString(36)}`;
+  }
+  const account: Account = {
+    id,
+    nameKey: 'account.wallet',
+    name: trimmed,
+    type: 'wallet',
+    balance: 0,
+  };
+  return { accounts: [...accounts, account], account, created: true };
+}
+
+/** Add newly introduced default accounts (e.g. virtual wallet) without wiping balances. */
 export function mergeDefaultAccounts(stored: Account[] | null | undefined): {
   accounts: Account[];
   changed: boolean;
@@ -57,7 +136,7 @@ export function defaultIncomeAccountId(accounts: Account[]): string {
   return accounts.find((a) => a.type === 'bank')?.id ?? accounts[0]?.id ?? 'bank-main';
 }
 
-/** Cash, savings, Nequi/wallets, or the main bank — wherever this spend actually left. */
+/** Cash, savings, virtual wallets, or the main bank — wherever this spend actually left. */
 export function isSpendableLiquid(type: AccountType): boolean {
   return (
     type === 'cash' ||
@@ -106,5 +185,6 @@ export function mapLiquidAccounts(
     type: a.type,
     balance: a.balance,
     nameKey: a.nameKey,
+    name: a.name,
   }));
 }

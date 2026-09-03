@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 
+import { WalletQuickAdd } from '@/src/components/AccountChoiceChips';
 import { CollapsibleSection } from '@/src/components/CollapsibleSection';
 import { FadeInBlock } from '@/src/components/FadeInBlock';
 import { MoneyText } from '@/src/components/MoneyText';
@@ -25,7 +26,7 @@ import { palette, radii } from '@/src/theme/colors';
 import type { Debt } from '@/src/types/finance';
 import { categoryLabel } from '@/src/utils/categoryLabel';
 import { tapFeedback } from '@/src/utils/selectFeedback';
-import { accountRoleKey } from '@/src/utils/accounts';
+import { accountRoleKey, accountDisplayName } from '@/src/utils/accounts';
 
 function clampPayDay(raw: number): number | null {
   if (!Number.isFinite(raw)) return null;
@@ -221,7 +222,7 @@ export default function WealthScreen() {
             summary={t('wealth.accountsCollapsed', { count: accounts.length })}>
             {accounts.map((acc) => (
               <View key={acc.id} style={styles.card}>
-                <Text style={styles.cardTitle}>{t(acc.nameKey as TranslationKey)}</Text>
+                <Text style={styles.cardTitle}>{accountDisplayName(acc, t)}</Text>
                 <Text style={styles.meta}>{t(accountRoleKey(acc.type))}</Text>
                 <MoneyText
                   style={[
@@ -234,6 +235,7 @@ export default function WealthScreen() {
                 </MoneyText>
               </View>
             ))}
+            <WalletQuickAdd />
           </CollapsibleSection>
         </FadeInBlock>
 

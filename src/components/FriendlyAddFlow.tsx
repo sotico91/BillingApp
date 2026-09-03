@@ -35,6 +35,7 @@ import { InlineSubAdd } from '@/src/components/InlineSubAdd';
 import { useKeyboardVisible } from '@/src/hooks/useKeyboardVisible';
 import type { SavedMovement } from '@/src/components/ExpenseForm';
 import {
+  accountDisplayName,
   defaultIncomeAccountId,
   defaultSpendAccountId,
   defaultTransferDestinationId,
@@ -653,17 +654,21 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
                     ? t('flow.summaryAccountIncome')
                     : t('flow.summaryAccount')
                 }
-                value={t(
-                  (accounts.find((a) => a.id === accountId)?.nameKey ??
-                    'account.cash') as TranslationKey
+                value={accountDisplayName(
+                  accounts.find((a) => a.id === accountId) ?? {
+                    nameKey: 'account.cash',
+                  },
+                  t
                 )}
               />
               {intent === 'move' ? (
                 <SummaryLine
                   label={t('flow.summaryAccountTo')}
-                  value={t(
-                    (accounts.find((a) => a.id === toAccountId)?.nameKey ??
-                      'account.savings') as TranslationKey
+                  value={accountDisplayName(
+                    accounts.find((a) => a.id === toAccountId) ?? {
+                      nameKey: 'account.savings',
+                    },
+                    t
                   )}
                 />
               ) : null}

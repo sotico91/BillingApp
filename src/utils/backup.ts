@@ -89,6 +89,7 @@ function accountLabel(
   if (!accountId) return '';
   const acc = accounts.find((a) => a.id === accountId);
   if (!acc) return '';
+  if (acc.name?.trim()) return acc.name.trim();
   try {
     const label = t(acc.nameKey as TranslationKey);
     if (label && label !== acc.nameKey) return label;

@@ -52,7 +52,7 @@ import {
   sumByType,
   type PredictedSpend,
 } from '@/src/utils/financeMath';
-import { mapLiquidAccounts, mergeDefaultAccounts } from '@/src/utils/accounts';
+import { mapLiquidAccounts, mergeDefaultAccounts, ensureWalletAccount } from '@/src/utils/accounts';
 import { computeNetWorth } from '@/src/utils/netWorth';
 import {
   filterByPersonScope,
@@ -131,6 +131,7 @@ type FinanceContextValue = {
     debts: Debt[];
     subscriptions: Subscription[];
   }) => Promise<void>;
+  addWallet: (name: string) => Promise<Account | null>;
   updateBudget: (categoryId: string, limit: number) => Promise<void>;
   removeBudget: (categoryId: string) => Promise<void>;
   transactionsForPeriod: (period: Period, scope?: PersonScope) => Transaction[];
@@ -155,14 +156,16 @@ type FinanceContextValue = {
     type: Account['type'];
     balance: number;
     nameKey: string;
+    name?: string;
   }>;
-  /** Secondary pockets (Nequi / wallet / savings) — also spendable, not the main bank. */
+  /** Secondary pockets (virtual wallets / savings) — also spendable, not the main bank. */
   secondaryCash: number;
   secondaryByAccount: Array<{
     id: string;
     type: Account['type'];
     balance: number;
     nameKey: string;
+    name?: string;
   }>;
   netWorth: { assets: number; liabilities: number; net: number };
   budgetStatus: Array<{
@@ -419,6 +422,20 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       await saveDebts(next);
     },
     [debts]
+  );
+
+  const addWallet = useCallback(
+    async (name: string) => {
+      const trimmed = name.trim();
+      if (!trimmed) return null;
+      const { accounts: next, account } = ensureWalletAccount(accounts, trimmed);
+      if (next !== accounts) {
+        setAccounts(next);
+        await saveAccounts(next);
+      }
+      return account;
+    },
+    [accounts]
   );
 
   const canEditTransaction = useCallback(
@@ -743,6 +760,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       addDebt,
       updateDebt,
       removeDebt,
+      addWallet,
       updateTransaction,
       removeTransaction,
       canEditTransaction,
@@ -780,6 +798,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       addDebt,
       updateDebt,
       removeDebt,
+      addWallet,
       updateTransaction,
       removeTransaction,
       canEditTransaction,

@@ -1,11 +1,24 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import {
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 
+import { useFinance } from '@/src/hooks/useFinance';
 import { useMoney } from '@/src/hooks/useMoney';
 import { useLanguage } from '@/src/i18n/LanguageContext';
-import type { TranslationKey } from '@/src/i18n/translations';
 import { palette, radii } from '@/src/theme/colors';
 import type { Account } from '@/src/types/finance';
-import { accountRoleKey } from '@/src/utils/accounts';
+import {
+  WALLET_PRESETS,
+  accountDisplayName,
+  accountRoleKey,
+  findWalletByName,
+} from '@/src/utils/accounts';
 import { tapFeedback } from '@/src/utils/selectFeedback';
 
 type Props = {
@@ -13,52 +26,143 @@ type Props = {
   selectedId: string;
   onSelect: (id: string) => void;
   variant?: 'chip' | 'card';
+  allowAddWallet?: boolean;
 };
 
-/** Account picker that shows principal vs secondary and the live balance. */
+/** Account picker: principal vs wallets/savings, plus one-tap extra wallets. */
 export function AccountChoiceChips({
   accounts,
   selectedId,
   onSelect,
   variant = 'chip',
+  allowAddWallet = true,
 }: Props) {
   const { t } = useLanguage();
   const { format } = useMoney();
   const card = variant === 'card';
 
   return (
-    <View style={styles.wrap}>
-      {accounts.map((acc) => {
-        const on = acc.id === selectedId;
-        return (
-          <Pressable
-            key={acc.id}
-            onPress={() => {
-              tapFeedback();
-              onSelect(acc.id);
-            }}
-            style={[
-              card ? styles.card : styles.chip,
-              on && (card ? styles.cardOn : styles.chipOn),
-            ]}>
-            <Text
+    <View style={styles.block}>
+      <View style={styles.wrap}>
+        {accounts.map((acc) => {
+          const on = acc.id === selectedId;
+          return (
+            <Pressable
+              key={acc.id}
+              onPress={() => {
+                tapFeedback();
+                onSelect(acc.id);
+              }}
               style={[
-                card ? styles.cardName : styles.chipName,
-                on && styles.onText,
+                card ? styles.card : styles.chip,
+                on && (card ? styles.cardOn : styles.chipOn),
               ]}>
-              {t(acc.nameKey as TranslationKey)}
-            </Text>
-            <Text style={[styles.meta, on && styles.onText]}>
-              {t(accountRoleKey(acc.type))} · {format(acc.balance)}
-            </Text>
-          </Pressable>
-        );
-      })}
+              <Text
+                style={[
+                  card ? styles.cardName : styles.chipName,
+                  on && styles.onText,
+                ]}>
+                {accountDisplayName(acc, t)}
+              </Text>
+              <Text style={[styles.meta, on && styles.onText]}>
+                {t(accountRoleKey(acc.type))} · {format(acc.balance)}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+
+      {allowAddWallet ? (
+        <WalletQuickAdd onAdded={onSelect} mode="presets" />
+      ) : null}
+    </View>
+  );
+}
+
+export function WalletQuickAdd({
+  onAdded,
+  mode = 'full',
+}: {
+  onAdded?: (id: string) => void;
+  mode?: 'presets' | 'full';
+}) {
+  const { t } = useLanguage();
+  const { accounts, addWallet } = useFinance();
+  const [custom, setCustom] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  async function createWallet(name: string) {
+    const trimmed = name.trim();
+    if (!trimmed || busy) return;
+    setBusy(true);
+    try {
+      const acc = await addWallet(trimmed);
+      if (!acc) return;
+      tapFeedback();
+      setCustom('');
+      onAdded?.(acc.id);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const unusedPresets = WALLET_PRESETS.filter(
+    (name) => !findWalletByName(accounts, name)
+  );
+
+  if (mode === 'presets' && unusedPresets.length === 0) return null;
+
+  return (
+    <View style={styles.addBlock}>
+      {unusedPresets.length > 0 ? (
+        <View style={styles.wrap}>
+          {unusedPresets.map((name) => (
+            <Pressable
+              key={name}
+              onPress={() => void createWallet(name)}
+              disabled={busy}
+              style={styles.preset}>
+              <Text style={styles.presetText}>+ {name}</Text>
+            </Pressable>
+          ))}
+        </View>
+      ) : null}
+      {mode === 'full' ? (
+        <>
+          <Text style={styles.addLabel}>{t('flow.walletAdd')}</Text>
+          <View style={styles.row}>
+            <TextInput
+              value={custom}
+              onChangeText={setCustom}
+              placeholder={t('flow.walletNamePlaceholder')}
+              placeholderTextColor={palette.inkSoft}
+              style={styles.input}
+              editable={!busy}
+              onSubmitEditing={() => void createWallet(custom)}
+              returnKeyType="done"
+            />
+            <Pressable
+              onPress={() => void createWallet(custom)}
+              disabled={busy || !custom.trim()}
+              style={[
+                styles.addBtn,
+                (!custom.trim() || busy) && styles.addBtnDisabled,
+              ]}>
+              {busy ? (
+                <ActivityIndicator size="small" color={palette.white} />
+              ) : (
+                <Text style={styles.addBtnText}>{t('flow.addSubButton')}</Text>
+              )}
+            </Pressable>
+          </View>
+        </>
+      ) : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  block: { gap: 10 },
   wrap: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -107,6 +211,57 @@ const styles = StyleSheet.create({
     color: palette.inkMuted,
   },
   onText: {
+    color: palette.white,
+  },
+  addBlock: { gap: 8 },
+  addLabel: {
+    fontFamily: 'DMSans_500Medium',
+    fontSize: 13,
+    color: palette.inkMuted,
+  },
+  preset: {
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: palette.border,
+    borderRadius: radii.md,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: '#fff',
+  },
+  presetText: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 13,
+    color: palette.brand,
+  },
+  row: {
+    flexDirection: 'row',
+    gap: 8,
+    alignItems: 'center',
+  },
+  input: {
+    flex: 1,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
+    color: palette.ink,
+    borderWidth: 1,
+    borderColor: palette.border,
+    borderRadius: radii.md,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    backgroundColor: '#F7FAFC',
+  },
+  addBtn: {
+    backgroundColor: palette.accent,
+    borderRadius: radii.md,
+    paddingHorizontal: 14,
+    paddingVertical: 11,
+    minWidth: 72,
+    alignItems: 'center',
+  },
+  addBtnDisabled: { opacity: 0.5 },
+  addBtnText: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 14,
     color: palette.white,
   },
 });
