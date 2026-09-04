@@ -206,7 +206,7 @@ export const translations = {
       'Add Face ID, a fingerprint or a phone PIN in iPhone Settings, then try again.',
     'lock.enabledTitle': 'Face ID is on',
     'lock.enabledBody':
-      'When you leave and come back, BillingApp will ask for Face ID. It does not use your phone PIN. Turn it off anytime from ⋯.',
+      'If you close the app, it asks for Face ID or your fingerprint next time. Quick hops under a minute stay open. Turn it off anytime from ⋯.',
     'lock.disabledTitle': 'Face ID is off',
     'lock.disabledBody':
       'The app opens right away, with no Face ID. Turn it on again anytime from ⋯.',
@@ -924,7 +924,7 @@ export const translations = {
       'Primero configura Face ID, huella o un PIN en Ajustes del iPhone e inténtalo de nuevo.',
     'lock.enabledTitle': 'Face ID activado',
     'lock.enabledBody':
-      'Si sales y vuelves a la app, te pedirá Face ID. No usa el PIN del teléfono. Para quitarlo, entra otra vez a ⋯.',
+      'Si cierras la app, al abrirla pide Face ID o huella. Si solo sales un momento (menos de un minuto), sigues dentro. Para quitarlo, entra otra vez a ⋯.',
     'lock.disabledTitle': 'Face ID desactivado',
     'lock.disabledBody':
       'La app se abre de una vez, sin Face ID. Puedes activarlo otra vez cuando quieras en ⋯.',

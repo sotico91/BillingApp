@@ -9,22 +9,33 @@ import { authenticateAppLock } from '@/src/utils/appLock';
 import { tapFeedback } from '@/src/utils/selectFeedback';
 
 const FACE_ID_RESUME_MS = 250;
+/** Like Nequi/banks: stay unlocked if you hop out for less than this. */
+const SESSION_GRACE_MS = 60_000;
+
+/**
+ * Lives only in this JS process. Killing the app drops it, so the next
+ * launch always asks for Face ID / fingerprint even if it was under 1 min.
+ */
+let liveUnlocked = false;
 
 export function AppLockOverlay() {
   const { t } = useLanguage();
   const { settings, ready } = useSettings();
-  const [unlocked, setUnlocked] = useState(false);
+  const [unlocked, setUnlocked] = useState(liveUnlocked);
   const [obscured, setObscured] = useState(false);
   const [showTapHint, setShowTapHint] = useState(false);
-  const unlockedRef = useRef(false);
+  const unlockedRef = useRef(liveUnlocked);
   const promptingRef = useRef(false);
   const waitForTapRef = useRef(false);
   const autoPromptedRef = useRef(false);
   const resumeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const backgroundedAtRef = useRef<number | null>(null);
 
   const shouldLock = ready && settings.onboardingDone && settings.appLockEnabled;
   const showUnlock = shouldLock && !unlocked;
-  const visible = showUnlock || (shouldLock && unlocked && obscured);
+  const waitingForSettings = !ready;
+  const visible =
+    waitingForSettings || showUnlock || (shouldLock && unlocked && obscured);
 
   const clearResumeTimer = useCallback(() => {
     if (resumeTimerRef.current) {
@@ -34,11 +45,14 @@ export function AppLockOverlay() {
   }, []);
 
   const lockNow = useCallback(() => {
+    liveUnlocked = false;
     waitForTapRef.current = false;
     autoPromptedRef.current = false;
     unlockedRef.current = false;
+    backgroundedAtRef.current = null;
     setShowTapHint(false);
     setUnlocked(false);
+    setObscured(true);
   }, []);
 
   const tryUnlock = useCallback(
@@ -56,6 +70,7 @@ export function AppLockOverlay() {
           t('lock.usePasscode')
         );
         if (result.ok) {
+          liveUnlocked = true;
           waitForTapRef.current = false;
           unlockedRef.current = true;
           setUnlocked(true);
@@ -78,9 +93,11 @@ export function AppLockOverlay() {
   useEffect(() => {
     if (!ready) return;
     if (!settings.onboardingDone || !settings.appLockEnabled) {
+      liveUnlocked = true;
       unlockedRef.current = true;
       waitForTapRef.current = false;
       autoPromptedRef.current = false;
+      backgroundedAtRef.current = null;
       setUnlocked(true);
       setObscured(false);
       setShowTapHint(false);
@@ -100,13 +117,29 @@ export function AppLockOverlay() {
       if (state === 'background') {
         clearResumeTimer();
         setObscured(true);
-        lockNow();
+        if (backgroundedAtRef.current == null) {
+          backgroundedAtRef.current = Date.now();
+        }
         return;
       }
 
       if (state === 'active') {
-        setObscured(false);
-        if (unlockedRef.current) return;
+        const awayMs =
+          backgroundedAtRef.current != null
+            ? Date.now() - backgroundedAtRef.current
+            : 0;
+        backgroundedAtRef.current = null;
+
+        if (unlockedRef.current && awayMs >= SESSION_GRACE_MS) {
+          lockNow();
+        }
+
+        if (unlockedRef.current) {
+          setObscured(false);
+          return;
+        }
+
+        setObscured(true);
         clearResumeTimer();
         resumeTimerRef.current = setTimeout(() => {
           resumeTimerRef.current = null;
