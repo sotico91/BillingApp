@@ -331,6 +331,17 @@ export const translations = {
     'wealth.net': 'Net worth',
     'wealth.accountOwes': 'You owe {amount}',
     'wealth.accountHas': '{amount}',
+    'wealth.walletRename': 'Rename',
+    'wealth.walletRenameSave': 'Save name',
+    'wealth.walletDelete': 'Remove wallet',
+    'wealth.walletDeleteNeedEmpty':
+      'Move the money to another account first. Then you can remove this wallet.',
+    'wealth.walletDeleteProtected':
+      'This is the default wallet slot — change the name instead of deleting it.',
+    'wealth.walletNameNeed': 'Type a name for this wallet.',
+    'wealth.walletNameTaken': 'You already have a wallet with that name.',
+    'wealth.walletManageHint':
+      'Typed the wrong wallet name? Rename it here. Extra wallets with $0 can be removed.',
     'wealth.debts': 'Installments & credit',
     'wealth.debtsEmptyShort': 'No installments yet',
     'wealth.debtsCollapsed': '{count} · {amount}/mo fixed — tap to open',
@@ -418,7 +429,9 @@ export const translations = {
     'flow.whichAccountSpend':
       'Pocket for this habit — we’ll reuse the last one if it still has money.',
     'flow.walletAdd': 'Add another virtual wallet',
-    'flow.walletNamePlaceholder': 'Name (Nequi, Daviplata…)',
+    'flow.walletAddHint':
+      'You can have as many as you use. Spend from each one, or move money to cash, bank, savings, or another wallet.',
+    'flow.walletNamePlaceholder': 'Wallet name',
     'flow.whichAccountIncome': 'Which account did it land in?',
     'flow.whichAccountTo': 'To which account?',
     'flow.review': 'Does this look right?',
@@ -1036,6 +1049,17 @@ export const translations = {
     'wealth.net': 'Patrimonio neto',
     'wealth.accountOwes': 'Debes {amount}',
     'wealth.accountHas': '{amount}',
+    'wealth.walletRename': 'Cambiar nombre',
+    'wealth.walletRenameSave': 'Guardar nombre',
+    'wealth.walletDelete': 'Eliminar billetera',
+    'wealth.walletDeleteNeedEmpty':
+      'Primero mueve el dinero a otra cuenta. Después sí puedes quitar esta billetera.',
+    'wealth.walletDeleteProtected':
+      'Esa es la billetera de base: cámbiale el nombre, no la borres.',
+    'wealth.walletNameNeed': 'Escribe un nombre para esta billetera.',
+    'wealth.walletNameTaken': 'Ya tienes una billetera con ese nombre.',
+    'wealth.walletManageHint':
+      'Si te equivocaste en el nombre, cámbialo aquí. Las billeteras extra en $0 se pueden eliminar.',
     'wealth.debts': 'Cuotas y créditos',
     'wealth.debtsEmptyShort': 'Sin cuotas aún',
     'wealth.debtsCollapsed': '{count} · {amount}/mes fijos — toca para abrir',
@@ -1125,7 +1149,9 @@ export const translations = {
     'flow.whichAccountSpend':
       'Bolsillo de este hábito — reusamos el último si aún tiene saldo.',
     'flow.walletAdd': 'Agregar otra billetera virtual',
-    'flow.walletNamePlaceholder': 'Nombre (Nequi, Daviplata…)',
+    'flow.walletAddHint':
+      'Puedes tener varias. Gasta desde cada una o mueve el dinero a efectivo, banco, ahorros u otra billetera.',
+    'flow.walletNamePlaceholder': 'Nombre de la billetera',
     'flow.whichAccountIncome': '¿En qué cuenta entró?',
     'flow.whichAccountTo': '¿A qué cuenta?',
     'flow.review': '¿Se ve bien?',

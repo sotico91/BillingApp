@@ -72,19 +72,15 @@ export function AccountChoiceChips({
         })}
       </View>
 
-      {allowAddWallet ? (
-        <WalletQuickAdd onAdded={onSelect} mode="presets" />
-      ) : null}
+      {allowAddWallet ? <WalletQuickAdd onAdded={onSelect} /> : null}
     </View>
   );
 }
 
 export function WalletQuickAdd({
   onAdded,
-  mode = 'full',
 }: {
   onAdded?: (id: string) => void;
-  mode?: 'presets' | 'full';
 }) {
   const { t } = useLanguage();
   const { accounts, addWallet } = useFinance();
@@ -110,8 +106,6 @@ export function WalletQuickAdd({
     (name) => !findWalletByName(accounts, name)
   );
 
-  if (mode === 'presets' && unusedPresets.length === 0) return null;
-
   return (
     <View style={styles.addBlock}>
       {unusedPresets.length > 0 ? (
@@ -127,36 +121,33 @@ export function WalletQuickAdd({
           ))}
         </View>
       ) : null}
-      {mode === 'full' ? (
-        <>
-          <Text style={styles.addLabel}>{t('flow.walletAdd')}</Text>
-          <View style={styles.row}>
-            <TextInput
-              value={custom}
-              onChangeText={setCustom}
-              placeholder={t('flow.walletNamePlaceholder')}
-              placeholderTextColor={palette.inkSoft}
-              style={styles.input}
-              editable={!busy}
-              onSubmitEditing={() => void createWallet(custom)}
-              returnKeyType="done"
-            />
-            <Pressable
-              onPress={() => void createWallet(custom)}
-              disabled={busy || !custom.trim()}
-              style={[
-                styles.addBtn,
-                (!custom.trim() || busy) && styles.addBtnDisabled,
-              ]}>
-              {busy ? (
-                <ActivityIndicator size="small" color={palette.white} />
-              ) : (
-                <Text style={styles.addBtnText}>{t('flow.addSubButton')}</Text>
-              )}
-            </Pressable>
-          </View>
-        </>
-      ) : null}
+      <Text style={styles.addLabel}>{t('flow.walletAdd')}</Text>
+      <Text style={styles.addHint}>{t('flow.walletAddHint')}</Text>
+      <View style={styles.row}>
+        <TextInput
+          value={custom}
+          onChangeText={setCustom}
+          placeholder={t('flow.walletNamePlaceholder')}
+          placeholderTextColor={palette.inkSoft}
+          style={styles.input}
+          editable={!busy}
+          onSubmitEditing={() => void createWallet(custom)}
+          returnKeyType="done"
+        />
+        <Pressable
+          onPress={() => void createWallet(custom)}
+          disabled={busy || !custom.trim()}
+          style={[
+            styles.addBtn,
+            (!custom.trim() || busy) && styles.addBtnDisabled,
+          ]}>
+          {busy ? (
+            <ActivityIndicator size="small" color={palette.white} />
+          ) : (
+            <Text style={styles.addBtnText}>{t('flow.addSubButton')}</Text>
+          )}
+        </Pressable>
+      </View>
     </View>
   );
 }
@@ -218,6 +209,12 @@ const styles = StyleSheet.create({
     fontFamily: 'DMSans_500Medium',
     fontSize: 13,
     color: palette.inkMuted,
+  },
+  addHint: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 12,
+    color: palette.inkSoft,
+    lineHeight: 16,
   },
   preset: {
     borderWidth: 1,

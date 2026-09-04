@@ -52,7 +52,7 @@ import {
   sumByType,
   type PredictedSpend,
 } from '@/src/utils/financeMath';
-import { mapLiquidAccounts, mergeDefaultAccounts, ensureWalletAccount, resolveSpendAccountId, settleLiquidOverdrafts } from '@/src/utils/accounts';
+import { mapLiquidAccounts, mergeDefaultAccounts, ensureWalletAccount, renameWalletAccount, removeWalletAccount, resolveSpendAccountId, settleLiquidOverdrafts } from '@/src/utils/accounts';
 import { computeNetWorth } from '@/src/utils/netWorth';
 import {
   filterByPersonScope,
@@ -132,6 +132,13 @@ type FinanceContextValue = {
     subscriptions: Subscription[];
   }) => Promise<void>;
   addWallet: (name: string) => Promise<Account | null>;
+  renameWallet: (
+    id: string,
+    name: string
+  ) => Promise<{ account: Account } | { error: 'missing' | 'empty' | 'duplicate' }>;
+  removeWallet: (
+    id: string
+  ) => Promise<{ ok: true } | { error: 'missing' | 'protected' | 'hasBalance' }>;
   updateBudget: (categoryId: string, limit: number) => Promise<void>;
   removeBudget: (categoryId: string) => Promise<void>;
   transactionsForPeriod: (period: Period, scope?: PersonScope) => Transaction[];
@@ -446,6 +453,28 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
         await saveAccounts(next);
       }
       return account;
+    },
+    [accounts]
+  );
+
+  const renameWallet = useCallback(
+    async (id: string, name: string) => {
+      const result = renameWalletAccount(accounts, id, name);
+      if ('error' in result) return result;
+      setAccounts(result.accounts);
+      await saveAccounts(result.accounts);
+      return { account: result.account };
+    },
+    [accounts]
+  );
+
+  const removeWallet = useCallback(
+    async (id: string) => {
+      const result = removeWalletAccount(accounts, id);
+      if ('error' in result) return result;
+      setAccounts(result.accounts);
+      await saveAccounts(result.accounts);
+      return { ok: true as const };
     },
     [accounts]
   );
@@ -788,6 +817,8 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       updateDebt,
       removeDebt,
       addWallet,
+      renameWallet,
+      removeWallet,
       updateTransaction,
       removeTransaction,
       canEditTransaction,
@@ -826,6 +857,8 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       updateDebt,
       removeDebt,
       addWallet,
+      renameWallet,
+      removeWallet,
       updateTransaction,
       removeTransaction,
       canEditTransaction,

@@ -35,7 +35,7 @@ export function accountDisplayName(
   return label && label !== acc.nameKey ? label : acc.nameKey;
 }
 
-/** Common Colombian wallets — tap to add; each keeps its own balance. */
+/** One-tap shortcuts. Any other name is a separate wallet with its own balance. */
 export const WALLET_PRESETS = ['Nequi', 'Daviplata'] as const;
 
 export function slugWalletId(name: string): string {
@@ -98,6 +98,41 @@ export function ensureWalletAccount(
     balance: 0,
   };
   return { accounts: [...accounts, account], account, created: true };
+}
+
+export function isRemovableWallet(acc: Pick<Account, 'id' | 'type'>): boolean {
+  return acc.type === 'wallet' && acc.id !== 'wallet';
+}
+
+export function renameWalletAccount(
+  accounts: Account[],
+  id: string,
+  name: string
+):
+  | { accounts: Account[]; account: Account }
+  | { error: 'missing' | 'empty' | 'duplicate' } {
+  const trimmed = name.trim();
+  if (!trimmed) return { error: 'empty' };
+  const current = accounts.find((a) => a.id === id);
+  if (!current || current.type !== 'wallet') return { error: 'missing' };
+  const clash = findWalletByName(accounts, trimmed);
+  if (clash && clash.id !== id) return { error: 'duplicate' };
+  const account = { ...current, name: trimmed };
+  return {
+    accounts: accounts.map((a) => (a.id === id ? account : a)),
+    account,
+  };
+}
+
+export function removeWalletAccount(
+  accounts: Account[],
+  id: string
+): { accounts: Account[] } | { error: 'missing' | 'protected' | 'hasBalance' } {
+  const current = accounts.find((a) => a.id === id);
+  if (!current || current.type !== 'wallet') return { error: 'missing' };
+  if (!isRemovableWallet(current)) return { error: 'protected' };
+  if (Math.abs(current.balance) >= 0.01) return { error: 'hasBalance' };
+  return { accounts: accounts.filter((a) => a.id !== id) };
 }
 
 /** Add newly introduced default accounts (e.g. virtual wallet) without wiping balances. */

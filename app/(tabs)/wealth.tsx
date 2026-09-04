@@ -26,7 +26,11 @@ import { palette, radii } from '@/src/theme/colors';
 import type { Debt } from '@/src/types/finance';
 import { categoryLabel } from '@/src/utils/categoryLabel';
 import { tapFeedback } from '@/src/utils/selectFeedback';
-import { accountRoleKey, accountDisplayName } from '@/src/utils/accounts';
+import {
+  accountRoleKey,
+  accountDisplayName,
+  isRemovableWallet,
+} from '@/src/utils/accounts';
 
 function clampPayDay(raw: number): number | null {
   if (!Number.isFinite(raw)) return null;
@@ -55,6 +59,8 @@ export default function WealthScreen() {
     addDebt,
     updateDebt,
     removeDebt,
+    renameWallet,
+    removeWallet,
     updateBudget,
     transactionsForPeriod,
     budgetStatus,
@@ -70,6 +76,9 @@ export default function WealthScreen() {
   const [rate, setRate] = useState('');
   const [payDay, setPayDay] = useState('1');
   const [saving, setSaving] = useState(false);
+  const [editingWalletId, setEditingWalletId] = useState<string | null>(null);
+  const [walletNameDraft, setWalletNameDraft] = useState('');
+  const [savingWallet, setSavingWallet] = useState(false);
 
   const monthTx = transactionsForPeriod('mes', 'mine');
 
@@ -191,6 +200,66 @@ export default function WealthScreen() {
     ]);
   }
 
+  function startRenameWallet(acc: { id: string; name?: string; nameKey: string }) {
+    tapFeedback();
+    setAccountsOpen(true);
+    setEditingWalletId(acc.id);
+    setWalletNameDraft(accountDisplayName(acc, t));
+  }
+
+  async function handleSaveWalletName() {
+    if (!editingWalletId || savingWallet) return;
+    setSavingWallet(true);
+    try {
+      const result = await renameWallet(editingWalletId, walletNameDraft);
+      if ('error' in result) {
+        Alert.alert(
+          t('wealth.walletRename'),
+          result.error === 'duplicate'
+            ? t('wealth.walletNameTaken')
+            : t('wealth.walletNameNeed')
+        );
+        return;
+      }
+      setEditingWalletId(null);
+      setWalletNameDraft('');
+    } finally {
+      setSavingWallet(false);
+    }
+  }
+
+  function confirmRemoveWallet(id: string, label: string, balance: number) {
+    if (Math.abs(balance) >= 0.01) {
+      Alert.alert(t('wealth.walletDelete'), t('wealth.walletDeleteNeedEmpty'));
+      return;
+    }
+    Alert.alert(t('wealth.walletDelete'), label, [
+      { text: t('history.cancel'), style: 'cancel' },
+      {
+        text: t('wealth.walletDelete'),
+        style: 'destructive',
+        onPress: () => {
+          void (async () => {
+            const result = await removeWallet(id);
+            if ('error' in result) {
+              Alert.alert(
+                t('wealth.walletDelete'),
+                result.error === 'hasBalance'
+                  ? t('wealth.walletDeleteNeedEmpty')
+                  : t('wealth.walletDeleteProtected')
+              );
+              return;
+            }
+            if (editingWalletId === id) {
+              setEditingWalletId(null);
+              setWalletNameDraft('');
+            }
+          })();
+        },
+      },
+    ]);
+  }
+
   return (
     <ScreenBackground>
       <ScrollView
@@ -220,21 +289,93 @@ export default function WealthScreen() {
             open={accountsOpen}
             onToggle={() => setAccountsOpen((v) => !v)}
             summary={t('wealth.accountsCollapsed', { count: accounts.length })}>
-            {accounts.map((acc) => (
-              <View key={acc.id} style={styles.card}>
-                <Text style={styles.cardTitle}>{accountDisplayName(acc, t)}</Text>
-                <Text style={styles.meta}>{t(accountRoleKey(acc.type))}</Text>
-                <MoneyText
-                  style={[
-                    styles.amount,
-                    acc.balance < 0 ? styles.amountDebt : null,
-                  ]}>
-                  {acc.balance < 0
-                    ? t('wealth.accountOwes', { amount: format(Math.abs(acc.balance)) })
-                    : format(acc.balance)}
-                </MoneyText>
-              </View>
-            ))}
+            {accounts.map((acc) => {
+              const isWallet = acc.type === 'wallet';
+              const renaming = editingWalletId === acc.id;
+              const label = accountDisplayName(acc, t);
+              return (
+                <View
+                  key={acc.id}
+                  style={[styles.card, renaming && styles.cardEditing]}>
+                  <View style={styles.sectionRow}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.cardTitle}>{label}</Text>
+                      <Text style={styles.meta}>{t(accountRoleKey(acc.type))}</Text>
+                    </View>
+                    {isWallet ? (
+                      <View style={styles.cardActions}>
+                        <Pressable onPress={() => startRenameWallet(acc)}>
+                          <Text style={styles.editText}>{t('wealth.walletRename')}</Text>
+                        </Pressable>
+                        {isRemovableWallet(acc) ? (
+                          <Pressable
+                            onPress={() =>
+                              confirmRemoveWallet(acc.id, label, acc.balance)
+                            }>
+                            <Text style={styles.deleteText}>
+                              {t('wealth.walletDelete')}
+                            </Text>
+                          </Pressable>
+                        ) : null}
+                      </View>
+                    ) : null}
+                  </View>
+                  <MoneyText
+                    style={[
+                      styles.amount,
+                      acc.balance < 0 ? styles.amountDebt : null,
+                    ]}>
+                    {acc.balance < 0
+                      ? t('wealth.accountOwes', { amount: format(Math.abs(acc.balance)) })
+                      : format(acc.balance)}
+                  </MoneyText>
+                  {renaming ? (
+                    <View style={styles.walletRename}>
+                      <TextInput
+                        value={walletNameDraft}
+                        onChangeText={setWalletNameDraft}
+                        placeholder={t('flow.walletNamePlaceholder')}
+                        placeholderTextColor={palette.inkSoft}
+                        style={styles.input}
+                        autoFocus
+                        onSubmitEditing={() => void handleSaveWalletName()}
+                        returnKeyType="done"
+                      />
+                      <View style={styles.formActions}>
+                        <Pressable
+                          onPress={() => {
+                            tapFeedback();
+                            setEditingWalletId(null);
+                            setWalletNameDraft('');
+                          }}
+                          style={styles.secondaryBtn}>
+                          <Text style={styles.secondaryBtnText}>
+                            {t('onboard.back')}
+                          </Text>
+                        </Pressable>
+                        <Pressable
+                          onPress={() => void handleSaveWalletName()}
+                          disabled={savingWallet || !walletNameDraft.trim()}
+                          style={[
+                            styles.saveBtn,
+                            styles.saveBtnFlex,
+                            (!walletNameDraft.trim() || savingWallet) && {
+                              opacity: 0.5,
+                            },
+                          ]}>
+                          <Text style={styles.saveBtnText}>
+                            {savingWallet
+                              ? t('add.saving')
+                              : t('wealth.walletRenameSave')}
+                          </Text>
+                        </Pressable>
+                      </View>
+                    </View>
+                  ) : null}
+                </View>
+              );
+            })}
+            <Text style={styles.copyHint}>{t('wealth.walletManageHint')}</Text>
             <WalletQuickAdd />
           </CollapsibleSection>
         </FadeInBlock>
@@ -626,6 +767,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: palette.border,
     marginBottom: 10,
+  },
+  walletRename: {
+    marginTop: 10,
+    gap: 6,
   },
   cardEditing: {
     borderColor: palette.teal,
