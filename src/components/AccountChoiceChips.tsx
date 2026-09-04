@@ -79,8 +79,12 @@ export function AccountChoiceChips({
 
 export function WalletQuickAdd({
   onAdded,
+  onInputFocus,
+  onInputBlur,
 }: {
   onAdded?: (id: string) => void;
+  onInputFocus?: () => void;
+  onInputBlur?: () => void;
 }) {
   const { t } = useLanguage();
   const { accounts, addWallet } = useFinance();
@@ -131,6 +135,8 @@ export function WalletQuickAdd({
           placeholderTextColor={palette.inkSoft}
           style={styles.input}
           editable={!busy}
+          onFocus={onInputFocus}
+          onBlur={onInputBlur}
           onSubmitEditing={() => void createWallet(custom)}
           returnKeyType="done"
         />
@@ -206,15 +212,15 @@ const styles = StyleSheet.create({
   },
   addBlock: { gap: 8 },
   addLabel: {
-    fontFamily: 'DMSans_500Medium',
-    fontSize: 13,
-    color: palette.inkMuted,
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 14,
+    color: palette.ink,
   },
   addHint: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 12,
-    color: palette.inkSoft,
-    lineHeight: 16,
+    fontSize: 13,
+    color: palette.inkMuted,
+    lineHeight: 18,
   },
   preset: {
     borderWidth: 1,
@@ -228,7 +234,7 @@ const styles = StyleSheet.create({
   presetText: {
     fontFamily: 'DMSans_600SemiBold',
     fontSize: 13,
-    color: palette.brand,
+    color: palette.accent,
   },
   row: {
     flexDirection: 'row',
@@ -237,15 +243,15 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
+    fontFamily: 'DMSans_500Medium',
+    fontSize: 16,
     color: palette.ink,
     borderWidth: 1,
     borderColor: palette.border,
     borderRadius: radii.md,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    backgroundColor: '#F7FAFC',
+    backgroundColor: '#fff',
   },
   addBtn: {
     backgroundColor: palette.accent,

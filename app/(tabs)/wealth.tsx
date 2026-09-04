@@ -1,6 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
+  Dimensions,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -18,6 +21,7 @@ import { RaisedText } from '@/src/components/RaisedText';
 import { ScreenBackground } from '@/src/components/ScreenBackground';
 import { findSpendSub } from '@/src/data/spendConcepts';
 import { useFinance } from '@/src/hooks/useFinance';
+import { useKeyboardHeight } from '@/src/hooks/useKeyboardVisible';
 import { useMoney } from '@/src/hooks/useMoney';
 import { useSettings } from '@/src/hooks/useSettings';
 import { useLanguage } from '@/src/i18n/LanguageContext';
@@ -65,6 +69,11 @@ export default function WealthScreen() {
     transactionsForPeriod,
     budgetStatus,
   } = useFinance();
+  const keyboardHeight = useKeyboardHeight();
+  const scrollRef = useRef<ScrollView>(null);
+  const addCardRef = useRef<View>(null);
+  const scrollY = useRef(0);
+  const walletFieldFocused = useRef(false);
 
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -260,13 +269,44 @@ export default function WealthScreen() {
     ]);
   }
 
+  function scrollWalletFieldIntoView() {
+    const kb = keyboardHeight;
+    if (kb <= 0) return;
+    addCardRef.current?.measureInWindow((_x, y, _w, h) => {
+      const winH = Dimensions.get('window').height;
+      const tabBar = 84;
+      const limit = winH - kb - tabBar - 12;
+      if (y + h <= limit) return;
+      scrollRef.current?.scrollTo({
+        y: Math.max(0, scrollY.current + (y + h - limit) + 20),
+        animated: true,
+      });
+    });
+  }
+
+  useEffect(() => {
+    if (keyboardHeight <= 0 || !walletFieldFocused.current) return;
+    const id = setTimeout(scrollWalletFieldIntoView, Platform.OS === 'android' ? 80 : 30);
+    return () => clearTimeout(id);
+  }, [keyboardHeight]);
+
+  const keyboardPad = keyboardHeight > 0 ? keyboardHeight + 16 : 0;
+
   return (
     <ScreenBackground>
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView
-        contentContainerStyle={styles.content}
+        ref={scrollRef}
+        contentContainerStyle={[styles.content, { paddingBottom: 168 + keyboardPad }]}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="interactive"
-        automaticallyAdjustKeyboardInsets
+        automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
+        onScroll={(e) => {
+          scrollY.current = e.nativeEvent.contentOffset.y;
+        }}
+        scrollEventThrottle={16}
         showsVerticalScrollIndicator={false}>
         <FadeInBlock>
           <RaisedText style={styles.title}>{t('wealth.title')}</RaisedText>
@@ -375,9 +415,22 @@ export default function WealthScreen() {
                 </View>
               );
             })}
-            <Text style={styles.copyHint}>{t('wealth.walletManageHint')}</Text>
-            <WalletQuickAdd />
           </CollapsibleSection>
+          <View
+            ref={addCardRef}
+            collapsable={false}
+            style={styles.addWalletCard}>
+            <Text style={styles.addWalletHint}>{t('wealth.walletManageHint')}</Text>
+            <WalletQuickAdd
+              onInputFocus={() => {
+                walletFieldFocused.current = true;
+                requestAnimationFrame(scrollWalletFieldIntoView);
+              }}
+              onInputBlur={() => {
+                walletFieldFocused.current = false;
+              }}
+            />
+          </View>
         </FadeInBlock>
 
         <FadeInBlock index={2}>
@@ -611,12 +664,29 @@ export default function WealthScreen() {
           </CollapsibleSection>
         </FadeInBlock>
       </ScrollView>
+      </KeyboardAvoidingView>
     </ScreenBackground>
   );
 }
 
 const styles = StyleSheet.create({
+  flex: { flex: 1 },
   content: { padding: 22, paddingBottom: 168, gap: 12 },
+  addWalletCard: {
+    marginTop: 12,
+    backgroundColor: palette.surfaceSolid,
+    borderRadius: radii.md,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: palette.border,
+  },
+  addWalletHint: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
+    color: palette.inkMuted,
+    lineHeight: 18,
+    marginBottom: 10,
+  },
   title: {
     fontFamily: 'Fraunces_700Bold',
     fontSize: 34,
