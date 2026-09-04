@@ -341,7 +341,7 @@ export const translations = {
     'wealth.walletNameNeed': 'Type a name for this wallet.',
     'wealth.walletNameTaken': 'You already have a wallet with that name.',
     'wealth.walletManageHint':
-      'Typed the wrong wallet name? Rename it here. Extra wallets with $0 can be removed.',
+      'Wrong name? Rename it, or remove it when the balance is $0. Removing the first wallet turns it back into a generic virtual wallet.',
     'wealth.debts': 'Installments & credit',
     'wealth.debtsEmptyShort': 'No installments yet',
     'wealth.debtsCollapsed': '{count} · {amount}/mo fixed — tap to open',
@@ -1059,7 +1059,7 @@ export const translations = {
     'wealth.walletNameNeed': 'Escribe un nombre para esta billetera.',
     'wealth.walletNameTaken': 'Ya tienes una billetera con ese nombre.',
     'wealth.walletManageHint':
-      'Si te equivocaste en el nombre, cámbialo aquí. Las billeteras extra en $0 se pueden eliminar.',
+      'Si te equivocaste en el nombre, cámbialo. También puedes eliminar una billetera en $0 — la primera vuelve a “Billetera virtual”.',
     'wealth.debts': 'Cuotas y créditos',
     'wealth.debtsEmptyShort': 'Sin cuotas aún',
     'wealth.debtsCollapsed': '{count} · {amount}/mes fijos — toca para abrir',

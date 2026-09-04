@@ -100,8 +100,12 @@ export function ensureWalletAccount(
   return { accounts: [...accounts, account], account, created: true };
 }
 
-export function isRemovableWallet(acc: Pick<Account, 'id' | 'type'>): boolean {
-  return acc.type === 'wallet' && acc.id !== 'wallet';
+export function isRemovableWallet(
+  acc: Pick<Account, 'id' | 'type' | 'name'>
+): boolean {
+  if (acc.type !== 'wallet') return false;
+  // Named default slot (e.g. Davivienda) or any extra wallet can be removed.
+  return Boolean(acc.name?.trim()) || acc.id !== 'wallet';
 }
 
 export function renameWalletAccount(
@@ -132,6 +136,13 @@ export function removeWalletAccount(
   if (!current || current.type !== 'wallet') return { error: 'missing' };
   if (!isRemovableWallet(current)) return { error: 'protected' };
   if (Math.abs(current.balance) >= 0.01) return { error: 'hasBalance' };
+  // Keep the default pocket: dropping it would come back empty on next load.
+  if (current.id === 'wallet') {
+    const account = { ...current, name: undefined };
+    return {
+      accounts: accounts.map((a) => (a.id === 'wallet' ? account : a)),
+    };
+  }
   return { accounts: accounts.filter((a) => a.id !== id) };
 }
 
