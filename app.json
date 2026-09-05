@@ -97,8 +97,8 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/images/android-icon-monochrome.png",
-          "color": "#1B3A4B",
+          "icon": "./assets/images/notification-icon.png",
+          "color": "#FF6B4A",
           "defaultChannel": "billing-alerts",
           "sounds": []
         }

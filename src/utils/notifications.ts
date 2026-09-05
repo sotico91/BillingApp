@@ -1,4 +1,5 @@
 import * as Notifications from 'expo-notifications';
+import { Asset } from 'expo-asset';
 import { AppState, Platform } from 'react-native';
 
 import type { ReminderRule } from '@/src/types/settings';
@@ -19,6 +20,36 @@ Notifications.setNotificationHandler({
 const ANDROID_CHANNEL_ID = 'billing-alerts';
 /** Dedicated channel so badge + importance apply on devices that already had the old channel. */
 const ANDROID_REMINDER_CHANNEL_ID = 'billing-reminders';
+const ANDROID_ACCENT = '#FF6B4A';
+
+let cachedLogoUri: string | null | undefined;
+
+/** iOS shows a thumbnail of the app logo next to the banner; Android uses the large icon from the manifest. */
+async function iosLogoAttachments(): Promise<
+  Notifications.NotificationContentAttachmentIos[] | undefined
+> {
+  if (Platform.OS !== 'ios') return undefined;
+  if (cachedLogoUri === null) return undefined;
+  if (!cachedLogoUri) {
+    try {
+      const asset = Asset.fromModule(require('../../assets/images/icon.png'));
+      await asset.downloadAsync();
+      const uri = asset.localUri ?? asset.uri;
+      cachedLogoUri = uri && uri.length > 0 ? uri : null;
+    } catch {
+      cachedLogoUri = null;
+    }
+  }
+  if (!cachedLogoUri) return undefined;
+  return [
+    {
+      identifier: 'billing-logo',
+      url: cachedLogoUri,
+      type: 'image/png',
+      typeHint: 'public.png',
+    },
+  ];
+}
 
 async function ensureAndroidChannels(): Promise<void> {
   if (Platform.OS !== 'android') return;
@@ -153,6 +184,7 @@ export async function notifyExpenseRegistered(title: string, body: string): Prom
   await clearPriorExpenseConfirms();
 
   const identifier = `${EXPENSE_NOTIFY_PREFIX}${now}-${Math.random().toString(36).slice(2, 8)}`;
+  const attachments = await iosLogoAttachments();
 
   await Notifications.scheduleNotificationAsync({
     identifier,
@@ -160,7 +192,10 @@ export async function notifyExpenseRegistered(title: string, body: string): Prom
       title,
       body,
       data: { type: 'expense-registered' as const },
-      ...(Platform.OS === 'android' ? { channelId: ANDROID_CHANNEL_ID } : null),
+      ...(attachments ? { attachments } : null),
+      ...(Platform.OS === 'android'
+        ? { channelId: ANDROID_CHANNEL_ID, color: ANDROID_ACCENT }
+        : null),
     },
     trigger: null,
   });
@@ -215,6 +250,7 @@ export async function syncCategoryReminders(opts: {
             minute: item.minute,
           };
 
+    const attachments = await iosLogoAttachments();
     await Notifications.scheduleNotificationAsync({
       identifier: `billing-reminder-${item.categoryId}`,
       content: {
@@ -227,9 +263,12 @@ export async function syncCategoryReminders(opts: {
           type: 'expense-reminder',
           dayOfMonth: day != null ? String(day) : '',
         },
+        ...(attachments ? { attachments } : null),
         // iOS: system default sound. Android: channel controls sound (no custom file).
         ...(Platform.OS === 'ios' ? { sound: true } : null),
-        ...(Platform.OS === 'android' ? { channelId: ANDROID_REMINDER_CHANNEL_ID } : null),
+        ...(Platform.OS === 'android'
+          ? { channelId: ANDROID_REMINDER_CHANNEL_ID, color: ANDROID_ACCENT }
+          : null),
       },
       trigger,
     });
