@@ -1,9 +1,7 @@
 import { useState } from 'react';
 import {
   Alert,
-  KeyboardAvoidingView,
   Modal,
-  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -12,6 +10,8 @@ import {
 } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import { KeyboardSafeOverlay } from '@/src/components/KeyboardSafe';
 
 import { useSettings } from '@/src/hooks/useSettings';
 import { useLanguage } from '@/src/i18n/LanguageContext';
@@ -44,9 +44,7 @@ export function NamePromptOverlay() {
 
   return (
     <Modal visible={visible} animationType="fade" transparent>
-      <KeyboardAvoidingView
-        style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardSafeOverlay>
       <View
         style={[
           styles.backdrop,
@@ -75,13 +73,12 @@ export function NamePromptOverlay() {
           </Pressable>
         </Animated.View>
       </View>
-      </KeyboardAvoidingView>
+      </KeyboardSafeOverlay>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1 },
   backdrop: {
     flex: 1,
     backgroundColor: 'rgba(8,20,28,0.72)',

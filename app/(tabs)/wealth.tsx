@@ -1,28 +1,17 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import {
-  Alert,
-  Dimensions,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { useMemo, useState } from 'react';
+import { Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { router } from 'expo-router';
 
 import { WalletQuickAdd } from '@/src/components/AccountChoiceChips';
 import { CollapsibleSection } from '@/src/components/CollapsibleSection';
 import { FadeInBlock } from '@/src/components/FadeInBlock';
 import { HowToGuideButton } from '@/src/components/HowToGuideButton';
+import { KeyboardSafeScroll } from '@/src/components/KeyboardSafe';
 import { MoneyText } from '@/src/components/MoneyText';
 import { RaisedText } from '@/src/components/RaisedText';
 import { ScreenBackground } from '@/src/components/ScreenBackground';
 import { findSpendSub } from '@/src/data/spendConcepts';
 import { useFinance } from '@/src/hooks/useFinance';
-import { useKeyboardHeight } from '@/src/hooks/useKeyboardVisible';
 import { useMoney } from '@/src/hooks/useMoney';
 import { useSettings } from '@/src/hooks/useSettings';
 import { useLanguage } from '@/src/i18n/LanguageContext';
@@ -54,7 +43,7 @@ function nextPaymentIsoFromDay(day: number, from = new Date()): string {
 
 export default function WealthScreen() {
   const { t, language } = useLanguage();
-  const { format, parse, currency } = useMoney();
+  const { format, parse } = useMoney();
   const { settings, ensureDebtCategory } = useSettings();
   const spendConcepts = settings.spendConcepts ?? [];
   const {
@@ -70,11 +59,6 @@ export default function WealthScreen() {
     transactionsForPeriod,
     budgetStatus,
   } = useFinance();
-  const keyboardHeight = useKeyboardHeight();
-  const scrollRef = useRef<ScrollView>(null);
-  const addCardRef = useRef<View>(null);
-  const scrollY = useRef(0);
-  const walletFieldFocused = useRef(false);
 
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -83,7 +67,6 @@ export default function WealthScreen() {
   const [name, setName] = useState('');
   const [balance, setBalance] = useState('');
   const [installment, setInstallment] = useState('');
-  const [rate, setRate] = useState('');
   const [payDay, setPayDay] = useState('1');
   const [saving, setSaving] = useState(false);
   const [editingWalletId, setEditingWalletId] = useState<string | null>(null);
@@ -112,7 +95,6 @@ export default function WealthScreen() {
     setName('');
     setBalance('');
     setInstallment('');
-    setRate('');
     setPayDay('1');
     setEditingId(null);
     setShowForm(false);
@@ -128,7 +110,6 @@ export default function WealthScreen() {
     setName('');
     setBalance('');
     setInstallment('');
-    setRate('');
     setPayDay('1');
     setShowForm(true);
   }
@@ -143,7 +124,6 @@ export default function WealthScreen() {
     setName(label);
     setBalance(String(debt.balance || ''));
     setInstallment(String(debt.installment || ''));
-    setRate(debt.interestRate > 0 ? String(debt.interestRate) : '');
     setPayDay(String(Number.isNaN(day) ? 1 : Math.min(28, Math.max(1, day))));
     setShowForm(true);
   }
@@ -155,7 +135,6 @@ export default function WealthScreen() {
       Alert.alert(t('wealth.addDebt'), t('wealth.debtNeed'));
       return;
     }
-    const parsedRate = Number(rate.replace(',', '.')) || 0;
     const day = clampPayDay(Number(payDay.replace(',', '.')));
     if (!day) {
       Alert.alert(t('wealth.addDebt'), t('wealth.debtPayDayNeed'));
@@ -173,7 +152,7 @@ export default function WealthScreen() {
           name: name.trim(),
           balance: parsedBalance,
           installment: parsedInstallment,
-          interestRate: parsedRate,
+          interestRate: 0,
           nextPaymentDate,
           categoryId,
         });
@@ -184,7 +163,6 @@ export default function WealthScreen() {
           name: name.trim(),
           balance: parsedBalance,
           installment: parsedInstallment,
-          interestRate: parsedRate,
           nextPaymentDate,
           categoryId,
         });
@@ -270,44 +248,10 @@ export default function WealthScreen() {
     ]);
   }
 
-  function scrollWalletFieldIntoView() {
-    const kb = keyboardHeight;
-    if (kb <= 0) return;
-    addCardRef.current?.measureInWindow((_x, y, _w, h) => {
-      const winH = Dimensions.get('window').height;
-      const tabBar = 84;
-      const limit = winH - kb - tabBar - 12;
-      if (y + h <= limit) return;
-      scrollRef.current?.scrollTo({
-        y: Math.max(0, scrollY.current + (y + h - limit) + 20),
-        animated: true,
-      });
-    });
-  }
-
-  useEffect(() => {
-    if (keyboardHeight <= 0 || !walletFieldFocused.current) return;
-    const id = setTimeout(scrollWalletFieldIntoView, Platform.OS === 'android' ? 80 : 30);
-    return () => clearTimeout(id);
-  }, [keyboardHeight]);
-
-  const keyboardPad = keyboardHeight > 0 ? keyboardHeight + 16 : 0;
-
   return (
     <ScreenBackground>
-      <KeyboardAvoidingView
-        style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView
-        ref={scrollRef}
-        contentContainerStyle={[styles.content, { paddingBottom: 168 + keyboardPad }]}
-        keyboardShouldPersistTaps="handled"
-        keyboardDismissMode="interactive"
-        automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
-        onScroll={(e) => {
-          scrollY.current = e.nativeEvent.contentOffset.y;
-        }}
-        scrollEventThrottle={16}
+      <KeyboardSafeScroll
+        contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}>
         <FadeInBlock>
           <View style={styles.titleRow}>
@@ -395,7 +339,7 @@ export default function WealthScreen() {
                           }}
                           style={styles.secondaryBtn}>
                           <Text style={styles.secondaryBtnText}>
-                            {t('onboard.back')}
+                            {t('wealth.debtCancel')}
                           </Text>
                         </Pressable>
                         <Pressable
@@ -421,20 +365,9 @@ export default function WealthScreen() {
               );
             })}
           </CollapsibleSection>
-          <View
-            ref={addCardRef}
-            collapsable={false}
-            style={styles.addWalletCard}>
+          <View style={styles.addWalletCard}>
             <Text style={styles.addWalletHint}>{t('wealth.walletManageHint')}</Text>
-            <WalletQuickAdd
-              onInputFocus={() => {
-                walletFieldFocused.current = true;
-                requestAnimationFrame(scrollWalletFieldIntoView);
-              }}
-              onInputBlur={() => {
-                walletFieldFocused.current = false;
-              }}
-            />
+            <WalletQuickAdd />
           </View>
         </FadeInBlock>
 
@@ -451,14 +384,14 @@ export default function WealthScreen() {
                     amount: format(monthlyInstallments),
                   })
             }>
-            <View style={styles.sectionRow}>
-              <Text style={styles.copyHintFlex}>{t('wealth.debtConceptHint')}</Text>
-              <Pressable onPress={startCreate} style={styles.addBtn}>
-                <Text style={styles.addBtnText}>
-                  {showForm && !editingId ? t('onboard.back') : t('wealth.addDebt')}
-                </Text>
-              </Pressable>
-            </View>
+            {!showForm ? (
+              <View style={styles.sectionRow}>
+                <Text style={styles.copyHintFlex}>{t('wealth.debtConceptHint')}</Text>
+                <Pressable onPress={startCreate} style={styles.addBtn}>
+                  <Text style={styles.addBtnText}>{t('wealth.addDebt')}</Text>
+                </Pressable>
+              </View>
+            ) : null}
 
             {debts.length > 0 ? (
               <View style={styles.summaryCard}>
@@ -523,31 +456,20 @@ export default function WealthScreen() {
                   style={styles.input}
                 />
                 <Text style={styles.copyHint}>{t('wealth.debtPayDayHint')}</Text>
-                <Text style={styles.label}>{t('wealth.debtRate')}</Text>
-                <TextInput
-                  value={rate}
-                  onChangeText={setRate}
-                  keyboardType="decimal-pad"
-                  placeholder="0"
-                  placeholderTextColor={palette.inkSoft}
-                  style={styles.input}
-                />
                 <Text style={styles.copyHint}>{t('wealth.debtBudgetHint')}</Text>
                 <View style={styles.formActions}>
-                  {editingId ? (
-                    <Pressable
-                      onPress={() => {
-                        tapFeedback();
-                        resetForm();
-                      }}
-                      style={styles.secondaryBtn}>
-                      <Text style={styles.secondaryBtnText}>{t('onboard.back')}</Text>
-                    </Pressable>
-                  ) : null}
+                  <Pressable
+                    onPress={() => {
+                      tapFeedback();
+                      resetForm();
+                    }}
+                    style={styles.secondaryBtn}>
+                    <Text style={styles.secondaryBtnText}>{t('wealth.debtCancel')}</Text>
+                  </Pressable>
                   <Pressable
                     onPress={() => void handleSaveDebt()}
                     disabled={saving}
-                    style={[styles.saveBtn, editingId && styles.saveBtnFlex]}>
+                    style={[styles.saveBtn, styles.saveBtnFlex]}>
                     <Text style={styles.saveBtnText}>
                       {saving
                         ? t('add.saving')
@@ -647,11 +569,6 @@ export default function WealthScreen() {
                       })}
                     </Text>
                   ) : null}
-                  {debt.interestRate > 0 ? (
-                    <Text style={styles.meta}>
-                      {t('wealth.rate', { rate: debt.interestRate })}
-                    </Text>
-                  ) : null}
                   <Text style={styles.meta}>
                     {t('wealth.next', {
                       date: new Date(debt.nextPaymentDate).toLocaleDateString(
@@ -668,14 +585,12 @@ export default function WealthScreen() {
             ) : null}
           </CollapsibleSection>
         </FadeInBlock>
-      </ScrollView>
-      </KeyboardAvoidingView>
+      </KeyboardSafeScroll>
     </ScreenBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1 },
   content: { padding: 22, paddingBottom: 168, gap: 12 },
   addWalletCard: {
     marginTop: 12,
@@ -834,6 +749,7 @@ const styles = StyleSheet.create({
   },
   secondaryBtn: {
     marginTop: 4,
+    flex: 1,
     borderRadius: radii.sm,
     paddingVertical: 12,
     paddingHorizontal: 14,

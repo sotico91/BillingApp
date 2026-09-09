@@ -2,9 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   FlatList,
-  KeyboardAvoidingView,
   Modal,
-  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -13,6 +11,7 @@ import {
 } from 'react-native';
 
 import { flattenSpendSubs } from '@/src/data/spendConcepts';
+import { KeyboardSafeOverlay } from '@/src/components/KeyboardSafe';
 import { useSettings } from '@/src/hooks/useSettings';
 import { useLanguage } from '@/src/i18n/LanguageContext';
 import { palette, radii } from '@/src/theme/colors';
@@ -281,9 +280,7 @@ export function ReminderSettingsCard() {
         animationType="slide"
         transparent
         onRequestClose={() => setPickerOpen(false)}>
-        <KeyboardAvoidingView
-          style={styles.flex}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <KeyboardSafeOverlay>
         <Pressable style={styles.modalBackdrop} onPress={() => setPickerOpen(false)}>
           <Pressable style={styles.modalSheet} onPress={(e) => e.stopPropagation()}>
             <Text style={styles.modalTitle}>{t('reminder.pickSubs')}</Text>
@@ -321,14 +318,13 @@ export function ReminderSettingsCard() {
             </Pressable>
           </Pressable>
         </Pressable>
-        </KeyboardAvoidingView>
+        </KeyboardSafeOverlay>
       </Modal>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1 },
   card: {
     backgroundColor: palette.surfaceSolid,
     borderRadius: radii.md,

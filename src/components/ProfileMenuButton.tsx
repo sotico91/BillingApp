@@ -1,9 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
   Alert,
-  KeyboardAvoidingView,
   Modal,
-  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -13,6 +11,7 @@ import {
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { KeyboardSafeOverlay } from '@/src/components/KeyboardSafe';
 import { useFinance } from '@/src/hooks/useFinance';
 import { useSettings } from '@/src/hooks/useSettings';
 import { useHowToGuide } from '@/src/hooks/useHowToGuide';
@@ -278,9 +277,7 @@ export function ProfileMenuButton({ light = true }: Props) {
         transparent
         animationType="slide"
         onRequestClose={() => setEditOpen(false)}>
-        <KeyboardAvoidingView
-          style={styles.flex}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <KeyboardSafeOverlay>
         <View
           style={[
             styles.editBackdrop,
@@ -317,14 +314,13 @@ export function ProfileMenuButton({ light = true }: Props) {
             </View>
           </View>
         </View>
-        </KeyboardAvoidingView>
+        </KeyboardSafeOverlay>
       </Modal>
     </>
   );
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1 },
   dotsBtn: {
     width: 36,
     height: 36,

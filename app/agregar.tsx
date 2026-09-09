@@ -1,20 +1,11 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import {
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Alert, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { ExpenseForm, type SavedMovement } from '@/src/components/ExpenseForm';
 import { RaisedText } from '@/src/components/RaisedText';
 import { FriendlyAddFlow } from '@/src/components/FriendlyAddFlow';
+import { KeyboardSafeScroll } from '@/src/components/KeyboardSafe';
 import { ScreenBackground } from '@/src/components/ScreenBackground';
 import { useMoney } from '@/src/hooks/useMoney';
 import { useLanguage } from '@/src/i18n/LanguageContext';
@@ -23,7 +14,6 @@ import { palette, radii } from '@/src/theme/colors';
 export default function AgregarScreen() {
   const { t } = useLanguage();
   const { format } = useMoney();
-  const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{
     categoryId?: string;
     amount?: string;
@@ -76,58 +66,49 @@ export default function AgregarScreen() {
 
   return (
     <ScreenBackground edges="none">
-      <KeyboardAvoidingView
-        style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top + 12 : 0}>
-        <View style={styles.content}>
-          <RaisedText style={styles.title}>{t('add.title')}</RaisedText>
+      <View style={styles.content}>
+        <RaisedText style={styles.title}>{t('add.title')}</RaisedText>
 
-          <View style={styles.modeSwitch}>
-            <Pressable
-              onPress={() => setMode('friendly')}
-              style={[styles.modeBtn, mode === 'friendly' && styles.modeOn]}>
-              <Text style={[styles.modeText, mode === 'friendly' && styles.modeTextOn]}>
-                {t('flow.friendly')}
-              </Text>
-            </Pressable>
-            <Pressable
-              onPress={() => setMode('advanced')}
-              style={[styles.modeBtn, mode === 'advanced' && styles.modeOn]}>
-              <Text style={[styles.modeText, mode === 'advanced' && styles.modeTextOn]}>
-                {t('flow.advanced')}
-              </Text>
-            </Pressable>
-          </View>
-
-          {mode === 'friendly' ? (
-            <FriendlyAddFlow
-              onSaved={handleSaved}
-              onSwitchAdvanced={() => setMode('advanced')}
-            />
-          ) : (
-            <ScrollView
-              keyboardShouldPersistTaps="handled"
-              keyboardDismissMode="interactive"
-              automaticallyAdjustKeyboardInsets
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={styles.advancedPad}>
-              <ExpenseForm
-                onSaved={handleSaved}
-                initialCategoryId={prefilledCategoryId}
-                initialAmount={prefilledAmount}
-                initialNote={prefilledNote}
-              />
-            </ScrollView>
-          )}
+        <View style={styles.modeSwitch}>
+          <Pressable
+            onPress={() => setMode('friendly')}
+            style={[styles.modeBtn, mode === 'friendly' && styles.modeOn]}>
+            <Text style={[styles.modeText, mode === 'friendly' && styles.modeTextOn]}>
+              {t('flow.friendly')}
+            </Text>
+          </Pressable>
+          <Pressable
+            onPress={() => setMode('advanced')}
+            style={[styles.modeBtn, mode === 'advanced' && styles.modeOn]}>
+            <Text style={[styles.modeText, mode === 'advanced' && styles.modeTextOn]}>
+              {t('flow.advanced')}
+            </Text>
+          </Pressable>
         </View>
-      </KeyboardAvoidingView>
+
+        {mode === 'friendly' ? (
+          <FriendlyAddFlow
+            onSaved={handleSaved}
+            onSwitchAdvanced={() => setMode('advanced')}
+          />
+        ) : (
+          <KeyboardSafeScroll
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.advancedPad}>
+            <ExpenseForm
+              onSaved={handleSaved}
+              initialCategoryId={prefilledCategoryId}
+              initialAmount={prefilledAmount}
+              initialNote={prefilledNote}
+            />
+          </KeyboardSafeScroll>
+        )}
+      </View>
     </ScreenBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1 },
   content: {
     flex: 1,
     padding: 22,

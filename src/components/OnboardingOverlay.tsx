@@ -12,6 +12,7 @@ import {
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { KeyboardSafeOverlay } from '@/src/components/KeyboardSafe';
 import { createSpendSub, ONBOARDING_CONCEPTS } from '@/src/data/spendConcepts';
 import { useSettings } from '@/src/hooks/useSettings';
 import { useLanguage } from '@/src/i18n/LanguageContext';
@@ -122,6 +123,7 @@ export function OnboardingOverlay() {
 
   return (
     <Modal visible={visible} animationType="fade" transparent>
+      <KeyboardSafeOverlay>
       <View
         style={[
           styles.backdrop,
@@ -292,6 +294,7 @@ export function OnboardingOverlay() {
           </View>
         </Animated.View>
       </View>
+      </KeyboardSafeOverlay>
     </Modal>
   );
 }

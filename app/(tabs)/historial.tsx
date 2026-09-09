@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { CollapsibleSection } from '@/src/components/CollapsibleSection';
 import { EditTransactionModal } from '@/src/components/EditTransactionModal';
 import { ExpenseRow } from '@/src/components/ExpenseRow';
 import { FadeInBlock } from '@/src/components/FadeInBlock';
+import { KeyboardSafeScroll } from '@/src/components/KeyboardSafe';
 import { MoneyText } from '@/src/components/MoneyText';
 import { PeriodToggle } from '@/src/components/PeriodToggle';
 import { RaisedText } from '@/src/components/RaisedText';
@@ -122,11 +123,8 @@ export default function HistorialScreen() {
 
   return (
     <ScreenBackground>
-      <ScrollView
+      <KeyboardSafeScroll
         contentContainerStyle={styles.content}
-        keyboardShouldPersistTaps="handled"
-        keyboardDismissMode="interactive"
-        automaticallyAdjustKeyboardInsets
         showsVerticalScrollIndicator={false}>
         <FadeInBlock>
           <RaisedText style={styles.pageTitle}>{t('history.title')}</RaisedText>
@@ -300,7 +298,7 @@ export default function HistorialScreen() {
             )}
           </CollapsibleSection>
         </FadeInBlock>
-      </ScrollView>
+      </KeyboardSafeScroll>
 
       <EditTransactionModal
         visible={!!editing}

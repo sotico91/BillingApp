@@ -15,8 +15,8 @@ const SECTIONS: Section[] = [
   { title: 'guide.ideaTitle', body: 'guide.ideaBody' },
   { title: 'guide.spendTitle', body: 'guide.spendBody' },
   { title: 'guide.wealthTitle', body: 'guide.wealthBody' },
-  { title: 'guide.dayTitle', body: 'guide.dayBody' },
   { title: 'guide.debtTitle', body: 'guide.debtBody' },
+  { title: 'guide.dayTitle', body: 'guide.dayBody' },
 ];
 
 type Props = {

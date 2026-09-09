@@ -1,12 +1,5 @@
 import { useMemo, useState } from 'react';
-import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { CategoryBreakdown } from '@/src/components/CategoryBreakdown';
 import { CollapsibleSection } from '@/src/components/CollapsibleSection';
@@ -15,6 +8,7 @@ import { MoneyText } from '@/src/components/MoneyText';
 import { PeriodToggle } from '@/src/components/PeriodToggle';
 import { RaisedText } from '@/src/components/RaisedText';
 import { SavingsDecor } from '@/src/components/SavingsDecor';
+import { KeyboardSafeScroll } from '@/src/components/KeyboardSafe';
 import { ScreenBackground } from '@/src/components/ScreenBackground';
 import { useFinance } from '@/src/hooks/useFinance';
 import { useMoney } from '@/src/hooks/useMoney';
@@ -115,11 +109,8 @@ export default function InsightsScreen() {
 
   return (
     <ScreenBackground>
-      <ScrollView
+      <KeyboardSafeScroll
         contentContainerStyle={styles.content}
-        keyboardShouldPersistTaps="handled"
-        keyboardDismissMode="interactive"
-        automaticallyAdjustKeyboardInsets
         showsVerticalScrollIndicator={false}>
         <FadeInBlock>
           <View style={styles.heroRow}>
@@ -305,7 +296,7 @@ export default function InsightsScreen() {
             <CategoryBreakdown insights={insights} budgetStatus={budgetStatus} />
           </CollapsibleSection>
         </FadeInBlock>
-      </ScrollView>
+      </KeyboardSafeScroll>
     </ScreenBackground>
   );
 }

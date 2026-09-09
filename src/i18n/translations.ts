@@ -324,10 +324,10 @@ export const translations = {
     'wealth.title': 'Wealth',
     'wealth.subtitle':
       'Net worth = what you have in accounts minus debts. Income raises the account you chose (cash, bank, savings or a virtual wallet), not a separate “bonus” pot.',
-    'wealth.accounts': 'Accounts',
+    'wealth.accounts': 'Accounts & wallets',
     'wealth.accountsHint':
-      'Cash, bank, savings, investments and the card are fixed accounts. Nequi or others are wallets you add.',
-    'wealth.accountsCollapsed': '{count} accounts — tap to open',
+      'Where your money sits: cash, bank, savings, investments, the card, plus wallets you add (Nequi, etc.).',
+    'wealth.accountsCollapsed': '{count} pockets — tap to open',
     'wealth.assets': 'Assets',
     'wealth.liabilities': 'Liabilities',
     'wealth.net': 'Net worth',
@@ -344,17 +344,17 @@ export const translations = {
     'wealth.walletNameTaken': 'You already have a wallet with that name.',
     'wealth.walletManageHint':
       'Wrong name? Rename it, or remove it when the balance is $0. Removing the first wallet turns it back into a generic virtual wallet.',
-    'wealth.debts': 'Installments & credit',
-    'wealth.debtsEmptyShort': 'No installments yet',
-    'wealth.debtsCollapsed': '{count} · {amount}/mo fixed — tap to open',
+    'wealth.debts': 'Fixed installments',
+    'wealth.debtsEmptyShort': 'No fixed installments yet',
+    'wealth.debtsCollapsed': '{count} · {amount}/mo — tap to open',
     'wealth.debtsEmpty':
-      'Register a permanent installment: apartment, car or credit. It becomes a Credit subcategory with a monthly limit.',
-    'wealth.addDebt': 'Add installment / debt',
+      'Only if you pay the same amount every month (apartment, car, payroll loan). Write that installment here. If the amount changes, skip this and log the payment as spend when you pay.',
+    'wealth.addDebt': 'Add fixed installment',
+    'wealth.debtCancel': 'Discard',
     'wealth.debtName': 'What are you paying',
-    'wealth.debtNamePlaceholder': 'Apartment, car loan, card…',
+    'wealth.debtNamePlaceholder': 'Apartment, car loan…',
     'wealth.debtBalance': 'Remaining balance',
-    'wealth.debtInstallment': 'Monthly installment',
-    'wealth.debtRate': 'Annual rate % (optional)',
+    'wealth.debtInstallment': 'Fixed monthly installment',
     'wealth.debtPayDay': 'Payment day of month (1–28)',
     'wealth.debtPayDayNeed': 'Payment day must be between 1 and 28.',
     'wealth.debtPayDayHint':
@@ -366,11 +366,11 @@ export const translations = {
     'wealth.debtDelete': 'Remove',
     'wealth.debtNeed': 'Name, balance and monthly installment must be greater than 0.',
     'wealth.howToPay':
-      'Registering a debt in Wealth does not add it to this month’s spend. To pay: Add → “I paid a debt” — that logs the expense and lowers the account.',
+      'Saving a cuota here does not spend money. When you actually pay: Add → “I paid a debt”.',
     'wealth.debtPermanentHint':
-      'Permanent installment on file: reminder + limit in Plan. It becomes spend only when you log the payment in Add.',
+      'Only the fixed installment amount — a reminder, not a loan calculator. It becomes spend when you log the payment in Add.',
     'wealth.debtConceptHint':
-      'Each installment is saved under Credit and watched like your other concepts.',
+      'For fixed-amount credits only. Register the installment value, not an interest rate.',
     'wealth.debtBudgetHint':
       'Saving also sets a monthly limit equal to the installment on that subcategory.',
     'wealth.fixedMonth': 'Fixed installments this month',
@@ -385,9 +385,7 @@ export const translations = {
     'wealth.monthlySubs': 'Monthly subscriptions',
     'wealth.yearlySubs': 'Yearly estimate',
     'wealth.installment': 'Installment {amount}',
-    'wealth.rate': 'Rate {rate}%',
     'wealth.next': 'Next {date}',
-    'wealth.capitalShare': '{percent}% of installment reduces capital',
 
     'add.title': 'New movement',
     'add.privacyHint': 'Amounts stay hidden. Tap the eye to reveal them.',
@@ -602,19 +600,19 @@ export const translations = {
     'guide.kicker': 'Anytime from ? or ⋯',
     'guide.ideaTitle': 'Two ideas, that’s it',
     'guide.ideaBody':
-      'Plan is WHAT you spend on. Wealth is WHERE the money sits. They are not the same list.',
+      'Plan is WHAT you spend on. Accounts are WHERE the money sits. Fixed installments are only the same monthly amount — Billing does not calculate interest.',
     'guide.spendTitle': 'Expense categories (Plan)',
     'guide.spendBody':
       'A concept is broad (Food, Bills). A subcategory is the specific thing (Coffee, Power, Uber). Setup only picked concepts; you add subcategories in Plan. Until you do, everything lands in “General”.',
     'guide.wealthTitle': 'Fixed accounts and wallets (Wealth)',
     'guide.wealthBody':
       'Fixed accounts are already there: Cash, Main bank, Savings, Investments and Credit card. You don’t create or delete them — balances move when you log. Virtual wallets (Nequi, Daviplata or another) are the ones you add.',
-    'guide.dayTitle': 'Day to day',
+    'guide.dayTitle': 'Log what you paid',
     'guide.dayBody':
-      'Add logs a movement and picks which account it comes from. Home shows Available now (money today) and This month’s result (ahead or behind). Activity is for edits.',
-    'guide.debtTitle': 'Installments vs the card',
+      'Add is for real movements: an expense, income, or “I paid a debt”. That is what changes your accounts. A cuota in Wealth only reminds you of the fixed amount.',
+    'guide.debtTitle': 'Fixed credits',
     'guide.debtBody':
-      'A recurring installment (rent, car) lives under Wealth. The credit card is a fixed account. “Credits” in Plan is just the spend concept for classifying those payments.',
+      'If the bank always charges the same (apartment, car, payroll loan), note that installment under Fixed installments. No EA, no simulation. The day you pay, Add logs the expense and lowers the account. If the amount changes each month, do not add it here — log it as spend when it leaves.',
     'guide.hint': 'Open this again anytime with ? or ⋯ → How to use.',
 
     'reminder.title': 'Expense reminders',
@@ -1067,10 +1065,10 @@ export const translations = {
     'wealth.title': 'Patrimonio',
     'wealth.subtitle':
       'Patrimonio = lo que hay en tus cuentas menos deudas. Un ingreso sube la cuenta que elegiste (efectivo, banco, ahorro o una billetera virtual). Bonos es solo el tipo de ingreso.',
-    'wealth.accounts': 'Cuentas',
+    'wealth.accounts': 'Cuentas y billeteras',
     'wealth.accountsHint':
-      'Efectivo, banco, ahorros, inversiones y tarjeta son cuentas fijas. Nequi u otras son billeteras que agregas tú.',
-    'wealth.accountsCollapsed': '{count} cuentas — toca para abrir',
+      'Dónde está tu plata: efectivo, banco, ahorros, inversiones, la tarjeta, y las billeteras que agregas (Nequi, etc.).',
+    'wealth.accountsCollapsed': '{count} bolsillos — toca para abrir',
     'wealth.assets': 'Activos',
     'wealth.liabilities': 'Pasivos',
     'wealth.net': 'Patrimonio neto',
@@ -1087,17 +1085,17 @@ export const translations = {
     'wealth.walletNameTaken': 'Ya tienes una billetera con ese nombre.',
     'wealth.walletManageHint':
       'Si te equivocaste en el nombre, cámbialo. También puedes eliminar una billetera en $0 — la primera vuelve a “Billetera virtual”.',
-    'wealth.debts': 'Cuotas y créditos',
-    'wealth.debtsEmptyShort': 'Sin cuotas aún',
-    'wealth.debtsCollapsed': '{count} · {amount}/mes fijos — toca para abrir',
+    'wealth.debts': 'Cuotas fijas',
+    'wealth.debtsEmptyShort': 'Sin cuotas fijas aún',
+    'wealth.debtsCollapsed': '{count} · {amount}/mes — toca para abrir',
     'wealth.debtsEmpty':
-      'Registra una cuota permanente: apto, carro o crédito. Queda como subcategoría de Créditos con tope mensual.',
-    'wealth.addDebt': 'Agregar cuota / deuda',
+      'Solo si pagas el mismo valor todos los meses (apto, carro, libranza). Aquí anotas esa cuota. Si el monto cambia, no lo pongas aquí: regístralo como gasto cuando pagues.',
+    'wealth.addDebt': 'Agregar cuota fija',
+    'wealth.debtCancel': 'Descartar',
     'wealth.debtName': 'Qué estás pagando',
-    'wealth.debtNamePlaceholder': 'Cuota apto, cuota carro, tarjeta…',
+    'wealth.debtNamePlaceholder': 'Cuota apto, cuota carro…',
     'wealth.debtBalance': 'Saldo que aún debes',
-    'wealth.debtInstallment': 'Cuota mensual',
-    'wealth.debtRate': 'Tasa anual % (opcional)',
+    'wealth.debtInstallment': 'Cuota mensual fija',
     'wealth.debtPayDay': 'Día de pago del mes (1–28)',
     'wealth.debtPayDayNeed': 'El día de pago debe estar entre 1 y 28.',
     'wealth.debtPayDayHint':
@@ -1109,11 +1107,11 @@ export const translations = {
     'wealth.debtDelete': 'Eliminar',
     'wealth.debtNeed': 'Nombre, saldo y cuota mensual mayores a 0.',
     'wealth.howToPay':
-      'Registrar la deuda en Patrimonio no la suma al gasto del mes. Para pagar: Agregar → “Pagué una deuda” — ahí sí cuenta el gasto y baja la cuenta.',
+      'Anotar la cuota aquí no gasta plata. Cuando pagues de verdad: Agregar → “Pagué una deuda”.',
     'wealth.debtPermanentHint':
-      'Cuota permanente en ficha: recordatorio + tope en Plan. Solo es gasto cuando registras el pago en Agregar.',
+      'Solo el valor de la cuota fija — un recordatorio, no una calculadora de crédito. Es gasto cuando registras el pago en Agregar.',
     'wealth.debtConceptHint':
-      'Cada cuota se guarda en Créditos y se vigila como tus otros conceptos.',
+      'Solo créditos de cuota fija. Aquí registras ese valor, no la tasa.',
     'wealth.debtBudgetHint':
       'Al guardar también se crea un tope mensual igual a la cuota en esa subcategoría.',
     'wealth.fixedMonth': 'Cuotas fijas del mes',
@@ -1128,9 +1126,7 @@ export const translations = {
     'wealth.monthlySubs': 'Suscripciones mensuales',
     'wealth.yearlySubs': 'Estimado anual',
     'wealth.installment': 'Cuota {amount}',
-    'wealth.rate': 'Tasa {rate}%',
     'wealth.next': 'Próximo {date}',
-    'wealth.capitalShare': '{percent}% de la cuota reduce capital',
 
     'add.title': 'Nuevo movimiento',
     'add.privacyHint': 'Los montos quedan ocultos. Toca el ojo para verlos.',
@@ -1347,19 +1343,19 @@ export const translations = {
     'guide.kicker': 'Cuando quieras, con ? o ⋯',
     'guide.ideaTitle': 'Dos ideas, no más',
     'guide.ideaBody':
-      'Plan es EN QUÉ gastas. Patrimonio es DÓNDE está el dinero. No son la misma lista.',
+      'Plan es EN QUÉ gastas. Las cuentas son DÓNDE está el dinero. Las cuotas fijas son solo el mismo valor mensual — Billing no calcula interés.',
     'guide.spendTitle': 'Categorías de gasto (Plan)',
     'guide.spendBody':
       'Un concepto es amplio (Alimentación, Recibos). Una subcategoría es lo concreto (Café, Luz, Uber). Al empezar solo elegiste conceptos; las subcategorías se crean en Plan. Hasta que las armes, todo cae en “General”.',
     'guide.wealthTitle': 'Cuentas fijas y billeteras (Patrimonio)',
     'guide.wealthBody':
       'Las cuentas fijas ya están: Efectivo, Banco principal, Ahorros, Inversiones y Tarjeta. No las creas ni las borras; el saldo sube o baja al registrar. Las billeteras virtuales (Nequi, Daviplata u otra) sí las agregas tú.',
-    'guide.dayTitle': 'El día a día',
+    'guide.dayTitle': 'Anota lo que pagaste',
     'guide.dayBody':
-      'Agregar registra un movimiento y elige de qué cuenta sale. Inicio muestra Disponible hoy (plata ahora) y Resultado del mes (si vas a favor o en rojo). Actividad sirve para corregir.',
-    'guide.debtTitle': 'Cuotas vs la tarjeta',
+      'Agregar es para movimientos reales: un gasto, un ingreso o “Pagué una deuda”. Eso sí cambia tus cuentas. La cuota en Patrimonio solo te recuerda el valor fijo.',
+    'guide.debtTitle': 'Créditos de cuota fija',
     'guide.debtBody':
-      'Una cuota permanente (apto, carro) se registra en Patrimonio. La tarjeta de crédito es una cuenta fija. “Créditos” en Plan es solo el concepto para clasificar esos pagos.',
+      'Si el banco te cobra siempre lo mismo (apto, carro, libranza), anota esa cuota en Cuotas fijas. Sin tasa EA ni simulación. El día que pagas, Agregar registra el gasto y baja la cuenta. Si el valor cambia cada mes, no lo pongas aquí: anótalo como gasto cuando salga.',
     'guide.hint': 'Vuelve a abrir esto con ? o en ⋯ → Cómo usar.',
 
     'reminder.title': 'Recordatorios de gastos',

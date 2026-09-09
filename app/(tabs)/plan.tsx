@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 import { AppCopyright } from '@/src/components/AppCopyright';
+import { KeyboardSafeScroll } from '@/src/components/KeyboardSafe';
 import { CollapsibleSection } from '@/src/components/CollapsibleSection';
 import { ConceptsPlanCard } from '@/src/components/ConceptsPlanCard';
 import { FadeInBlock } from '@/src/components/FadeInBlock';
@@ -44,7 +45,7 @@ export default function PlanScreen() {
 
   return (
     <ScreenBackground>
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" automaticallyAdjustKeyboardInsets showsVerticalScrollIndicator={false}>
+      <KeyboardSafeScroll contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <FadeInBlock>
           <View style={styles.titleRow}>
             <RaisedText style={styles.title}>{t('plan.title')}</RaisedText>
@@ -187,7 +188,7 @@ export default function PlanScreen() {
         <FadeInBlock index={5}>
           <AppCopyright />
         </FadeInBlock>
-      </ScrollView>
+      </KeyboardSafeScroll>
     </ScreenBackground>
   );
 }

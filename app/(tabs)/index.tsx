@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Alert, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CollapsibleSection } from '@/src/components/CollapsibleSection';
@@ -9,6 +9,7 @@ import { EditTransactionModal } from '@/src/components/EditTransactionModal';
 import { ExpenseRow } from '@/src/components/ExpenseRow';
 import { FadeInBlock } from '@/src/components/FadeInBlock';
 import { HowToGuideButton } from '@/src/components/HowToGuideButton';
+import { KeyboardSafeScroll } from '@/src/components/KeyboardSafe';
 import { LanguageSwitcher } from '@/src/components/LanguageSwitcher';
 import { PredictedSpendsCard } from '@/src/components/PredictedSpendsCard';
 import { ProfileMenuButton } from '@/src/components/ProfileMenuButton';
@@ -136,12 +137,9 @@ export default function HomeScreen() {
 
   return (
     <ScreenBackground>
-      <ScrollView
+      <KeyboardSafeScroll
         style={styles.screen}
         contentContainerStyle={styles.content}
-        keyboardShouldPersistTaps="handled"
-        keyboardDismissMode="interactive"
-        automaticallyAdjustKeyboardInsets
         showsVerticalScrollIndicator={false}>
         <FadeInBlock>
           <View style={styles.heroRow}>
@@ -358,7 +356,7 @@ export default function HomeScreen() {
             </View>
           </CollapsibleSection>
         </FadeInBlock>
-      </ScrollView>
+      </KeyboardSafeScroll>
 
       <ConceptGlanceSheet
         visible={glance != null}

@@ -1,15 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
-  KeyboardAvoidingView,
   Modal,
-  Platform,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   View,
+  type ScrollView,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -26,6 +24,7 @@ import type { PaymentMethod, Transaction, TransactionType } from '@/src/types/fi
 import { categoryLabel } from '@/src/utils/categoryLabel';
 import { incomeDestinationAccounts } from '@/src/utils/netWorth';
 import { AccountChoiceChips } from '@/src/components/AccountChoiceChips';
+import { KeyboardSafeOverlay, KeyboardSafeScroll } from '@/src/components/KeyboardSafe';
 
 type Props = {
   transaction: Transaction | null;
@@ -126,18 +125,15 @@ export function EditTransactionModal({ transaction, visible, onClose }: Props) {
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      <KeyboardAvoidingView
-        style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardSafeOverlay>
         <View style={[styles.backdrop, { paddingTop: insets.top + 8, paddingBottom: insets.bottom + 8 }]}>
           <View style={styles.sheet}>
             <Text style={styles.title}>{t('history.editTitle')}</Text>
             <Text style={styles.copy}>{t('history.editBody')}</Text>
 
-            <ScrollView
+            <KeyboardSafeScroll
               ref={scrollRef}
-              keyboardShouldPersistTaps="handled"
-              keyboardDismissMode="interactive"
+              avoidKeyboard={false}
               showsVerticalScrollIndicator={false}
               contentContainerStyle={styles.body}>
               <Text style={styles.label}>{t('flow.summaryAmount')}</Text>
@@ -248,7 +244,7 @@ export function EditTransactionModal({ transaction, visible, onClose }: Props) {
                 }, 280);
               }}
             />
-          </ScrollView>
+          </KeyboardSafeScroll>
 
           {keyboardVisible ? null : (
           <View style={styles.actions}>
@@ -267,13 +263,12 @@ export function EditTransactionModal({ transaction, visible, onClose }: Props) {
           )}
         </View>
         </View>
-      </KeyboardAvoidingView>
+      </KeyboardSafeOverlay>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1 },
   backdrop: {
     flex: 1,
     backgroundColor: 'rgba(8,20,28,0.72)',

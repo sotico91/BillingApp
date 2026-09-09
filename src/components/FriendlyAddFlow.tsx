@@ -3,11 +3,11 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   View,
+  type ScrollView,
 } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
@@ -32,6 +32,7 @@ import { notifyExpenseRegistered } from '@/src/utils/notifications';
 import { tapFeedback } from '@/src/utils/selectFeedback';
 import { AccountChoiceChips } from '@/src/components/AccountChoiceChips';
 import { InlineSubAdd } from '@/src/components/InlineSubAdd';
+import { KeyboardSafeScroll } from '@/src/components/KeyboardSafe';
 import { useKeyboardVisible } from '@/src/hooks/useKeyboardVisible';
 import type { SavedMovement } from '@/src/components/ExpenseForm';
 import {
@@ -333,10 +334,8 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
         {t('flow.stepOf', { current: step + 1, total: totalSteps })}
       </Text>
 
-      <ScrollView
+      <KeyboardSafeScroll
         ref={scrollRef}
-        keyboardShouldPersistTaps="handled"
-        keyboardDismissMode="interactive"
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.body}>
         {step === 0 ? (
@@ -729,7 +728,7 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
             />
           </Animated.View>
         ) : null}
-      </ScrollView>
+      </KeyboardSafeScroll>
 
       {keyboardVisible ? null : (
       <View style={styles.footer}>
