@@ -8,6 +8,7 @@ import { ConceptGlanceSheet } from '@/src/components/ConceptGlanceSheet';
 import { EditTransactionModal } from '@/src/components/EditTransactionModal';
 import { ExpenseRow } from '@/src/components/ExpenseRow';
 import { FadeInBlock } from '@/src/components/FadeInBlock';
+import { HowToGuideButton } from '@/src/components/HowToGuideButton';
 import { LanguageSwitcher } from '@/src/components/LanguageSwitcher';
 import { PredictedSpendsCard } from '@/src/components/PredictedSpendsCard';
 import { ProfileMenuButton } from '@/src/components/ProfileMenuButton';
@@ -155,6 +156,7 @@ export default function HomeScreen() {
             </View>
             <View style={styles.heroAside}>
               <View style={styles.avatarRow}>
+                <HowToGuideButton light />
                 <ProfileMenuButton />
                 <View style={styles.avatar}>
                   <Text style={styles.avatarText}>{initial}</Text>

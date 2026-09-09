@@ -5,6 +5,7 @@ import { AppCopyright } from '@/src/components/AppCopyright';
 import { CollapsibleSection } from '@/src/components/CollapsibleSection';
 import { ConceptsPlanCard } from '@/src/components/ConceptsPlanCard';
 import { FadeInBlock } from '@/src/components/FadeInBlock';
+import { HowToGuideButton } from '@/src/components/HowToGuideButton';
 import { MoneyText } from '@/src/components/MoneyText';
 import { RaisedText } from '@/src/components/RaisedText';
 import { ReminderSettingsCard } from '@/src/components/ReminderSettingsCard';
@@ -45,7 +46,10 @@ export default function PlanScreen() {
     <ScreenBackground>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" automaticallyAdjustKeyboardInsets showsVerticalScrollIndicator={false}>
         <FadeInBlock>
-          <RaisedText style={styles.title}>{t('plan.title')}</RaisedText>
+          <View style={styles.titleRow}>
+            <RaisedText style={styles.title}>{t('plan.title')}</RaisedText>
+            <HowToGuideButton light variant="chip" />
+          </View>
           <Text style={styles.subtitle}>{t('plan.subtitle')}</Text>
         </FadeInBlock>
 
@@ -190,6 +194,12 @@ export default function PlanScreen() {
 
 const styles = StyleSheet.create({
   content: { padding: 22, paddingBottom: 168, gap: 12 },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
   title: {
     fontFamily: 'Fraunces_700Bold',
     fontSize: 34,

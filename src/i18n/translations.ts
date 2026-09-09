@@ -325,6 +325,8 @@ export const translations = {
     'wealth.subtitle':
       'Net worth = what you have in accounts minus debts. Income raises the account you chose (cash, bank, savings or a virtual wallet), not a separate “bonus” pot.',
     'wealth.accounts': 'Accounts',
+    'wealth.accountsHint':
+      'Cash, bank, savings, investments and the card are fixed accounts. Nequi or others are wallets you add.',
     'wealth.accountsCollapsed': '{count} accounts — tap to open',
     'wealth.assets': 'Assets',
     'wealth.liabilities': 'Liabilities',
@@ -590,7 +592,30 @@ export const translations = {
     'coach.glanceTitle': 'Check this month’s amounts',
     'coach.glanceBody': 'Open this to review totals by concept and spot what needs attention.',
     'coach.tabsTitle': 'The rest lives down here',
-    'coach.tabsBody': 'Activity to edit, Plan for limits, Wealth for accounts, Insights to understand.',
+    'coach.tabsBody':
+      'Activity to edit, Plan for categories, Wealth for accounts. Lost later? Tap ? or ⋯ → How to use.',
+
+    'guide.menu': 'How to use',
+    'guide.openA11y': 'How to use Billing',
+    'guide.title': 'How to use Billing',
+    'guide.close': 'Got it',
+    'guide.kicker': 'Anytime from ? or ⋯',
+    'guide.ideaTitle': 'Two ideas, that’s it',
+    'guide.ideaBody':
+      'Plan is WHAT you spend on. Wealth is WHERE the money sits. They are not the same list.',
+    'guide.spendTitle': 'Expense categories (Plan)',
+    'guide.spendBody':
+      'A concept is broad (Food, Bills). A subcategory is the specific thing (Coffee, Power, Uber). Setup only picked concepts; you add subcategories in Plan. Until you do, everything lands in “General”.',
+    'guide.wealthTitle': 'Fixed accounts and wallets (Wealth)',
+    'guide.wealthBody':
+      'Fixed accounts are already there: Cash, Main bank, Savings, Investments and Credit card. You don’t create or delete them — balances move when you log. Virtual wallets (Nequi, Daviplata or another) are the ones you add.',
+    'guide.dayTitle': 'Day to day',
+    'guide.dayBody':
+      'Add logs a movement and picks which account it comes from. Home shows Available now (money today) and This month’s result (ahead or behind). Activity is for edits.',
+    'guide.debtTitle': 'Installments vs the card',
+    'guide.debtBody':
+      'A recurring installment (rent, car) lives under Wealth. The credit card is a fixed account. “Credits” in Plan is just the spend concept for classifying those payments.',
+    'guide.hint': 'Open this again anytime with ? or ⋯ → How to use.',
 
     'reminder.title': 'Expense reminders',
     'reminder.collapsed': '{count} reminders — tap to open',
@@ -1043,6 +1068,8 @@ export const translations = {
     'wealth.subtitle':
       'Patrimonio = lo que hay en tus cuentas menos deudas. Un ingreso sube la cuenta que elegiste (efectivo, banco, ahorro o una billetera virtual). Bonos es solo el tipo de ingreso.',
     'wealth.accounts': 'Cuentas',
+    'wealth.accountsHint':
+      'Efectivo, banco, ahorros, inversiones y tarjeta son cuentas fijas. Nequi u otras son billeteras que agregas tú.',
     'wealth.accountsCollapsed': '{count} cuentas — toca para abrir',
     'wealth.assets': 'Activos',
     'wealth.liabilities': 'Pasivos',
@@ -1310,7 +1337,30 @@ export const translations = {
     'coach.glanceTitle': 'Validar los montos del mes',
     'coach.glanceBody': 'Aquí revisas totales por concepto y ves qué merece atención.',
     'coach.tabsTitle': 'El resto está abajo',
-    'coach.tabsBody': 'Actividad para editar, Plan para topes, Patrimonio para cuentas, Análisis para entender.',
+    'coach.tabsBody':
+      'Actividad para editar, Plan para categorías, Patrimonio para cuentas. Si te pierdes, toca ? o ⋯ → Cómo usar.',
+
+    'guide.menu': 'Cómo usar',
+    'guide.openA11y': 'Cómo usar Billing',
+    'guide.title': 'Cómo usar Billing',
+    'guide.close': 'Entendido',
+    'guide.kicker': 'Cuando quieras, con ? o ⋯',
+    'guide.ideaTitle': 'Dos ideas, no más',
+    'guide.ideaBody':
+      'Plan es EN QUÉ gastas. Patrimonio es DÓNDE está el dinero. No son la misma lista.',
+    'guide.spendTitle': 'Categorías de gasto (Plan)',
+    'guide.spendBody':
+      'Un concepto es amplio (Alimentación, Recibos). Una subcategoría es lo concreto (Café, Luz, Uber). Al empezar solo elegiste conceptos; las subcategorías se crean en Plan. Hasta que las armes, todo cae en “General”.',
+    'guide.wealthTitle': 'Cuentas fijas y billeteras (Patrimonio)',
+    'guide.wealthBody':
+      'Las cuentas fijas ya están: Efectivo, Banco principal, Ahorros, Inversiones y Tarjeta. No las creas ni las borras; el saldo sube o baja al registrar. Las billeteras virtuales (Nequi, Daviplata u otra) sí las agregas tú.',
+    'guide.dayTitle': 'El día a día',
+    'guide.dayBody':
+      'Agregar registra un movimiento y elige de qué cuenta sale. Inicio muestra Disponible hoy (plata ahora) y Resultado del mes (si vas a favor o en rojo). Actividad sirve para corregir.',
+    'guide.debtTitle': 'Cuotas vs la tarjeta',
+    'guide.debtBody':
+      'Una cuota permanente (apto, carro) se registra en Patrimonio. La tarjeta de crédito es una cuenta fija. “Créditos” en Plan es solo el concepto para clasificar esos pagos.',
+    'guide.hint': 'Vuelve a abrir esto con ? o en ⋯ → Cómo usar.',
 
     'reminder.title': 'Recordatorios de gastos',
     'reminder.collapsed': '{count} recordatorios — toca para abrir',

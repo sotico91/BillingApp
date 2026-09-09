@@ -16,6 +16,7 @@ import { router } from 'expo-router';
 import { WalletQuickAdd } from '@/src/components/AccountChoiceChips';
 import { CollapsibleSection } from '@/src/components/CollapsibleSection';
 import { FadeInBlock } from '@/src/components/FadeInBlock';
+import { HowToGuideButton } from '@/src/components/HowToGuideButton';
 import { MoneyText } from '@/src/components/MoneyText';
 import { RaisedText } from '@/src/components/RaisedText';
 import { ScreenBackground } from '@/src/components/ScreenBackground';
@@ -309,7 +310,10 @@ export default function WealthScreen() {
         scrollEventThrottle={16}
         showsVerticalScrollIndicator={false}>
         <FadeInBlock>
-          <RaisedText style={styles.title}>{t('wealth.title')}</RaisedText>
+          <View style={styles.titleRow}>
+            <RaisedText style={styles.title}>{t('wealth.title')}</RaisedText>
+            <HowToGuideButton light variant="chip" />
+          </View>
           <Text style={styles.subtitle}>{t('wealth.subtitle')}</Text>
           <View style={styles.netBox}>
             <Text style={styles.netLabel}>{t('wealth.net')}</Text>
@@ -329,6 +333,7 @@ export default function WealthScreen() {
             open={accountsOpen}
             onToggle={() => setAccountsOpen((v) => !v)}
             summary={t('wealth.accountsCollapsed', { count: accounts.length })}>
+            <Text style={styles.accountsHint}>{t('wealth.accountsHint')}</Text>
             {accounts.map((acc) => {
               const isWallet = acc.type === 'wallet';
               const renaming = editingWalletId === acc.id;
@@ -686,6 +691,19 @@ const styles = StyleSheet.create({
     color: palette.inkMuted,
     lineHeight: 18,
     marginBottom: 10,
+  },
+  accountsHint: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
+    color: palette.brandMuted,
+    lineHeight: 18,
+    marginBottom: 10,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
   },
   title: {
     fontFamily: 'Fraunces_700Bold',

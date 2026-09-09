@@ -19,6 +19,7 @@ import { CoachMarksOverlay } from '@/src/components/CoachMarksOverlay';
 import { NamePromptOverlay } from '@/src/components/NamePromptOverlay';
 import { OnboardingOverlay } from '@/src/components/OnboardingOverlay';
 import { ReminderHygiene } from '@/src/components/ReminderHygiene';
+import { HowToGuideProvider } from '@/src/hooks/useHowToGuide';
 import { AmountPrivacyProvider } from '@/src/hooks/useAmountPrivacy';
 import { ExpensesProvider } from '@/src/hooks/useExpenses';
 import { SettingsProvider } from '@/src/hooks/useSettings';
@@ -69,12 +70,14 @@ export default function RootLayout() {
       <SettingsProvider>
         <AmountPrivacyProvider>
           <ExpensesProvider>
-            <StatusBar style="light" />
-            <RootNavigator />
-            <ReminderHygiene />
-            <OnboardingOverlay />
-            <NamePromptOverlay />
-            <CoachMarksOverlay />
+            <HowToGuideProvider>
+              <StatusBar style="light" />
+              <RootNavigator />
+              <ReminderHygiene />
+              <OnboardingOverlay />
+              <NamePromptOverlay />
+              <CoachMarksOverlay />
+            </HowToGuideProvider>
             <AppLockOverlay />
           </ExpensesProvider>
         </AmountPrivacyProvider>

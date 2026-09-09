@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useFinance } from '@/src/hooks/useFinance';
 import { useSettings } from '@/src/hooks/useSettings';
+import { useHowToGuide } from '@/src/hooks/useHowToGuide';
 import { useLanguage } from '@/src/i18n/LanguageContext';
 import { palette, radii } from '@/src/theme/colors';
 import {
@@ -32,6 +33,7 @@ type Props = {
 export function ProfileMenuButton({ light = true }: Props) {
   const insets = useSafeAreaInsets();
   const { t, language } = useLanguage();
+  const { openGuide } = useHowToGuide();
   const { settings, quickTemplates, updateUserName, restoreSettingsFromBackup, updateAppLock } =
     useSettings();
   const {
@@ -203,6 +205,15 @@ export function ProfileMenuButton({ light = true }: Props) {
         onRequestClose={() => setMenuOpen(false)}>
         <Pressable style={styles.menuBackdrop} onPress={() => setMenuOpen(false)}>
           <View style={[styles.menuSheet, { marginTop: insets.top + 56 }]}>
+            <Pressable
+              onPress={() => {
+                tapFeedback();
+                setMenuOpen(false);
+                openGuide();
+              }}
+              style={styles.menuItem}>
+              <Text style={styles.menuItemText}>{t('guide.menu')}</Text>
+            </Pressable>
             <Pressable
               onPress={() => {
                 tapFeedback();
