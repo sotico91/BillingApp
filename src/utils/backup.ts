@@ -14,7 +14,8 @@ import type {
 import type { QuickTemplate, SpendConcept, UserSettings } from '@/src/types/settings';
 import type { Language, TranslationKey } from '@/src/i18n/translations';
 
-export const BACKUP_FORMAT = 'billingapp-backup';
+export const BACKUP_FORMAT = 'rumi-backup';
+export const LEGACY_BACKUP_FORMAT = 'billingapp-backup';
 export const BACKUP_VERSION = 1;
 
 export type BillingBackup = {
@@ -178,7 +179,9 @@ export function parseBackupJson(raw: string): BillingBackup {
   }
   if (!parsed || typeof parsed !== 'object') throw new Error('INVALID_BACKUP');
   const data = parsed as Partial<BillingBackup>;
-  if (data.format !== BACKUP_FORMAT) throw new Error('INVALID_FORMAT');
+  if (data.format !== BACKUP_FORMAT && data.format !== LEGACY_BACKUP_FORMAT) {
+    throw new Error('INVALID_FORMAT');
+  }
   if (typeof data.version !== 'number') throw new Error('INVALID_VERSION');
   if (!Array.isArray(data.transactions)) throw new Error('INVALID_TRANSACTIONS');
   if (!Array.isArray(data.accounts)) throw new Error('INVALID_ACCOUNTS');
@@ -224,7 +227,7 @@ async function shareFile(file: File, contents: string, title: string) {
 export async function shareBackupJson(snapshot: BackupSnapshot): Promise<void> {
   const backup = buildBackup(snapshot);
   const contents = JSON.stringify(backup, null, 2);
-  const filename = `BillingApp-backup-${stamp()}.json`;
+  const filename = `Rumi-backup-${stamp()}.json`;
   const file = await writeCacheFile(filename, contents);
   await shareFile(file, contents, filename);
 }
@@ -236,8 +239,8 @@ export async function shareTransactionsCsv(
   const contents = transactionsToCsv(transactions, ctx);
   const filename =
     ctx.language === 'es'
-      ? `BillingApp-movimientos-${stamp()}.csv`
-      : `BillingApp-movements-${stamp()}.csv`;
+      ? `Rumi-movimientos-${stamp()}.csv`
+      : `Rumi-movements-${stamp()}.csv`;
   const file = await writeCacheFile(filename, contents);
   await shareFile(file, contents, filename);
 }

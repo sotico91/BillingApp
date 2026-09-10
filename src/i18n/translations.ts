@@ -2,8 +2,8 @@ export type Language = 'en' | 'es';
 
 export const translations = {
   en: {
-    'brand.mark': 'BILLING',
-    'brand.name': 'Billing',
+    'brand.mark': 'RUMI',
+    'brand.name': 'Rumi',
     'home.subtitle': 'Register → classify → understand → decide.',
     'home.greeting': 'Hi, {name}',
     'home.greetingFallback': 'Hi there',
@@ -170,7 +170,7 @@ export const translations = {
     'decor.totalsHint':
       'Available now = accounts today. This month’s result = income − spend this month. Tap outside or ✕ to close.',
     'decor.overlayHint': 'Quick glance — layout stays put',
-    'insights.searchTitle': 'Ask BillingApp',
+    'insights.searchTitle': 'Ask Rumi',
     'insights.searchPlaceholder': 'How much did I spend on delivery {when}?',
     'insights.searchAsk': 'Ask',
     'insights.searchHint':
@@ -212,7 +212,7 @@ export const translations = {
       'The app opens right away, with no Face ID. Turn it on again anytime from ⋯.',
     'lock.promptFace': 'Unlock with Face ID',
     'lock.promptFinger': 'Unlock with fingerprint',
-    'lock.promptPin': 'Unlock BillingApp',
+    'lock.promptPin': 'Unlock Rumi',
     'lock.promptDisable': 'Confirm with Face ID to turn it off',
     'lock.faceTitle': 'Unlock with Face ID',
     'lock.faceBody':
@@ -241,7 +241,7 @@ export const translations = {
     'backup.restoreDoneBody': 'Your data was replaced with the selected backup.',
     'backup.errorTitle': 'Backup',
     'backup.exportError': 'Could not export. Try again.',
-    'backup.restoreError': 'That file is not a valid BillingApp backup.',
+    'backup.restoreError': 'That file is not a valid Rumi backup.',
     'csv.date': 'Date',
     'csv.type': 'Type',
     'csv.amount': 'Amount',
@@ -539,7 +539,7 @@ export const translations = {
     'language.es': 'ES',
 
     'notFound.title': 'This screen doesn’t exist',
-    'notFound.back': 'Back to BillingApp',
+    'notFound.back': 'Back to Rumi',
 
     'onboard.welcomeTitle': "Let's make money feel simple",
     'onboard.welcomeBody':
@@ -594,13 +594,13 @@ export const translations = {
       'Activity to edit, Plan for categories, Wealth for accounts. Lost later? Tap ? or ⋯ → How to use.',
 
     'guide.menu': 'How to use',
-    'guide.openA11y': 'How to use Billing',
-    'guide.title': 'How to use Billing',
+    'guide.openA11y': 'How to use Rumi',
+    'guide.title': 'How to use Rumi',
     'guide.close': 'Got it',
     'guide.kicker': 'Anytime from ? or ⋯',
     'guide.ideaTitle': 'Two ideas, that’s it',
     'guide.ideaBody':
-      'Plan is WHAT you spend on. Accounts are WHERE the money sits. Fixed installments are only the same monthly amount — Billing does not calculate interest.',
+      'Plan is WHAT you spend on. Accounts are WHERE the money sits. Fixed installments are only the same monthly amount — Rumi does not calculate interest.',
     'guide.spendTitle': 'Expense categories (Plan)',
     'guide.spendBody':
       'A concept is broad (Food, Bills). A subcategory is the specific thing (Coffee, Power, Uber). Setup only picked concepts; you add subcategories in Plan. Until you do, everything lands in “General”.',
@@ -648,7 +648,7 @@ export const translations = {
     'reminder.save': 'Save reminders',
     'reminder.savedTitle': 'Reminders updated',
     'reminder.savedBody': 'Your local reminders were scheduled with date and time.',
-    'reminder.pushTitle': 'Billing reminder',
+    'reminder.pushTitle': 'Rumi reminder',
     'reminder.pushBody': 'Did you log {category} yet?',
     'reminder.pickCategories': 'Concepts to remind',
 
@@ -667,7 +667,7 @@ export const translations = {
       '{category} is your largest share of income ({period}): {percent}% of what you earned.',
     'smart.spendIncomeShare': 'You spent {percent}% of your income {period}.',
     'smart.antTotal': 'Ant expenses ({period}): {amount}.',
-    'smart.empty': 'Keep logging — BillingApp will explain your money story.',
+    'smart.empty': 'Keep logging — Rumi will explain your money story.',
     'smart.compareYesterday': 'yesterday',
     'smart.compareLastWeek': 'last week',
     'smart.compareLastMonth': 'last month',
@@ -741,8 +741,8 @@ export const translations = {
       '{count} limits exceeded in {period}. Highest: {label} at {percent}%.',
   },
   es: {
-    'brand.mark': 'BILLING',
-    'brand.name': 'Billing',
+    'brand.mark': 'RUMI',
+    'brand.name': 'Rumi',
     'home.subtitle': 'Registrar → clasificar → entender → decidir.',
     'home.greeting': 'Hola, {name}',
     'home.greetingFallback': 'Hola',
@@ -910,7 +910,7 @@ export const translations = {
     'decor.totalsHint':
       'Disponible hoy = cuentas ahora. Resultado del mes = ingresos − gastos de este mes. Toca afuera o ✕ para cerrar.',
     'decor.overlayHint': 'Vista rápida — sin mover el contenido',
-    'insights.searchTitle': 'Pregúntale a BillingApp',
+    'insights.searchTitle': 'Pregúntale a Rumi',
     'insights.searchPlaceholder': '¿Cuánto gasté en domicilio {when}?',
     'insights.searchAsk': 'Preguntar',
     'insights.searchHint':
@@ -953,7 +953,7 @@ export const translations = {
       'La app se abre de una vez, sin Face ID. Puedes activarlo otra vez cuando quieras en ⋯.',
     'lock.promptFace': 'Desbloquear con Face ID',
     'lock.promptFinger': 'Desbloquear con huella',
-    'lock.promptPin': 'Desbloquear BillingApp',
+    'lock.promptPin': 'Desbloquear Rumi',
     'lock.promptDisable': 'Confirma con Face ID para quitarlo',
     'lock.faceTitle': 'Desbloquear con Face ID',
     'lock.faceBody':
@@ -982,7 +982,7 @@ export const translations = {
     'backup.restoreDoneBody': 'Tus datos se reemplazaron con el respaldo seleccionado.',
     'backup.errorTitle': 'Respaldo',
     'backup.exportError': 'No se pudo exportar. Intenta de nuevo.',
-    'backup.restoreError': 'Ese archivo no es un respaldo válido de BillingApp.',
+    'backup.restoreError': 'Ese archivo no es un respaldo válido de Rumi.',
     'csv.date': 'Fecha',
     'csv.type': 'Tipo',
     'csv.amount': 'Monto',
@@ -1282,7 +1282,7 @@ export const translations = {
     'language.es': 'ES',
 
     'notFound.title': 'Esta pantalla no existe',
-    'notFound.back': 'Volver a BillingApp',
+    'notFound.back': 'Volver a Rumi',
 
     'onboard.welcomeTitle': 'Hagamos que el dinero se sienta simple',
     'onboard.welcomeBody':
@@ -1337,13 +1337,13 @@ export const translations = {
       'Actividad para editar, Plan para categorías, Patrimonio para cuentas. Si te pierdes, toca ? o ⋯ → Cómo usar.',
 
     'guide.menu': 'Cómo usar',
-    'guide.openA11y': 'Cómo usar Billing',
-    'guide.title': 'Cómo usar Billing',
+    'guide.openA11y': 'Cómo usar Rumi',
+    'guide.title': 'Cómo usar Rumi',
     'guide.close': 'Entendido',
     'guide.kicker': 'Cuando quieras, con ? o ⋯',
     'guide.ideaTitle': 'Dos ideas, no más',
     'guide.ideaBody':
-      'Plan es EN QUÉ gastas. Las cuentas son DÓNDE está el dinero. Las cuotas fijas son solo el mismo valor mensual — Billing no calcula interés.',
+      'Plan es EN QUÉ gastas. Las cuentas son DÓNDE está el dinero. Las cuotas fijas son solo el mismo valor mensual — Rumi no calcula interés.',
     'guide.spendTitle': 'Categorías de gasto (Plan)',
     'guide.spendBody':
       'Un concepto es amplio (Alimentación, Recibos). Una subcategoría es lo concreto (Café, Luz, Uber). Al empezar solo elegiste conceptos; las subcategorías se crean en Plan. Hasta que las armes, todo cae en “General”.',
@@ -1392,7 +1392,7 @@ export const translations = {
     'reminder.save': 'Guardar recordatorios',
     'reminder.savedTitle': 'Recordatorios actualizados',
     'reminder.savedBody': 'Tus alertas locales quedaron con fecha y hora.',
-    'reminder.pushTitle': 'Recordatorio Billing',
+    'reminder.pushTitle': 'Recordatorio Rumi',
     'reminder.pushBody': '¿Ya registraste {category}?',
     'reminder.pickCategories': 'Conceptos a recordar',
 
@@ -1411,7 +1411,7 @@ export const translations = {
       '{category} es lo que más pesa sobre tu ingreso ({period}): {percent}% de lo que ganaste.',
     'smart.spendIncomeShare': 'Gastaste el {percent}% de tu ingreso {period}.',
     'smart.antTotal': 'Gastos hormiga ({period}): {amount}.',
-    'smart.empty': 'Sigue registrando: BillingApp te explicará la historia de tu dinero.',
+    'smart.empty': 'Sigue registrando: Rumi te explicará la historia de tu dinero.',
     'smart.compareYesterday': 'ayer',
     'smart.compareLastWeek': 'la semana pasada',
     'smart.compareLastMonth': 'el mes pasado',

@@ -1,4 +1,4 @@
-# Store readiness checklist — Billing
+# Store readiness checklist — Rumi
 
 ## Before first submission
 

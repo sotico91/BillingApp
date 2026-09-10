@@ -1,4 +1,4 @@
-# Android setup — BillingApp
+# Android setup — Rumi
 
 Same Expo/React Native app as iOS. **No Kotlin rewrite required.**
 

@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "Billing",
-    "slug": "billing-app",
+    "name": "Rumi",
+    "slug": "rumi",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "billingapp",
+    "scheme": ["rumi", "billingapp"],
     "userInterfaceStyle": "automatic",
     "primaryColor": "#1B3A4B",
     "description": "Personal finance tracker. Log expenses, budgets, debts and insights — data stays on your device.",
@@ -17,7 +17,9 @@
       "buildNumber": "1",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
-        "CFBundleAllowMixedLocalizations": true
+        "CFBundleAllowMixedLocalizations": true,
+        "CFBundleDisplayName": "Rumi",
+        "CFBundleName": "Rumi"
       },
       "config": {
         "usesNonExemptEncryption": false
@@ -47,7 +49,7 @@
       "package": "com.billingapp.personal",
       "versionCode": 1,
       "adaptiveIcon": {
-        "backgroundColor": "#1B3A4B",
+        "backgroundColor": "#F3E6D8",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
@@ -81,8 +83,8 @@
         {
           "image": "./assets/images/splash-icon.png",
           "resizeMode": "contain",
-          "backgroundColor": "#1B3A4B",
-          "imageWidth": 72
+          "backgroundColor": "#F3E6D8",
+          "imageWidth": 148
         }
       ],
       [
@@ -106,7 +108,7 @@
       [
         "expo-local-authentication",
         {
-          "faceIDPermission": "Billing uses Face ID to unlock your money data on this device."
+          "faceIDPermission": "Rumi uses Face ID to unlock your money data on this device."
         }
       ]
     ],

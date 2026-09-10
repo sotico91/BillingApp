@@ -32,7 +32,7 @@ export default function PrivacyPolicyScreen() {
         {es ? (
           <>
             <Text style={styles.p}>
-              Billing (“la App”) es una aplicación de finanzas personales. Esta política
+              Rumi (“la App”) es una aplicación de finanzas personales. Esta política
               explica qué datos se manejan y cómo. Al usar la App aceptas estas prácticas.
             </Text>
             <Text style={styles.h}>1. Resumen</Text>
@@ -64,7 +64,7 @@ export default function PrivacyPolicyScreen() {
             </Text>
             <Text style={styles.h}>5. Menores</Text>
             <Text style={styles.p}>
-              Billing no está dirigida a menores de 13 años.
+              Rumi no está dirigida a menores de 13 años.
             </Text>
             <Text style={styles.h}>6. Conservación y eliminación</Text>
             <Text style={styles.p}>
@@ -82,7 +82,7 @@ export default function PrivacyPolicyScreen() {
         ) : (
           <>
             <Text style={styles.p}>
-              Billing (“the App”) is a personal finance app. This policy explains what data is
+              Rumi (“the App”) is a personal finance app. This policy explains what data is
               handled and how. By using the App you accept these practices.
             </Text>
             <Text style={styles.h}>1. Summary</Text>
@@ -113,7 +113,7 @@ export default function PrivacyPolicyScreen() {
             </Text>
             <Text style={styles.h}>5. Children</Text>
             <Text style={styles.p}>
-              Billing is not directed at children under 13.
+              Rumi is not directed at children under 13.
             </Text>
             <Text style={styles.h}>6. Retention</Text>
             <Text style={styles.p}>

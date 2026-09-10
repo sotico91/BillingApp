@@ -72,7 +72,7 @@ export default function HomeScreen() {
   const spaceLabel = displayName
     ? t('home.spaceLabel', { name: displayName })
     : t('home.yours');
-  const initial = (displayName.charAt(0) || 'B').toUpperCase();
+  const initial = (displayName.charAt(0) || 'R').toUpperCase();
 
   const income = totalForPeriod('mes', 'income');
   const expenses = totalForPeriod('mes', 'expense');
@@ -144,11 +144,10 @@ export default function HomeScreen() {
         <FadeInBlock>
           <View style={styles.heroRow}>
             <View style={styles.heroCopy}>
-              <Text style={styles.brandMark}>{t('brand.mark')}</Text>
+              <RaisedText style={styles.brand}>{t('brand.name')}</RaisedText>
               <RaisedText tone="gold" style={styles.greeting}>
                 {greeting}
               </RaisedText>
-              <RaisedText style={styles.brand}>{t('brand.name')}</RaisedText>
               <Text style={styles.spaceLabel}>{spaceLabel}</Text>
               <Text style={styles.subtitle}>{t('home.subtitle')}</Text>
             </View>
@@ -530,12 +529,6 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   heroCopy: { flex: 1, paddingRight: 4 },
-  brandMark: {
-    fontFamily: 'DMSans_600SemiBold',
-    fontSize: 12,
-    color: palette.gold,
-    letterSpacing: 4.5,
-  },
   greeting: {
     marginTop: 8,
     fontFamily: 'Fraunces_700Bold',

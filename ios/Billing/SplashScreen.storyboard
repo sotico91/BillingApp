@@ -18,7 +18,11 @@
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                         <subviews>
                             <imageView id="EXPO-SplashScreen" userLabel="SplashScreenLogo" image="SplashScreenLogo" contentMode="scaleAspectFit" clipsSubviews="true" userInteractionEnabled="false" translatesAutoresizingMaskIntoConstraints="false">
-                                <rect key="frame" x="160.5" y="390" width="72" height="72"/>
+                                <rect key="frame" x="122.5" y="352" width="148" height="148"/>
+                                <constraints>
+                                    <constraint firstAttribute="width" constant="148" id="splash-w"/>
+                                    <constraint firstAttribute="height" constant="148" id="splash-h"/>
+                                </constraints>
                             </imageView>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="Rmq-lb-GrQ"/>
@@ -40,7 +44,7 @@
             <color white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
         </systemColor>
         <namedColor name="SplashScreenBackground">
-            <color alpha="1.000" blue="0.294117647058824" green="0.227450980392157" red="0.105882352941176" customColorSpace="sRGB" colorSpace="custom"/>
+            <color alpha="1.000" blue="0.847059" green="0.901961" red="0.952941" customColorSpace="sRGB" colorSpace="custom"/>
         </namedColor>
     </resources>
 </document>

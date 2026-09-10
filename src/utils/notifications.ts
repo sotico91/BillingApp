@@ -56,14 +56,14 @@ async function ensureAndroidChannels(): Promise<void> {
   // Omit `sound` so Android uses the system default.
   // Passing sound: 'default' is treated as a custom file name and LogBox-errors.
   await Notifications.setNotificationChannelAsync(ANDROID_CHANNEL_ID, {
-    name: 'BillingApp',
+    name: 'Rumi',
     importance: Notifications.AndroidImportance.DEFAULT,
     vibrationPattern: [0, 250, 250, 250],
     lightColor: '#1B3A4B',
     showBadge: true,
   });
   await Notifications.setNotificationChannelAsync(ANDROID_REMINDER_CHANNEL_ID, {
-    name: 'BillingApp reminders',
+    name: 'Rumi reminders',
     importance: Notifications.AndroidImportance.HIGH,
     vibrationPattern: [0, 250, 250, 250],
     lightColor: '#1B3A4B',
@@ -286,7 +286,7 @@ export async function syncRemindersFromRules(
   return syncCategoryReminders({
     reminders: rules.map((rule) => ({
       categoryId: rule.subId,
-      title: labels[rule.subId]?.title ?? 'BillingApp',
+      title: labels[rule.subId]?.title ?? 'Rumi',
       body: labels[rule.subId]?.body ?? '',
       hour: rule.hour,
       minute: rule.minute,
