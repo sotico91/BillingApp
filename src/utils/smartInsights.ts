@@ -411,6 +411,42 @@ const MONTH_INDEX: Record<string, number> = {
   december: 11,
 };
 
+function monthsAgoPeriod(
+  count: number,
+  language: 'en' | 'es',
+  now = new Date()
+): QueryPeriod {
+  const d = new Date(now.getFullYear(), now.getMonth() - count, 1);
+  return monthPeriod(d.getFullYear(), d.getMonth(), language);
+}
+
+const MES_AGO_WORDS: Record<string, number> = {
+  un: 1,
+  una: 1,
+  dos: 2,
+  tres: 3,
+  cuatro: 4,
+  cinco: 5,
+  seis: 6,
+  siete: 7,
+  ocho: 8,
+  nueve: 9,
+  diez: 10,
+  once: 11,
+  doce: 12,
+};
+
+function parseMesAgoCount(raw: string): number | null {
+  const n = Number(raw);
+  if (Number.isFinite(n) && n >= 1 && n <= 36) return Math.floor(n);
+  return MES_AGO_WORDS[raw] ?? null;
+}
+
+/** Named month without a year: if that month is still ahead this year, use last year. */
+function yearForBareMonth(monthIndex: number, now: Date): number {
+  if (monthIndex > now.getMonth()) return now.getFullYear() - 1;
+  return now.getFullYear();
+}
 type QueryPeriod = {
   label: string;
   from: Date;
@@ -564,10 +600,27 @@ function resolvePeriod(
   );
   if (dayMonth) {
     const monthIndex = MONTH_INDEX[dayMonth[2]];
-    const year = parseYearToken(dayMonth[3], yearNow);
+    const year = dayMonth[3]
+      ? parseYearToken(dayMonth[3], yearNow)
+      : yearForBareMonth(monthIndex ?? 0, now);
     const day = Number(dayMonth[1]);
     if (monthIndex != null && day >= 1 && day <= 31) {
       return dayPeriod(new Date(year, monthIndex, day), language);
+    }
+  }
+
+  const isoMonth = q.match(/\b(20\d{2})[\/\-.](\d{1,2})\b/);
+  if (isoMonth) {
+    const monthIndex = Number(isoMonth[2]) - 1;
+    if (monthIndex >= 0 && monthIndex <= 11) {
+      return monthPeriod(Number(isoMonth[1]), monthIndex, language);
+    }
+  }
+  const monthYear = q.match(/\b(\d{1,2})[\/\-.](20\d{2})\b/);
+  if (monthYear) {
+    const monthIndex = Number(monthYear[1]) - 1;
+    if (monthIndex >= 0 && monthIndex <= 11) {
+      return monthPeriod(Number(monthYear[2]), monthIndex, language);
     }
   }
 
@@ -584,8 +637,23 @@ function resolvePeriod(
     }
   }
 
+  const haceMeses = q.match(
+    /\bhace\s+(\d+|un|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez|once|doce)\s+mes(?:es)?\b/
+  );
+  if (haceMeses) {
+    const count = parseMesAgoCount(haceMeses[1]);
+    if (count) return monthsAgoPeriod(count, language, now);
+  }
+  const monthsAgoEn = q.match(/\b(\d+)\s+months?\s+ago\b/);
+  if (monthsAgoEn) {
+    const count = parseMesAgoCount(monthsAgoEn[1]);
+    if (count) return monthsAgoPeriod(count, language, now);
+  }
+
   const namedMonth = q.match(
-    new RegExp(`\\b(?:en\\s+)?(${months})(?:\\s+(?:de\\s+)?(\\d{4}))?\\b`)
+    new RegExp(
+      `\\b(?:(?:en|del)\\s+(?:el\\s+)?(?:mes\\s+de\\s+)?)?(${months})(?:\\s+(?:de(?:l)?\\s+)?(\\d{4}))?\\b`
+    )
   );
 
   const hasLastMonth = includesAny(q, [
@@ -623,11 +691,10 @@ function resolvePeriod(
   if (namedMonth) {
     const monthIndex = MONTH_INDEX[namedMonth[1]];
     if (monthIndex != null) {
-      return monthPeriod(
-        parseYearToken(namedMonth[2], yearNow),
-        monthIndex,
-        language
-      );
+      const year = namedMonth[2]
+        ? parseYearToken(namedMonth[2], yearNow)
+        : yearForBareMonth(monthIndex, now);
+      return monthPeriod(year, monthIndex, language);
     }
   }
 
@@ -1335,125 +1402,32 @@ export function buildSearchSuggestions(
     spentBySub.set(tx.categoryId, (spentBySub.get(tx.categoryId) ?? 0) + tx.amount);
   }
 
-  const activeSubs = flattenSpendSubs(spendConcepts)
-    .map((sub) => ({
-      sub,
-      spent: spentBySub.get(sub.id) ?? 0,
-    }))
-    .sort((a, b) => b.spent - a.spent || a.sub.name.localeCompare(b.sub.name));
-
-  const featuredSubs = [
-    ...activeSubs.filter((x) => x.spent > 0).slice(0, 4),
-    ...activeSubs.filter((x) => x.spent <= 0).slice(0, 4),
-  ]
-    .filter(
-      (x, i, arr) => arr.findIndex((y) => y.sub.id === x.sub.id) === i
-    )
-    .slice(0, 4);
-
-  const hasDebtPayments = periodTxs.some((t) => t.type === 'debt_payment');
-  const hasDebts = (options.debts?.length ?? 0) > 0;
-  const creditsConcept = spendConcepts.find((c) => c.id === CREDITS_CONCEPT_ID);
-  const topSub = featuredSubs[0]?.sub;
+  const topSub = flattenSpendSubs(spendConcepts)
+    .map((sub) => ({ sub, spent: spentBySub.get(sub.id) ?? 0 }))
+    .sort((a, b) => b.spent - a.spent || a.sub.name.localeCompare(b.sub.name))[0]?.sub;
   const topHit = topSub ? findSpendSub(spendConcepts, topSub.id) : undefined;
-  const topName = topHit ? `${topHit.concept.name}/${topSub!.name}` : topSub?.name;
-
-  const now = new Date();
-  const pastMonthKeys = new Set<string>();
-  for (const tx of allTxs) {
-    if (tx.type !== 'expense' && tx.type !== 'debt_payment') continue;
-    const d = new Date(tx.createdAt);
-    if (d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth()) continue;
-    pastMonthKeys.add(`${d.getFullYear()}-${d.getMonth()}`);
-  }
-  const pastMonth = [...pastMonthKeys]
-    .map((key) => {
-      const [y, m] = key.split('-').map(Number);
-      return { year: y, monthIndex: m };
-    })
-    .sort((a, b) => b.year - a.year || b.monthIndex - a.monthIndex)[0];
-  const pastMonthName = pastMonth
-    ? language === 'es'
-      ? `${MONTHS_ES[pastMonth.monthIndex]} ${pastMonth.year}`
-      : `${monthLabel(pastMonth.monthIndex, 'en')} ${pastMonth.year}`
-    : null;
+  const topName = topHit ? `${topHit.concept.name}/${topSub.name}` : topSub?.name;
 
   if (language === 'es') {
-    prompts.push(`¿Qué % de mi ingreso gasté ${when}?`);
     prompts.push(`¿Cuánto gasté ${when}?`);
-    prompts.push('¿Cuánto gasté el mes pasado?');
-    prompts.push('¿En qué gasté más el mes pasado?');
-    if (topName) {
-      prompts.push(`¿Cuánto gasté en ${topName} el mes pasado?`);
-    }
-    prompts.push('¿Cuánto gasté este año?');
-    if (pastMonthName) {
-      prompts.push(`¿Cuánto gasté en ${pastMonthName}?`);
-    }
-    if (period !== 'hoy') prompts.push('¿Cuánto gasté ayer?');
-    if (hasDebtPayments || hasDebts) {
-      prompts.push(`¿Cuánto pagué en cuotas ${when}?`);
-      if (creditsConcept) {
-        prompts.push(`¿Cuánto gasté en ${creditsConcept.name} ${when}?`);
-      }
-    }
-    prompts.push(`¿Cuánto ahorré ${when}?`);
+    if (topName) prompts.push(`¿Cuánto gasté en ${topName} ${when}?`);
     prompts.push(
       period === 'mes'
         ? '¿Cuáles son mis gastos hormiga?'
         : `¿Cuáles son mis gastos hormiga ${when}?`
     );
-    for (const { sub } of featuredSubs) {
-      const hit = findSpendSub(spendConcepts, sub.id);
-      const name = hit ? `${hit.concept.name}/${sub.name}` : sub.name;
-      prompts.push(`¿Cuánto gasté en ${name} ${when}?`);
-    }
-    if (topName) {
-      prompts.push(`¿De qué bolsillo salió ${topName} ${when}?`);
-    }
-    prompts.push(`¿En qué gasté más ${when}?`);
-    prompts.push(`¿Gasté más ${when} que el mes pasado?`);
     prompts.push('¿Cuánto tengo disponible?');
-    if (hasDebts) prompts.push('¿Cuánto debo en deudas?');
   } else {
-    prompts.push(`What % of my income did I spend ${when}?`);
     prompts.push(`How much did I spend ${when}?`);
-    prompts.push('How much did I spend last month?');
-    prompts.push('Where did I spend the most last month?');
-    if (topName) {
-      prompts.push(`How much on ${topName} last month?`);
-    }
-    prompts.push('How much did I spend this year?');
-    if (pastMonthName) {
-      prompts.push(`How much did I spend in ${pastMonthName}?`);
-    }
-    if (period !== 'hoy') prompts.push('How much did I spend yesterday?');
-    if (hasDebtPayments || hasDebts) {
-      prompts.push(`How much did I pay in installments ${when}?`);
-      if (creditsConcept) {
-        prompts.push(`How much on ${creditsConcept.name} ${when}?`);
-      }
-    }
-    prompts.push(`How much did I save ${when}?`);
+    if (topName) prompts.push(`How much on ${topName} ${when}?`);
     prompts.push(
       period === 'mes'
         ? 'What are my ant expenses?'
         : `What are my ant expenses ${when}?`
     );
-    for (const { sub } of featuredSubs) {
-      const hit = findSpendSub(spendConcepts, sub.id);
-      const name = hit ? `${hit.concept.name}/${sub.name}` : sub.name;
-      prompts.push(`How much on ${name} ${when}?`);
-    }
-    if (topName) {
-      prompts.push(`Which pocket did ${topName} leave ${when}?`);
-    }
-    prompts.push(`Where did I spend the most ${when}?`);
-    prompts.push(`Did I spend more ${when} than last month?`);
     prompts.push('How much available cash do I have?');
-    if (hasDebts) prompts.push('How much do I still owe?');
   }
-  return prompts.slice(0, 16);
+  return prompts;
 }
 
 /**

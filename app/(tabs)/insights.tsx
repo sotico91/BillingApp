@@ -48,19 +48,7 @@ export default function InsightsScreen() {
   const total = totalForPeriod(period, 'expense');
   const top = insights[0];
   const periodLabel = t(`period.${period}` as TranslationKey);
-  const searchWhen =
-    language === 'es'
-      ? period === 'hoy'
-        ? 'hoy'
-        : period === 'semana'
-          ? 'esta semana'
-          : 'este mes'
-      : period === 'hoy'
-        ? 'today'
-        : period === 'semana'
-          ? 'this week'
-          : 'this month';
-  const searchPlaceholder = t('insights.searchPlaceholder', { when: searchWhen });
+  const searchPlaceholder = t('insights.searchPlaceholder');
   const smart = buildSmartInsights(transactions, t, format, spendConcepts, period, debts);
   const topBudget = top
     ? budgetStatus.find((b) => b.categoryId === top.categoryId)

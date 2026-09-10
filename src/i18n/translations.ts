@@ -195,10 +195,10 @@ export const translations = {
       'Cash, banks and wallets are what you can spend now. Income and expenses are only this month. Tap outside or ✕ to close.',
     'decor.overlayHint': 'Quick glance — layout stays put',
     'insights.searchTitle': 'Ask Rumi',
-    'insights.searchPlaceholder': 'How much did I spend on delivery {when}?',
+    'insights.searchPlaceholder': 'How much did I spend in July?',
     'insights.searchAsk': 'Ask',
     'insights.searchHint':
-      'The chips are shortcuts. You can type any period in the box: last month, August, yesterday, this year. Hoy / Semana / Mes below only change the charts — not the box.',
+      'Type any month in the box: July, March 2025, 2 months ago. The chips below are only short examples.',
     'insights.searchSuggestions': 'Try one of these',
     'insights.searchAnswer': 'Answer',
     'insights.searchClear': 'Clear',
@@ -678,7 +678,7 @@ export const translations = {
       'In Wealth → Debts & credit, tap Add a debt. Same amount every month (apartment, car, payroll loan): fixed installment, with balance and cuota. Card, credicheque or cupo: revolving credit, with the limit and what you already used. That’s a reminder — Rumi does not calculate interest.\n\nThe day you pay: Add → I paid a debt. That lowers the debt and the pocket you paid from.',
     'guide.step6Title': 'Insights — the analysis engine',
     'guide.step6Body':
-      'Open the Insights tab (bottom). At the top is Ask Rumi: type in the box or tap a chip, then Ask. The chips are shortcuts — last month is not only one chip. You can type “how much last month?”, “last month coffee”, “August”, “yesterday”.\n\nHoy / Semana / Mes only change the charts and notes below (ranking, pockets, smart notes). The text box uses the period you wrote.\n\nIf you want to know about ants or limits, those are marked in Plan; Insights is where you ask how they behaved.',
+      'Open the Insights tab (bottom). At the top is Ask Rumi: type the month you care about and tap Ask. Examples: “July”, “how much in March 2025”, “2 months ago”, “coffee last month”. A few chips are only examples — not a list of every month.\n\nHoy / Semana / Mes only change the charts and notes below. The box uses the period you wrote.\n\nAnts and limits are marked in Plan; Insights is where you ask how they behaved.',
     'guide.step7Title': 'Home and Activity',
     'guide.step7Body':
       'Home shows what you can still spend and whether this month is in the green. Activity is where you edit or delete a mistake. One-tap on Home appears after you repeat a usual expense a couple of times.',
@@ -789,11 +789,11 @@ export const translations = {
     'search.answerDebt': 'Current debt balance: {amount}.',
     'search.answerAvailable':
       'Spendable now: {amount} (cash + main bank + savings + wallets).',
-    'search.needQuestion': 'Type a question first — for example last month, coffee, or salary.',
+    'search.needQuestion': 'Type a question first — for example July, coffee, or last month.',
     'search.answerUnclear':
       'I could not match that question to your data. Try something like: {examples}',
     'search.examples':
-      '“How much last month?”, “How much in August?”, “How much this year?”, “What did I spend yesterday?”, “Which pocket did gym leave?”',
+      '“How much in July?”, “March 2025”, “2 months ago”, “How much this year?”, “Coffee this month”',
     'search.answerTopWithIncome':
       'Your biggest expense ({period}) is {label}: {amount} ({percent}% of income {income}) across {count} movements.',
     'search.answerNoIncome':
@@ -1029,10 +1029,10 @@ export const translations = {
       'Efectivo, bancos y billeteras son lo que puedes gastar ahora. Ingresos y gastos son solo este mes. Toca afuera o ✕ para cerrar.',
     'decor.overlayHint': 'Vista rápida — sin mover el contenido',
     'insights.searchTitle': 'Pregúntale a Rumi',
-    'insights.searchPlaceholder': '¿Cuánto gasté en domicilio {when}?',
+    'insights.searchPlaceholder': '¿Cuánto gasté en julio?',
     'insights.searchAsk': 'Preguntar',
     'insights.searchHint':
-      'Las chips son atajos. En la caja puedes escribir cualquier período: el mes pasado, agosto, ayer, este año. Hoy / Semana / Mes de abajo solo cambian las gráficas, no la caja.',
+      'Escribe el mes que quieras: julio, marzo 2025, hace 2 meses. Las chips son solo ejemplos cortos.',
     'insights.searchSuggestions': 'Prueba una de estas',
     'insights.searchAnswer': 'Respuesta',
     'insights.searchClear': 'Limpiar',
@@ -1515,7 +1515,7 @@ export const translations = {
       'En Patrimonio → Deudas y créditos, toca Agregar deuda. Si el banco te cobra siempre lo mismo (apto, carro, libranza): cuota fija, con saldo y cuota. Si es tarjeta, credicheque o cupo: crédito rotativo, con el cupo y lo que ya usaste. Eso es un recordatorio; Rumi no calcula interés.\n\nEl día que pagas: Agregar → Pagué una deuda. Ahí sí baja el saldo de la deuda y el de la cuenta con la que pagaste.',
     'guide.step6Title': 'Análisis: el motor de preguntas',
     'guide.step6Body':
-      'Abre la pestaña Análisis (abajo). Arriba está Pregúntale a Rumi: escribe en la caja o toca una chip y luego Preguntar. Las chips son atajos; el mes pasado no es solo una. Puedes escribir “el mes pasado”, “cuánto gasté el mes pasado en café”, “agosto”, “ayer”.\n\nHoy / Semana / Mes de esa pantalla solo cambian las gráficas y notas de abajo (ranking, bolsillos, notas inteligentes). La caja usa el período que escribiste.\n\nSi quieres saber de hormiga o topes, se marcan en Plan; en Análisis preguntas cómo se comportaron.',
+      'Abre la pestaña Análisis (abajo). Arriba está Pregúntale a Rumi: escribe el mes que te interesa y toca Preguntar. Ejemplos: “julio”, “cuánto gasté en marzo 2025”, “hace 2 meses”, “café el mes pasado”. Las chips son solo ejemplos, no una lista de todos los meses.\n\nHoy / Semana / Mes de esa pantalla solo cambian las gráficas y notas de abajo. La caja usa el período que escribiste.\n\nSi quieres saber de hormiga o topes, se marcan en Plan; en Análisis preguntas cómo se comportaron.',
     'guide.step7Title': 'Inicio y Actividad',
     'guide.step7Body':
       'En Inicio ves cuánto puedes gastar y si el mes va a favor. En Actividad editas o borras si te equivocaste. El registro rápido de Inicio aparece cuando ya repetiste un gasto un par de veces.',
@@ -1628,11 +1628,11 @@ export const translations = {
     'search.answerAvailable':
       'Disponible ahora: {amount} (efectivo + banco principal + ahorros + billeteras).',
     'search.needQuestion':
-      'Escribe una pregunta primero — por ejemplo el mes pasado, café o salario.',
+      'Escribe una pregunta primero — por ejemplo julio, café o el mes pasado.',
     'search.answerUnclear':
       'No pude relacionar esa pregunta con tus datos. Prueba algo como: {examples}',
     'search.examples':
-      '“¿Cuánto gasté el mes pasado?”, “¿Cuánto en agosto?”, “¿Cuánto este año?”, “¿Cuánto ayer?”, “¿De qué bolsillo salió el ejercicio?”',
+      '“¿Cuánto gasté en julio?”, “marzo 2025”, “hace 2 meses”, “¿Cuánto este año?”, “café este mes”',
     'search.answerTopWithIncome':
       'Tu mayor gasto ({period}) es {label}: {amount} ({percent}% del ingreso {income}) en {count} movimientos.',
     'search.answerNoIncome':
