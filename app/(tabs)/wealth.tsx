@@ -23,8 +23,10 @@ import { tapFeedback } from '@/src/utils/selectFeedback';
 import {
   accountRoleKey,
   accountDisplayName,
+  accountGroupKey,
   isRemovableWallet,
   isRemovableBank,
+  sortAccountsByKind,
 } from '@/src/utils/accounts';
 import {
   creditAvailable,
@@ -116,6 +118,20 @@ export default function WealthScreen() {
   const [savingWallet, setSavingWallet] = useState(false);
 
   const monthTx = transactionsForPeriod('mes', 'mine');
+
+  const groupedAccounts = useMemo(() => sortAccountsByKind(accounts), [accounts]);
+  const groupedDebts = useMemo(
+    () =>
+      [...debts].sort((a, b) => {
+        const ka = debtKind(a) === 'revolving' ? 1 : 0;
+        const kb = debtKind(b) === 'revolving' ? 1 : 0;
+        if (ka !== kb) return ka - kb;
+        const na = (a.name ?? a.nameKey ?? '').toLocaleLowerCase();
+        const nb = (b.name ?? b.nameKey ?? '').toLocaleLowerCase();
+        return na.localeCompare(nb);
+      }),
+    [debts]
+  );
 
   const paidByCategory = useMemo(() => {
     const map = new Map<string, number>();
@@ -362,16 +378,27 @@ export default function WealthScreen() {
             onToggle={() => setAccountsOpen((v) => !v)}
             summary={t('wealth.accountsCollapsed', { count: accounts.length })}>
             <Text style={styles.accountsHint}>{t('wealth.accountsHint')}</Text>
-            {accounts.map((acc) => {
+            {groupedAccounts.map((acc, index) => {
               const canRename = acc.type === 'wallet' || acc.type === 'bank';
               const canRemove =
                 isRemovableWallet(acc) || isRemovableBank(acc);
               const renaming = editingWalletId === acc.id;
               const label = accountDisplayName(acc, t);
+              const prevType = groupedAccounts[index - 1]?.type;
+              const showGroup = acc.type !== prevType;
               return (
-                <View
-                  key={acc.id}
-                  style={[styles.card, renaming && styles.cardEditing]}>
+                <View key={acc.id}>
+                  {showGroup ? (
+                    <Text
+                      style={[
+                        styles.groupLabel,
+                        index === 0 && styles.groupLabelFirst,
+                      ]}>
+                      {t(accountGroupKey(acc.type))}
+                    </Text>
+                  ) : null}
+                  <View
+                    style={[styles.card, renaming && styles.cardEditing]}>
                   <View style={styles.sectionRow}>
                     <View style={{ flex: 1 }}>
                       <Text style={styles.cardTitle}>{label}</Text>
@@ -458,6 +485,7 @@ export default function WealthScreen() {
                       </View>
                     </View>
                   ) : null}
+                </View>
                 </View>
               );
             })}
@@ -640,7 +668,7 @@ export default function WealthScreen() {
               </View>
             ) : null}
 
-            {debts.map((debt) => {
+            {groupedDebts.map((debt, index) => {
               const label = debt.nameKey
                 ? t(debt.nameKey as TranslationKey)
                 : debt.name ?? t('debt.mainCard');
@@ -665,10 +693,22 @@ export default function WealthScreen() {
               const tag = revolving
                 ? t(productLabelKey(revolvingProduct(debt)))
                 : t('wealth.kindTagInstallment');
+              const prevKind = groupedDebts[index - 1]
+                ? debtKind(groupedDebts[index - 1])
+                : null;
+              const thisKind = revolving ? 'revolving' : 'installment';
+              const showGroup = thisKind !== prevKind;
 
               return (
+                <View key={debt.id}>
+                  {showGroup ? (
+                    <Text style={styles.groupLabel}>
+                      {revolving
+                        ? t('wealth.kindRevolving')
+                        : t('wealth.kindInstallment')}
+                    </Text>
+                  ) : null}
                 <View
-                  key={debt.id}
                   style={[styles.card, isEditing && styles.cardEditing]}>
                   <View style={styles.sectionRow}>
                     <View style={{ flex: 1 }}>
@@ -739,6 +779,7 @@ export default function WealthScreen() {
                     })}
                   </Text>
                 </View>
+                </View>
               );
             })}
 
@@ -775,6 +816,18 @@ const styles = StyleSheet.create({
     color: palette.brandMuted,
     lineHeight: 18,
     marginBottom: 10,
+  },
+  groupLabel: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 11,
+    color: palette.inkSoft,
+    letterSpacing: 0.7,
+    textTransform: 'uppercase',
+    marginTop: 8,
+    marginBottom: 6,
+  },
+  groupLabelFirst: {
+    marginTop: 0,
   },
   titleRow: {
     flexDirection: 'row',

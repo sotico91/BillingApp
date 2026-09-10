@@ -154,6 +154,7 @@ export function OnboardingOverlay() {
 
           {step === 0 ? (
             <Animated.View entering={FadeInDown.springify()} style={styles.body}>
+              <Text style={styles.kicker}>{t('brand.name')}</Text>
               <Text style={styles.title}>{t('onboard.welcomeTitle')}</Text>
               <Text style={styles.copy}>{t('onboard.welcomeBody')}</Text>
               <Text style={styles.copy}>{t('onboard.welcomeShare')}</Text>
@@ -378,6 +379,13 @@ const styles = StyleSheet.create({
   body: {
     gap: 12,
     marginBottom: 18,
+  },
+  kicker: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 12,
+    color: palette.accent,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
   },
   title: {
     fontFamily: 'Fraunces_700Bold',

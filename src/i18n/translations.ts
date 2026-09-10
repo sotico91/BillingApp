@@ -353,6 +353,8 @@ export const translations = {
     'wealth.accounts': 'Accounts, banks & wallets',
     'wealth.accountsHint':
       'Where your money sits: cash, one or more banks, savings, investments, the card, plus wallets you add (Nequi, etc.).',
+    'wealth.groupInvestments': 'Investments',
+    'wealth.groupCredit': 'Credit',
     'wealth.accountsCollapsed': '{count} pockets — tap to open',
     'wealth.assets': 'Assets',
     'wealth.liabilities': 'Liabilities',
@@ -394,7 +396,7 @@ export const translations = {
     'wealth.debtMonthPay': 'Payment due this month',
     'wealth.creditAvailable': 'Available on this line: {amount}',
     'wealth.revolvingHint':
-      'Cupo minus used is what you can still charge. The monthly payment is a reminder until you log the payment in Add.',
+      'Cupo minus used is what you can still charge. The monthly payment is a reminder until you log it with Add movement.',
     'wealth.debtNamePlaceholderRevolving': 'Visa, Credicheque, bank cupo…',
     'wealth.debtNeedRevolving':
       'Name, cupo, and this month’s payment (used can be 0).',
@@ -407,7 +409,7 @@ export const translations = {
     'wealth.debtPayDay': 'Payment day of month (1–28)',
     'wealth.debtPayDayNeed': 'Payment day must be between 1 and 28.',
     'wealth.debtPayDayHint':
-      'Reminder day only — cash/bank is not deducted until you log the payment in Add.',
+      'Reminder day only — cash/bank is not deducted until you log the payment with Add movement.',
     'wealth.debtSave': 'Save',
     'wealth.debtEdit': 'Edit',
     'wealth.debtUpdate': 'Save changes',
@@ -415,9 +417,9 @@ export const translations = {
     'wealth.debtDelete': 'Remove',
     'wealth.debtNeed': 'Name, balance and monthly installment must be greater than 0.',
     'wealth.howToPay':
-      'Saving a cuota here does not spend money. When you actually pay: Add → “I paid a debt”.',
+      'Saving a cuota here does not spend money. When you actually pay: ◎ → Add movement → “I paid a debt”.',
     'wealth.debtPermanentHint':
-      'Only the fixed installment amount — a reminder, not a loan calculator. It becomes spend when you log the payment in Add.',
+      'Only the fixed installment amount — a reminder, not a loan calculator. It becomes spend when you log the payment with Add movement.',
     'wealth.debtConceptHint':
       'Fixed installments or revolving credit. Register the amount you pay — not an interest rate.',
     'wealth.debtBudgetHint':
@@ -601,18 +603,18 @@ export const translations = {
     'notFound.title': 'This screen doesn’t exist',
     'notFound.back': 'Back to Rumi',
 
-    'onboard.welcomeTitle': "Let's make money feel simple",
+    'onboard.welcomeTitle': 'Welcome to Rumi',
     'onboard.welcomeBody':
-      'In under a minute you’ll set your name, currency and a few spending concepts. Coffee, power bills or Uber go later as subcategories in Plan. On Home, tap Available now or This month’s result when you want to know what each number means.',
+      'In a minute you’ll set your name, currency and a few spending concepts. Coffee, power or Uber come later in Plan, as subcategories.\n\nFirst-day order: Wealth (where the money sits), Plan (what you spend on), then one real I spent. Don’t start by inventing an expense.',
     'onboard.welcomeShare':
-      'If you later share a household ledger, each person only registers their own spends — never someone else’s.',
+      'If you later share a household, each person only logs their own movements — never someone else’s.',
     'onboard.start': 'Sounds good',
     'onboard.next': 'Continue',
     'onboard.back': 'Back',
     'onboard.finish': "I'm ready",
     'onboard.nameTitle': 'What should we call you?',
     'onboard.nameBody':
-      'We’ll put your name on Home and stamp every expense you log as yours.',
+      'We’ll put your name on Home and stamp every movement you log as yours.',
     'onboard.namePlaceholder': 'Your first name',
     'onboard.nameNeed': 'Please enter your name to continue.',
     'onboard.currencyTitle': 'What currency do you use day to day?',
@@ -630,13 +632,14 @@ export const translations = {
     'onboard.concept.vivienda': 'Housing',
     'onboard.concept.general': 'General',
     'onboard.notifyTitle': 'Want a little confirmation?',
-    'onboard.notifyBody': 'We’ll nudge you when a movement is saved—helpful while you build the habit.',
+    'onboard.notifyBody': 'We’ll nudge you when a movement is saved — helpful while you build the habit.',
     'onboard.notifyYes': 'Yes, notify me',
     'onboard.notifyNo': 'No thanks',
     'onboard.reminderTitle': 'Which concepts should remind you?',
     'onboard.reminderBody':
       'Pick the concepts you want a daily local reminder for (evening by default). Add subcategories later in Plan.',
-    'onboard.reminderHint': 'Tip: keep this light — reminders follow the concept, not a single café.',
+    'onboard.reminderHint':
+      'Tip: the reminder follows the concept, not a single coffee. After this we’ll show you Home and the first-day recipe.',
     'onboard.step': 'Step {current} of {total}',
 
     'coach.step': '{current} of {total}',
@@ -646,12 +649,13 @@ export const translations = {
     'coach.privacyBody': 'Tap the eye to show or hide the values in the app.',
     'coach.moneyTitle': 'Available vs this month',
     'coach.moneyBody':
-      'Home only shows the total you can spend. Tap the wallet to see cash, banks and wallets. This month’s result is whether this month stayed in the green.',
-    'coach.glanceTitle': 'Check this month’s amounts',
-    'coach.glanceBody': 'Open this to review totals by concept and spot what needs attention.',
+      'Home shows what you can still spend. Tap the wallet for cash, banks and wallets (your pockets). This month’s result is whether this month stayed in the green — only what you logged.',
+    'coach.glanceTitle': 'Log a movement',
+    'coach.glanceBody':
+      'The ◎ button on the right opens this month’s summary. Tap Add movement for I spent, I received money, I moved money or I paid a debt.',
     'coach.tabsTitle': 'The rest lives down here',
     'coach.tabsBody':
-      'Activity to edit, Plan for categories, Wealth for accounts. Next you’ll get a first-day recipe. Later, tap ? or ⋯ → How to use.',
+      'Activity to edit, Plan for concepts, Wealth for pockets, Insights to ask Rumi. Next you’ll get a first-day recipe. If you get lost, tap ? or ⋯ → How to use.',
 
     'guide.menu': 'How to use',
     'guide.openA11y': 'How to use Rumi',
@@ -667,21 +671,21 @@ export const translations = {
     'guide.step2Title': 'Plan — what you’ll find there',
     'guide.step2Body':
       'Open Plan. Inside:\n• My concepts — create the buckets (Food, Bills) and subcategories (Coffee, Uber, Power). Until you add them, spends land in “General”.\n• Monthly limits — tap a subcategory if you want a cap.\n• Ant expenses — mark the small leaks so Insights can show them apart.\n• Reminders — if you want a ping on bill day, set it here.',
-    'guide.step3Title': 'Add — log an expense',
+    'guide.step3Title': 'Log an expense',
     'guide.step3Body':
-      'Tap + (Add). Choose I spent. Type the amount. Pick the concept and subcategory. Choose which pocket it left (cash, Nequi, bank…). That lowers that account and counts as this month’s spend. Paid a store by bank transfer? Still I spent — that’s a payment method, not moving money between your pockets.',
+      'Tap the round ◎ button (bottom right), then Add movement. Choose I spent. Type the amount. Pick the concept and subcategory. Choose which pocket it left (cash, Nequi, bank…). That lowers that account and counts as this month’s spend. Paid a store by bank transfer? Still I spent — that’s a payment method, not moving money between your pockets.',
     'guide.step4Title': 'Income, or just moving money',
     'guide.step4Body':
-      'Got paid? Add → I received money, and pick which account it entered (bank, Nequi, cash).\n\nMoved Nequi to savings, or bank to cash? Add → I moved money. Pick from and to. Not a spend: it was already yours, it only changed pocket.',
-    'guide.step5Title': 'Debts: note in Wealth, pay in Add',
+      'Got paid? ◎ → Add movement → I received money, and pick which account it entered (bank, Nequi, cash).\n\nMoved Nequi to savings, or bank to cash? ◎ → Add movement → I moved money. Pick from and to. Not a spend: it was already yours, it only changed pocket.',
+    'guide.step5Title': 'Debts: note in Wealth, pay with Add movement',
     'guide.step5Body':
-      'In Wealth → Debts & credit, tap Add a debt. Same amount every month (apartment, car, payroll loan): fixed installment, with balance and cuota. Card, credicheque or cupo: revolving credit, with the limit and what you already used. That’s a reminder — Rumi does not calculate interest.\n\nThe day you pay: Add → I paid a debt. That lowers the debt and the pocket you paid from.',
+      'In Wealth → Debts & credit, tap Add a debt. Same amount every month (apartment, car, payroll loan): fixed installment, with balance and cuota. Card, credicheque or cupo: revolving credit, with the limit and what you already used. That’s a reminder — Rumi does not calculate interest.\n\nThe day you pay: ◎ → Add movement → I paid a debt. That lowers the debt and the pocket you paid from.',
     'guide.step6Title': 'Insights — the analysis engine',
     'guide.step6Body':
       'Open the Insights tab (bottom). At the top is Ask Rumi: type the month you care about and tap Ask. Examples: “July”, “how much in March 2025”, “2 months ago”, “coffee last month”. A few chips are only examples — not a list of every month.\n\nHoy / Semana / Mes only change the charts and notes below. The box uses the period you wrote.\n\nAnts and limits are marked in Plan; Insights is where you ask how they behaved.',
     'guide.step7Title': 'Home and Activity',
     'guide.step7Body':
-      'Home shows what you can still spend and whether this month is in the green. Activity is where you edit or delete a mistake. One-tap on Home appears after you repeat a usual expense a couple of times.',
+      'Home shows what you can still spend and whether this month is in the green. The first 14 days a diary sits there to build the habit. Activity is where you edit or delete a mistake. One-tap on Home appears after you repeat a usual expense a couple of times.',
     'guide.hint': 'Open this again anytime with ? or ⋯ → How to use.',
 
     'reminder.title': 'Expense reminders',
@@ -994,7 +998,7 @@ export const translations = {
     'history.personHint':
       'La vista compartida muestra quién anotó cada gasto. Solo gestionas los tuyos.',
 
-    'insights.title': 'Entender',
+    'insights.title': 'Análisis',
     'insights.subtitle': 'qué está pasando con tu dinero',
     'insights.topCategory': 'Mayor categoría',
     'insights.topValue': '{amount} en {category}',
@@ -1188,6 +1192,8 @@ export const translations = {
     'wealth.accounts': 'Cuentas, bancos y billeteras',
     'wealth.accountsHint':
       'Dónde está tu plata: efectivo, uno o varios bancos, ahorros, inversiones, la tarjeta, y las billeteras que agregas (Nequi, etc.).',
+    'wealth.groupInvestments': 'Inversiones',
+    'wealth.groupCredit': 'Créditos',
     'wealth.accountsCollapsed': '{count} bolsillos — toca para abrir',
     'wealth.assets': 'Activos',
     'wealth.liabilities': 'Pasivos',
@@ -1229,7 +1235,7 @@ export const translations = {
     'wealth.debtMonthPay': 'Pago de este mes',
     'wealth.creditAvailable': 'Cupo disponible: {amount}',
     'wealth.revolvingHint':
-      'Cupo menos lo usado es lo que aún puedes cargar. El pago del mes es un recordatorio hasta que lo registres en Agregar.',
+      'Cupo menos lo usado es lo que aún puedes cargar. El pago del mes es un recordatorio hasta que lo registres con Registrar.',
     'wealth.debtNamePlaceholderRevolving': 'Visa, Credicheque, cupo del banco…',
     'wealth.debtNeedRevolving':
       'Nombre, cupo y un pago del mes (el usado puede ser 0).',
@@ -1242,7 +1248,7 @@ export const translations = {
     'wealth.debtPayDay': 'Día de pago del mes (1–28)',
     'wealth.debtPayDayNeed': 'El día de pago debe estar entre 1 y 28.',
     'wealth.debtPayDayHint':
-      'Solo es el día de la cuota: efectivo/banco no bajan hasta que registres el pago en Agregar.',
+      'Solo es el día de la cuota: efectivo/banco no bajan hasta que registres el pago con Registrar.',
     'wealth.debtSave': 'Guardar',
     'wealth.debtEdit': 'Editar',
     'wealth.debtUpdate': 'Guardar cambios',
@@ -1250,9 +1256,9 @@ export const translations = {
     'wealth.debtDelete': 'Eliminar',
     'wealth.debtNeed': 'Nombre, saldo y cuota mensual mayores a 0.',
     'wealth.howToPay':
-      'Anotar la cuota aquí no gasta plata. Cuando pagues de verdad: Agregar → “Pagué una deuda”.',
+      'Anotar la cuota aquí no gasta plata. Cuando pagues de verdad: ◎ → Registrar → “Pagué una deuda”.',
     'wealth.debtPermanentHint':
-      'Solo el valor de la cuota fija — un recordatorio, no una calculadora de crédito. Es gasto cuando registras el pago en Agregar.',
+      'Solo el valor de la cuota fija — un recordatorio, no una calculadora de crédito. Es gasto cuando registras el pago con Registrar.',
     'wealth.debtConceptHint':
       'Cuotas fijas o crédito rotativo. Aquí registras el valor que pagas, no la tasa.',
     'wealth.debtBudgetHint':
@@ -1438,18 +1444,18 @@ export const translations = {
     'notFound.title': 'Esta pantalla no existe',
     'notFound.back': 'Volver a Rumi',
 
-    'onboard.welcomeTitle': 'Hagamos que el dinero se sienta simple',
+    'onboard.welcomeTitle': 'Bienvenido a Rumi',
     'onboard.welcomeBody':
-      'En menos de un minuto eliges tu nombre, moneda y unos pocos conceptos de gasto. Café, luz o Uber van después como subcategorías en Plan. En Inicio, toca Disponible hoy o Resultado del mes cuando quieras saber qué significa cada número.',
+      'En un minuto eliges tu nombre, moneda y unos conceptos de gasto. Café, luz o Uber van después en Plan, como subcategorías.\n\nEl orden del primer día: Patrimonio (dónde está la plata), Plan (en qué sueles gastar) y luego un Gasté real. No empieces inventando un gasto.',
     'onboard.welcomeShare':
-      'Si más adelante compartes el hogar, cada persona solo registra lo suyo — nunca el gasto de otra.',
+      'Si más adelante compartes el hogar, cada persona solo registra lo suyo — nunca el movimiento de otra.',
     'onboard.start': 'Suena bien',
     'onboard.next': 'Continuar',
     'onboard.back': 'Atrás',
     'onboard.finish': 'Listo, vamos',
     'onboard.nameTitle': '¿Cómo te llamamos?',
     'onboard.nameBody':
-      'Pondremos tu nombre en Inicio y cada gasto que registres quedará marcado como tuyo.',
+      'Pondremos tu nombre en Inicio y cada movimiento que registres quedará marcado como tuyo.',
     'onboard.namePlaceholder': 'Tu nombre',
     'onboard.nameNeed': 'Escribe tu nombre para continuar.',
     'onboard.currencyTitle': '¿En qué moneda manejas el día a día?',
@@ -1467,13 +1473,14 @@ export const translations = {
     'onboard.concept.vivienda': 'Vivienda',
     'onboard.concept.general': 'General',
     'onboard.notifyTitle': '¿Quieres una confirmación amable?',
-    'onboard.notifyBody': 'Te avisamos al guardar un movimiento—útil mientras creas el hábito.',
+    'onboard.notifyBody': 'Te avisamos al guardar un movimiento — útil mientras creas el hábito.',
     'onboard.notifyYes': 'Sí, avísame',
     'onboard.notifyNo': 'No, gracias',
     'onboard.reminderTitle': '¿De qué conceptos quieres recordatorio?',
     'onboard.reminderBody':
       'Elige conceptos para un aviso diario (por la tarde). Las subcategorías las armas después en Plan.',
-    'onboard.reminderHint': 'Tip: el recordatorio es del concepto, no de un café suelto.',
+    'onboard.reminderHint':
+      'Tip: el recordatorio es del concepto, no de un café suelto. Al terminar te mostramos Inicio y la receta del primer día.',
     'onboard.step': 'Paso {current} de {total}',
 
     'coach.step': '{current} de {total}',
@@ -1483,12 +1490,13 @@ export const translations = {
     'coach.privacyBody': 'Toca el ojo para ver u ocultar los valores de la app.',
     'coach.moneyTitle': 'Disponible vs resultado del mes',
     'coach.moneyBody':
-      'En Inicio solo ves el total que puedes gastar. Toca la billetera para ver efectivo, bancos y billeteras. El resultado del mes es si este mes vas a favor o en rojo.',
-    'coach.glanceTitle': 'Validar los montos del mes',
-    'coach.glanceBody': 'Aquí revisas totales por concepto y ves qué merece atención.',
+      'En Inicio ves lo que aún puedes gastar. Toca la billetera para efectivo, bancos y billeteras (tus bolsillos). El resultado del mes es si vas a favor o en rojo — solo lo que registraste.',
+    'coach.glanceTitle': 'Registrar un movimiento',
+    'coach.glanceBody':
+      'El botón ◎ a la derecha abre el resumen del mes. Ahí tocas Registrar para Gasté, Recibí dinero, Moví dinero o Pagué una deuda.',
     'coach.tabsTitle': 'El resto está abajo',
     'coach.tabsBody':
-      'Actividad para editar, Plan para categorías, Patrimonio para cuentas. Luego verás la receta del primer día. Si te pierdes, toca ? o ⋯ → Cómo usar.',
+      'Actividad para editar, Plan para conceptos, Patrimonio para bolsillos, Análisis para preguntarle a Rumi. Luego verás la receta del primer día. Si te pierdes, toca ? o ⋯ → Cómo usar.',
 
     'guide.menu': 'Cómo usar',
     'guide.openA11y': 'Cómo usar Rumi',
@@ -1504,21 +1512,21 @@ export const translations = {
     'guide.step2Title': 'Plan: qué encuentras ahí',
     'guide.step2Body':
       'Abre Plan. En esta sección:\n• Mis conceptos de gasto — arma los cajones (Alimentación, Recibos) y las subcategorías (Café, Uber, Luz). Hasta que las crees, los gastos caen en “General”.\n• Topes mensuales — si quieres un límite, tócalo en la subcategoría.\n• Gastos hormiga — marca lo chico para verlo aparte en Análisis.\n• Recordatorios — si quieres que te avise el día de la luz o la cuota, se configura aquí.',
-    'guide.step3Title': 'Agregar: registra un gasto',
+    'guide.step3Title': 'Registra un gasto',
     'guide.step3Body':
-      'Toca + (Agregar). Elige Gasté. Escribe el monto. Elige el concepto y la subcategoría. Elige de qué bolsillo salió (efectivo, Nequi, banco…). Eso sí baja esa cuenta y cuenta como gasto del mes. ¿Le pagaste a un comercio por transferencia? Sigue siendo Gasté: eso es la forma de pago, no un traslado entre tus bolsillos.',
+      'Toca el botón redondo ◎ (abajo a la derecha) y luego Registrar. Elige Gasté. Escribe el monto. Elige el concepto y la subcategoría. Elige de qué bolsillo salió (efectivo, Nequi, banco…). Eso sí baja esa cuenta y cuenta como gasto del mes. ¿Le pagaste a un comercio por transferencia? Sigue siendo Gasté: eso es la forma de pago, no un traslado entre tus bolsillos.',
     'guide.step4Title': 'Si te pagaron o solo moviste plata',
     'guide.step4Body':
-      '¿Te llegó el salario o un giro? Agregar → Recibí dinero, y elige en qué cuenta entra (banco, Nequi, efectivo).\n\n¿Pasaste de Nequi a ahorros, o de banco a efectivo? Agregar → Moví dinero. Elige de dónde sale y a dónde llega. No es un gasto: la plata ya era tuya, solo cambió de bolsillo.',
-    'guide.step5Title': 'Deudas: anótalas en Patrimonio, págala en Agregar',
+      '¿Te llegó el salario o un giro? ◎ → Registrar → Recibí dinero, y elige en qué cuenta entra (banco, Nequi, efectivo).\n\n¿Pasaste de Nequi a ahorros, o de banco a efectivo? ◎ → Registrar → Moví dinero. Elige de dónde sale y a dónde llega. No es un gasto: la plata ya era tuya, solo cambió de bolsillo.',
+    'guide.step5Title': 'Deudas: anótalas en Patrimonio, págala con Registrar',
     'guide.step5Body':
-      'En Patrimonio → Deudas y créditos, toca Agregar deuda. Si el banco te cobra siempre lo mismo (apto, carro, libranza): cuota fija, con saldo y cuota. Si es tarjeta, credicheque o cupo: crédito rotativo, con el cupo y lo que ya usaste. Eso es un recordatorio; Rumi no calcula interés.\n\nEl día que pagas: Agregar → Pagué una deuda. Ahí sí baja el saldo de la deuda y el de la cuenta con la que pagaste.',
+      'En Patrimonio → Deudas y créditos, toca Agregar deuda. Si el banco te cobra siempre lo mismo (apto, carro, libranza): cuota fija, con saldo y cuota. Si es tarjeta, credicheque o cupo: crédito rotativo, con el cupo y lo que ya usaste. Eso es un recordatorio; Rumi no calcula interés.\n\nEl día que pagas: ◎ → Registrar → Pagué una deuda. Ahí sí baja el saldo de la deuda y el de la cuenta con la que pagaste.',
     'guide.step6Title': 'Análisis: el motor de preguntas',
     'guide.step6Body':
       'Abre la pestaña Análisis (abajo). Arriba está Pregúntale a Rumi: escribe el mes que te interesa y toca Preguntar. Ejemplos: “julio”, “cuánto gasté en marzo 2025”, “hace 2 meses”, “café el mes pasado”. Las chips son solo ejemplos, no una lista de todos los meses.\n\nHoy / Semana / Mes de esa pantalla solo cambian las gráficas y notas de abajo. La caja usa el período que escribiste.\n\nSi quieres saber de hormiga o topes, se marcan en Plan; en Análisis preguntas cómo se comportaron.',
     'guide.step7Title': 'Inicio y Actividad',
     'guide.step7Body':
-      'En Inicio ves cuánto puedes gastar y si el mes va a favor. En Actividad editas o borras si te equivocaste. El registro rápido de Inicio aparece cuando ya repetiste un gasto un par de veces.',
+      'En Inicio ves cuánto puedes gastar y si el mes va a favor. Los primeros 14 días hay un diario para crear el hábito. En Actividad editas o borras si te equivocaste. El registro rápido de un toque aparece cuando ya repetiste un gasto un par de veces.',
     'guide.hint': 'Vuelve a abrir esto con ? o en ⋯ → Cómo usar.',
 
     'reminder.title': 'Recordatorios de gastos',

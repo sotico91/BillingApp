@@ -38,6 +38,65 @@ export function accountDisplayName(
   return label && label !== acc.nameKey ? label : acc.nameKey;
 }
 
+/** Keep the same kinds together: cash, banks, wallets, savings, investments, credit. */
+const ACCOUNT_KIND_ORDER: Record<AccountType, number> = {
+  cash: 0,
+  bank: 1,
+  wallet: 2,
+  savings: 3,
+  investment: 4,
+  credit: 5,
+  other: 6,
+};
+
+const DEFAULT_SLOT_ORDER = [
+  'cash',
+  'bank-main',
+  'wallet',
+  'savings',
+  'investments',
+  'credit-card',
+];
+
+function accountSortName(acc: Pick<Account, 'name' | 'nameKey'>): string {
+  return (acc.name?.trim() || acc.nameKey || '').toLocaleLowerCase();
+}
+
+export function sortAccountsByKind(accounts: Account[]): Account[] {
+  return [...accounts].sort((a, b) => {
+    const ka = ACCOUNT_KIND_ORDER[a.type] ?? 9;
+    const kb = ACCOUNT_KIND_ORDER[b.type] ?? 9;
+    if (ka !== kb) return ka - kb;
+    const da = DEFAULT_SLOT_ORDER.indexOf(a.id);
+    const db = DEFAULT_SLOT_ORDER.indexOf(b.id);
+    const ra = da === -1 ? 100 : da;
+    const rb = db === -1 ? 100 : db;
+    if (ra !== rb) return ra - rb;
+    return accountSortName(a).localeCompare(accountSortName(b));
+  });
+}
+
+export function accountGroupKey(
+  type: AccountType
+): Extract<
+  TranslationKey,
+  | 'home.pocketCash'
+  | 'home.pocketBanks'
+  | 'home.pocketWallets'
+  | 'home.pocketSavings'
+  | 'wealth.groupInvestments'
+  | 'wealth.groupCredit'
+  | 'account.role.other'
+> {
+  if (type === 'cash') return 'home.pocketCash';
+  if (type === 'bank') return 'home.pocketBanks';
+  if (type === 'wallet') return 'home.pocketWallets';
+  if (type === 'savings') return 'home.pocketSavings';
+  if (type === 'investment') return 'wealth.groupInvestments';
+  if (type === 'credit') return 'wealth.groupCredit';
+  return 'account.role.other';
+}
+
 /** One-tap shortcuts. Any other name is a separate wallet with its own balance. */
 export const WALLET_PRESETS = ['Nequi', 'Daviplata'] as const;
 
@@ -100,7 +159,7 @@ export function ensureWalletAccount(
     type: 'wallet',
     balance: 0,
   };
-  return { accounts: [...accounts, account], account, created: true };
+  return { accounts: sortAccountsByKind([...accounts, account]), account, created: true };
 }
 
 export function isRemovableWallet(
@@ -193,7 +252,7 @@ export function ensureBankAccount(
     type: 'bank',
     balance: 0,
   };
-  return { accounts: [...accounts, account], account, created: true };
+  return { accounts: sortAccountsByKind([...accounts, account]), account, created: true };
 }
 
 export function isRemovableBank(acc: Pick<Account, 'id' | 'type'>): boolean {
@@ -260,7 +319,9 @@ export function mergeDefaultAccounts(stored: Account[] | null | undefined): {
     accounts.push(extra);
   }
 
-  return { accounts, changed };
+  const sorted = sortAccountsByKind(accounts);
+  const orderChanged = sorted.some((a, i) => a.id !== accounts[i]?.id);
+  return { accounts: sorted, changed: changed || orderChanged };
 }
 
 export function defaultIncomeAccountId(accounts: Account[]): string {

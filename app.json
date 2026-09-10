@@ -13,7 +13,10 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.billingapp.personal",
-      "icon": "./assets/images/icon.png",
+      "icon": {
+        "light": "./assets/images/icon.png",
+        "dark": "./assets/images/icon.png"
+      },
       "buildNumber": "1",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
@@ -105,6 +108,7 @@
           "sounds": []
         }
       ],
+      "./plugins/withNotificationLargeIcon.js",
       [
         "expo-local-authentication",
         {

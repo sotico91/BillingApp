@@ -146,6 +146,14 @@ writePNG(
   kind: .color
 )
 writePNG(
+  size: 1024,
+  path: "\(root)/ios/Billing/Images.xcassets/AppIcon.appiconset/App-Icon-dark-1024x1024@1x.png",
+  opaque: true,
+  background: cream,
+  markScale: 1,
+  kind: .color
+)
+writePNG(
   size: 72,
   path: "\(root)/ios/Billing/Images.xcassets/SplashScreenLogo.imageset/image.png",
   opaque: false,

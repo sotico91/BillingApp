@@ -20,6 +20,7 @@ import {
   accountRoleKey,
   findBankByName,
   findWalletByName,
+  sortAccountsByKind,
 } from '@/src/utils/accounts';
 import { tapFeedback } from '@/src/utils/selectFeedback';
 
@@ -42,11 +43,12 @@ export function AccountChoiceChips({
   const { t } = useLanguage();
   const { format } = useMoney();
   const card = variant === 'card';
+  const ordered = sortAccountsByKind(accounts);
 
   return (
     <View style={styles.block}>
       <View style={styles.wrap}>
-        {accounts.map((acc) => {
+        {ordered.map((acc) => {
           const on = acc.id === selectedId;
           return (
             <Pressable

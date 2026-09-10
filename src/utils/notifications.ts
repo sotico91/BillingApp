@@ -1,5 +1,6 @@
 import * as Notifications from 'expo-notifications';
 import { Asset } from 'expo-asset';
+import { File, Paths } from 'expo-file-system';
 import { AppState, Platform } from 'react-native';
 
 import type { ReminderRule } from '@/src/types/settings';
@@ -24,7 +25,10 @@ const ANDROID_ACCENT = '#FF6B4A';
 
 let cachedLogoUri: string | null | undefined;
 
-/** iOS shows a thumbnail of the app logo next to the banner; Android uses the large icon from the manifest. */
+/**
+ * iOS banner thumbnail: full-color cream card logo (must be a .png file URL).
+ * Android large icon comes from the native manifest; the small status icon stays a white silhouette.
+ */
 async function iosLogoAttachments(): Promise<
   Notifications.NotificationContentAttachmentIos[] | undefined
 > {
@@ -34,8 +38,15 @@ async function iosLogoAttachments(): Promise<
     try {
       const asset = Asset.fromModule(require('../../assets/images/icon.png'));
       await asset.downloadAsync();
-      const uri = asset.localUri ?? asset.uri;
-      cachedLogoUri = uri && uri.length > 0 ? uri : null;
+      const srcUri = asset.localUri ?? asset.uri;
+      if (!srcUri) {
+        cachedLogoUri = null;
+      } else {
+        const dest = new File(Paths.cache, 'rumi-notification-logo.png');
+        if (dest.exists) dest.delete();
+        await new File(srcUri).copy(dest);
+        cachedLogoUri = dest.uri;
+      }
     } catch {
       cachedLogoUri = null;
     }
@@ -47,6 +58,7 @@ async function iosLogoAttachments(): Promise<
       url: cachedLogoUri,
       type: 'image/png',
       typeHint: 'public.png',
+      hideThumbnail: false,
     },
   ];
 }
@@ -59,14 +71,14 @@ async function ensureAndroidChannels(): Promise<void> {
     name: 'Rumi',
     importance: Notifications.AndroidImportance.DEFAULT,
     vibrationPattern: [0, 250, 250, 250],
-    lightColor: '#1B3A4B',
+    lightColor: '#F3E6D8',
     showBadge: true,
   });
   await Notifications.setNotificationChannelAsync(ANDROID_REMINDER_CHANNEL_ID, {
     name: 'Rumi reminders',
     importance: Notifications.AndroidImportance.HIGH,
     vibrationPattern: [0, 250, 250, 250],
-    lightColor: '#1B3A4B',
+    lightColor: '#F3E6D8',
     showBadge: true,
   });
 }
