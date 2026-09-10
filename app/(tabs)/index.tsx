@@ -290,6 +290,8 @@ export default function HomeScreen() {
         </FadeInBlock>
 
         <FadeInBlock index={8}>
+          <CollapsibleSection
+            title={t('home.predictTitle')}
             open={predictOpen}
             onToggle={() => setPredictOpen((v) => !v)}
             summary={
