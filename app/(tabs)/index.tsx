@@ -14,6 +14,7 @@ import { LanguageSwitcher } from '@/src/components/LanguageSwitcher';
 import { PredictedSpendsCard } from '@/src/components/PredictedSpendsCard';
 import { ProfileMenuButton } from '@/src/components/ProfileMenuButton';
 import { QuickAddBar } from '@/src/components/QuickAddBar';
+import { PocketFlowList } from '@/src/components/PocketFlowList';
 import { RaisedText } from '@/src/components/RaisedText';
 import { SavingsDecor } from '@/src/components/SavingsDecor';
 import { ScreenBackground } from '@/src/components/ScreenBackground';
@@ -25,8 +26,10 @@ import type { TranslationKey } from '@/src/i18n/translations';
 import { palette, radii } from '@/src/theme/colors';
 import type { Transaction } from '@/src/types/finance';
 import { categoryLabel } from '@/src/utils/categoryLabel';
+import {
+  totalOwed,
+} from '@/src/utils/debts';
 import { tapFeedback } from '@/src/utils/selectFeedback';
-import { accountDisplayName } from '@/src/utils/accounts';
 import {
   toneFromExpensePressure,
   toneFromSavings,
@@ -46,9 +49,6 @@ export default function HomeScreen() {
     transactionsForPeriod,
     loading,
     availableCash,
-    availableByAccount,
-    secondaryCash,
-    secondaryByAccount,
     netWorth,
     debts,
     antForPeriod,
@@ -77,7 +77,7 @@ export default function HomeScreen() {
   const income = totalForPeriod('mes', 'income');
   const expenses = totalForPeriod('mes', 'expense');
   const savings = income - expenses;
-  const debtTotal = debts.reduce((s, d) => s + d.balance, 0);
+  const debtTotal = totalOwed(debts);
   const ant = antForPeriod('mes');
   const recent = transactionsForPeriod('hoy');
   const expenseConcepts = insightsForPeriod('mes', 'expense');
@@ -169,6 +169,27 @@ export default function HomeScreen() {
         </FadeInBlock>
 
         <FadeInBlock index={2}>
+          <Pressable
+            onPress={() => setMoneyInfo('available')}
+            onPressIn={() => tapFeedback()}
+            style={styles.positionCard}>
+            <View style={styles.availableHead}>
+              <View style={{ flex: 1, paddingRight: 12 }}>
+                <Text style={styles.positionTitle}>{t('home.available')}</Text>
+                <Text style={styles.positionHint}>{t('home.availableCaption')}</Text>
+              </View>
+              <Text
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.7}
+                style={[styles.availableTodayTotal, styles.textGood]}>
+                {format(loading ? 0 : availableCash)}
+              </Text>
+            </View>
+          </Pressable>
+        </FadeInBlock>
+
+        <FadeInBlock index={3}>
           <View style={styles.dashGrid}>
             <DashTile
               label={t('home.income')}
@@ -181,17 +202,6 @@ export default function HomeScreen() {
               value={format(loading ? 0 : expenses)}
               tone={expensesTone === 'neutral' ? 'danger' : expensesTone}
               onPress={() => setGlance('expense')}
-            />
-            <DashTile
-              label={t('home.available')}
-              value={format(availableCash)}
-              tone={availableCash < expenses * 0.2 && expenses > 0 ? 'warn' : 'neutral'}
-              hint={
-                secondaryCash !== 0
-                  ? t('home.availableSecondaryHint', { amount: format(secondaryCash) })
-                  : undefined
-              }
-              onPress={() => setMoneyInfo('available')}
             />
             <DashTile
               label={t('home.savings')}
@@ -210,6 +220,13 @@ export default function HomeScreen() {
               label={t('home.debts')}
               value={format(debtTotal)}
               tone={debtTotal > 0 ? 'warn' : 'neutral'}
+              hint={
+                debts.length > 1
+                  ? t('home.debtsManyHint', { count: debts.length })
+                  : debts.length === 1
+                    ? t('home.debtsOneHint')
+                    : undefined
+              }
               onPress={() => router.push('/(tabs)/wealth')}
             />
             <DashTile
@@ -226,11 +243,11 @@ export default function HomeScreen() {
           <Text style={styles.todayHint}>{todayHint}</Text>
         </FadeInBlock>
 
-        <FadeInBlock index={3}>
+        <FadeInBlock index={5}>
           <QuickAddBar />
         </FadeInBlock>
 
-        <FadeInBlock index={4}>
+        <FadeInBlock index={6}>
           <CollapsibleSection
             title={t('home.attention')}
             open={attentionOpen}
@@ -267,7 +284,7 @@ export default function HomeScreen() {
           </CollapsibleSection>
         </FadeInBlock>
 
-        <FadeInBlock index={5}>
+        <FadeInBlock index={7}>
           <CollapsibleSection
             title={t('home.predictTitle')}
             open={predictOpen}
@@ -285,7 +302,7 @@ export default function HomeScreen() {
         </FadeInBlock>
 
         {recent.length > 0 ? (
-          <FadeInBlock index={6}>
+          <FadeInBlock index={8}>
             <CollapsibleSection
               title={t('home.todayList')}
               open={todayOpen}
@@ -312,7 +329,7 @@ export default function HomeScreen() {
           </FadeInBlock>
         ) : null}
 
-        <FadeInBlock index={7}>
+        <FadeInBlock index={9}>
           <CollapsibleSection
             title={t('home.antTitle')}
             open={antOpen}
@@ -400,42 +417,7 @@ export default function HomeScreen() {
             </Text>
             {moneyInfo === 'available' ? (
               <View style={styles.availableBreakdown}>
-                <Text style={styles.availableBreakdownTitle}>
-                  {t('home.availablePrincipal')}
-                </Text>
-                {availableByAccount.map((acc) => (
-                  <View key={acc.id} style={styles.availableRow}>
-                    <Text style={styles.availableRowLabel}>
-                      {accountDisplayName(acc, t)}
-                    </Text>
-                    <Text style={styles.availableRowValue}>{format(acc.balance)}</Text>
-                  </View>
-                ))}
-                <Text
-                  style={[
-                    styles.availableBreakdownTitle,
-                    styles.availableBreakdownTitleGap,
-                  ]}>
-                  {t('home.availableSecondary')}
-                </Text>
-                {secondaryByAccount.map((acc) => (
-                  <View key={acc.id} style={styles.availableRow}>
-                    <Text style={styles.availableRowLabel}>
-                      {accountDisplayName(acc, t)}
-                    </Text>
-                    <Text style={styles.availableRowValue}>{format(acc.balance)}</Text>
-                  </View>
-                ))}
-                <View style={[styles.availableRow, styles.availableRowTotal]}>
-                  <Text style={styles.availableTotalLabel}>
-                    {t('home.availableSecondaryTotal')}
-                  </Text>
-                  <Text style={styles.availableRowValue}>{format(secondaryCash)}</Text>
-                </View>
-                <View style={[styles.availableRow, styles.availableRowTotal]}>
-                  <Text style={styles.availableTotalLabel}>{t('home.availableTotal')}</Text>
-                  <Text style={styles.availableTotalValue}>{format(availableCash)}</Text>
-                </View>
+                <PocketFlowList />
               </View>
             ) : null}
             <Text style={styles.infoCompare}>
@@ -583,6 +565,76 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: 10,
   },
+  positionCard: {
+    backgroundColor: palette.surfaceSolid,
+    borderRadius: radii.md,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: palette.border,
+  },
+  positionTitle: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 13,
+    color: palette.inkMuted,
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+  },
+  positionRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 12,
+  },
+  positionStat: {
+    flex: 1,
+  },
+  positionLabel: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 11,
+    color: palette.inkMuted,
+  },
+  positionValue: {
+    marginTop: 4,
+    fontFamily: 'Fraunces_600SemiBold',
+    fontSize: 18,
+    color: palette.ink,
+  },
+  availableHead: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  availableTodayTotal: {
+    fontFamily: 'Fraunces_600SemiBold',
+    fontSize: 22,
+    color: palette.ink,
+    maxWidth: '46%',
+    textAlign: 'right',
+  },
+  availableTodayList: {
+    marginTop: 14,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: palette.border,
+    gap: 14,
+  },
+  pocketGroup: {
+    gap: 8,
+  },
+  pocketGroupTitle: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 11,
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+    color: palette.inkSoft,
+  },
+  positionHint: {
+    marginTop: 8,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 12,
+    color: palette.inkSoft,
+    lineHeight: 16,
+  },
   tile: {
     width: '48%',
     backgroundColor: palette.surfaceSolid,
@@ -656,7 +708,7 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     borderTopWidth: 1,
     borderTopColor: palette.border,
-    gap: 8,
+    gap: 14,
   },
   availableBreakdownTitle: {
     fontFamily: 'DMSans_600SemiBold',

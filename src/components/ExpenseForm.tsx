@@ -31,6 +31,8 @@ import {
   defaultIncomeAccountId,
   defaultSpendAccountId,
   defaultTransferDestinationId,
+  accountsForPaymentMethod,
+  firstAccountId,
 } from '@/src/utils/accounts';
 import { notifyExpenseRegistered } from '@/src/utils/notifications';
 
@@ -106,23 +108,26 @@ export function ExpenseForm({
     return spendSubsAsCategories([concept]);
   }, [type, settings.enabledCategoryIds, spendConcepts, conceptId]);
 
-  const accountChoices = useMemo(
-    () => (type === 'income' ? incomeDestinationAccounts(accounts) : accounts),
-    [type, accounts]
-  );
+  const accountChoices = useMemo(() => {
+    if (type === 'income') return incomeDestinationAccounts(accounts);
+    return accountsForPaymentMethod(accounts, method, {
+      debts,
+      debtLabel: (debt) =>
+        debt.nameKey
+          ? t(debt.nameKey as TranslationKey)
+          : debt.name ?? t('debt.mainCard'),
+    });
+  }, [type, accounts, method, debts, t]);
 
   useEffect(() => {
-    if (type === 'income' || type === 'transfer' || type === 'investment') return;
-    const parsed = parse(amount);
-    const current = accounts.find((a) => a.id === accountId);
-    const need = parsed ?? 0;
-    const covers =
-      current &&
-      (need > 0 ? current.balance >= need : current.balance > 0);
-    if (covers) return;
-    const next = defaultSpendAccountId(accounts, { amount: need || undefined });
-    if (next !== accountId) setAccountId(next);
-  }, [accounts, accountId, type, amount, parse]);
+    if (type === 'income') {
+      const next = firstAccountId(accountChoices, accountId);
+      if (next && next !== accountId) setAccountId(next);
+      return;
+    }
+    const next = firstAccountId(accountChoices, accountId);
+    if (next && next !== accountId) setAccountId(next);
+  }, [type, method, accountChoices, accountId]);
 
   const scale = useSharedValue(1);
   const buttonStyle = useAnimatedStyle(() => ({
@@ -274,15 +279,22 @@ export function ExpenseForm({
       <Text style={styles.label}>
         {type === 'income'
           ? t('flow.whichAccountIncome')
-          : type === 'expense'
-            ? t('flow.whichAccountSpend')
-            : t('add.account')}
+          : method === 'credit' && type !== 'income'
+            ? t('flow.whichCard')
+            : type === 'expense'
+              ? t('flow.whichAccountSpend')
+              : t('add.account')}
       </Text>
-      <AccountChoiceChips
-        accounts={accountChoices}
-        selectedId={accountId}
-        onSelect={setAccountId}
-      />
+      {accountChoices.length === 0 ? (
+        <Text style={styles.preview}>{t('flow.payAccountsEmpty')}</Text>
+      ) : (
+        <AccountChoiceChips
+          accounts={accountChoices}
+          selectedId={accountId}
+          onSelect={setAccountId}
+          allowAddWallet={type === 'income' || method === 'transfer'}
+        />
+      )}
 
       {(type === 'transfer' || type === 'investment') && (
         <>

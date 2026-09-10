@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import {
   Modal,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -21,6 +22,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { PocketFlowList } from '@/src/components/PocketFlowList';
 import { useFinance } from '@/src/hooks/useFinance';
 import { useMoney } from '@/src/hooks/useMoney';
 import { useLanguage } from '@/src/i18n/LanguageContext';
@@ -43,7 +45,7 @@ export function SavingsDecor({
 }: DecorProps) {
   const { t } = useLanguage();
   const insets = useSafeAreaInsets();
-  const { width } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const [internalOpen, setInternalOpen] = useState(false);
   const open = openProp ?? internalOpen;
 
@@ -90,7 +92,7 @@ export function SavingsDecor({
     else setInternalOpen(next);
   }
 
-  const panelWidth = Math.min(280, width - 32);
+  const panelWidth = Math.min(320, width - 32);
 
   return (
     <>
@@ -155,7 +157,7 @@ export function SavingsDecor({
               </Pressable>
             </View>
 
-            <TotalsGlanceBody />
+            <TotalsGlanceBody maxHeight={height * 0.62} />
             <Text style={styles.panelHint}>{t('decor.totalsHint')}</Text>
           </Animated.View>
         </View>
@@ -164,26 +166,33 @@ export function SavingsDecor({
   );
 }
 
-function TotalsGlanceBody() {
+function TotalsGlanceBody({ maxHeight }: { maxHeight: number }) {
   const { t } = useLanguage();
   const { format } = useMoney();
-  const { totalForPeriod, availableCash } = useFinance();
+  const { totalForPeriod } = useFinance();
 
   const income = totalForPeriod('mes', 'income');
   const expenses = totalForPeriod('mes', 'expense');
   const savings = income - expenses;
 
   return (
-    <View style={styles.panelGrid}>
-      <PanelStat label={t('home.expenses')} value={format(expenses)} tone="danger" />
-      <PanelStat label={t('home.income')} value={format(income)} tone="good" />
-      <PanelStat
-        label={t('home.savings')}
-        value={format(savings)}
-        tone={savings >= 0 ? 'good' : 'danger'}
-      />
-      <PanelStat label={t('home.available')} value={format(availableCash)} />
-    </View>
+    <ScrollView
+      style={{ maxHeight }}
+      showsVerticalScrollIndicator={false}
+      bounces={false}>
+      <Text style={styles.section}>{t('fab.whereTitle')}</Text>
+      <PocketFlowList variant="dark" />
+      <Text style={[styles.section, styles.sectionGap]}>{t('decor.monthTitle')}</Text>
+      <View style={styles.panelGrid}>
+        <PanelStat label={t('home.income')} value={format(income)} tone="good" />
+        <PanelStat label={t('home.expenses')} value={format(expenses)} tone="danger" />
+        <PanelStat
+          label={t('home.savings')}
+          value={format(savings)}
+          tone={savings >= 0 ? 'good' : 'danger'}
+        />
+      </View>
+    </ScrollView>
   );
 }
 
@@ -339,6 +348,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
+  },
+  section: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.55)',
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+    marginBottom: 8,
+  },
+  sectionGap: {
+    marginTop: 14,
   },
   stat: {
     width: '47%',

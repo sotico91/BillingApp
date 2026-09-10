@@ -1,6 +1,7 @@
 import { DEFAULT_ACCOUNTS } from '@/src/data/financeDefaults';
-import type { Account, AccountType } from '@/src/types/finance';
+import type { Account, AccountType, Debt, PaymentMethod } from '@/src/types/finance';
 import type { TranslationKey } from '@/src/i18n/translations';
+import { revolvingAsPayAccounts } from '@/src/utils/debts';
 
 export function isPrincipalLiquid(type: AccountType): boolean {
   return type === 'cash' || type === 'bank';
@@ -15,11 +16,13 @@ export function accountRoleKey(
 ): Extract<
   TranslationKey,
   | 'account.role.principal'
+  | 'account.role.bank'
   | 'account.role.secondary'
   | 'account.role.wallet'
   | 'account.role.other'
 > {
-  if (isPrincipalLiquid(type)) return 'account.role.principal';
+  if (type === 'cash') return 'account.role.principal';
+  if (type === 'bank') return 'account.role.bank';
   if (type === 'wallet') return 'account.role.wallet';
   if (type === 'savings') return 'account.role.secondary';
   return 'account.role.other';
@@ -146,6 +149,88 @@ export function removeWalletAccount(
   return { accounts: accounts.filter((a) => a.id !== id) };
 }
 
+export const BANK_PRESETS = ['Bancolombia', 'Davivienda'] as const;
+
+export function slugBankId(name: string): string {
+  const slug = name
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 40);
+  return `bank-${slug || 'extra'}`;
+}
+
+export function findBankByName(accounts: Account[], name: string): Account | undefined {
+  const wanted = name.trim().toLowerCase();
+  if (!wanted) return undefined;
+  const id = slugBankId(name);
+  return accounts.find(
+    (a) =>
+      a.type === 'bank' &&
+      (a.id === id || (a.name ?? '').trim().toLowerCase() === wanted)
+  );
+}
+
+export function ensureBankAccount(
+  accounts: Account[],
+  name: string
+): { accounts: Account[]; account: Account; created: boolean } {
+  const trimmed = name.trim();
+  const existing = findBankByName(accounts, trimmed);
+  if (existing) return { accounts, account: existing, created: false };
+
+  let id = slugBankId(trimmed);
+  if (accounts.some((a) => a.id === id)) {
+    id = `${id}-${Date.now().toString(36)}`;
+  }
+  const account: Account = {
+    id,
+    nameKey: 'account.bankMain',
+    name: trimmed,
+    type: 'bank',
+    balance: 0,
+  };
+  return { accounts: [...accounts, account], account, created: true };
+}
+
+export function isRemovableBank(acc: Pick<Account, 'id' | 'type'>): boolean {
+  return acc.type === 'bank' && acc.id !== 'bank-main';
+}
+
+export function renameBankAccount(
+  accounts: Account[],
+  id: string,
+  name: string
+):
+  | { accounts: Account[]; account: Account }
+  | { error: 'missing' | 'empty' | 'duplicate' } {
+  const trimmed = name.trim();
+  if (!trimmed) return { error: 'empty' };
+  const current = accounts.find((a) => a.id === id);
+  if (!current || current.type !== 'bank') return { error: 'missing' };
+  const clash = findBankByName(accounts, trimmed);
+  if (clash && clash.id !== id) return { error: 'duplicate' };
+  const account = { ...current, name: trimmed };
+  return {
+    accounts: accounts.map((a) => (a.id === id ? account : a)),
+    account,
+  };
+}
+
+export function removeBankAccount(
+  accounts: Account[],
+  id: string
+): { accounts: Account[] } | { error: 'missing' | 'protected' | 'hasBalance' } {
+  const current = accounts.find((a) => a.id === id);
+  if (!current || current.type !== 'bank') return { error: 'missing' };
+  if (!isRemovableBank(current)) return { error: 'protected' };
+  if (Math.abs(current.balance) >= 0.01) return { error: 'hasBalance' };
+  return { accounts: accounts.filter((a) => a.id !== id) };
+}
+
 /** Add newly introduced default accounts (e.g. virtual wallet) without wiping balances. */
 export function mergeDefaultAccounts(stored: Account[] | null | undefined): {
   accounts: Account[];
@@ -180,6 +265,48 @@ export function mergeDefaultAccounts(stored: Account[] | null | undefined): {
 
 export function defaultIncomeAccountId(accounts: Account[]): string {
   return accounts.find((a) => a.type === 'bank')?.id ?? accounts[0]?.id ?? 'bank-main';
+}
+
+/**
+ * Pockets that match how the money left: cash, debit card, credit, or transfer.
+ */
+export function accountsForPaymentMethod(
+  accounts: Account[],
+  method: PaymentMethod,
+  opts?: {
+    debts?: Debt[];
+    debtLabel?: (debt: Debt) => string;
+  }
+): Account[] {
+  switch (method) {
+    case 'cash':
+      return accounts.filter((a) => a.type === 'cash');
+    case 'debit':
+      return accounts.filter((a) => a.type === 'bank');
+    case 'credit': {
+      const revolving = revolvingAsPayAccounts(
+        opts?.debts ?? [],
+        opts?.debtLabel ?? ((d) => d.name?.trim() || '')
+      );
+      const creditAcc = accounts.filter((a) => a.type === 'credit');
+      if (revolving.length > 0) {
+        const extras = creditAcc.filter(
+          (a) => a.id !== 'credit-card' || Boolean(a.name?.trim())
+        );
+        return [...revolving, ...extras];
+      }
+      return creditAcc;
+    }
+    case 'transfer':
+      return accounts.filter(
+        (a) => a.type === 'bank' || a.type === 'wallet' || a.type === 'savings'
+      );
+  }
+}
+
+export function firstAccountId(list: Account[], preferredId?: string): string | undefined {
+  if (preferredId && list.some((a) => a.id === preferredId)) return preferredId;
+  return list[0]?.id;
 }
 
 /** Cash, savings, virtual wallets, or the main bank — wherever this spend actually left. */

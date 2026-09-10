@@ -6,6 +6,7 @@ import { CollapsibleSection } from '@/src/components/CollapsibleSection';
 import { FadeInBlock } from '@/src/components/FadeInBlock';
 import { MoneyText } from '@/src/components/MoneyText';
 import { PeriodToggle } from '@/src/components/PeriodToggle';
+import { PocketBreakdown } from '@/src/components/PocketBreakdown';
 import { RaisedText } from '@/src/components/RaisedText';
 import { SavingsDecor } from '@/src/components/SavingsDecor';
 import { KeyboardSafeScroll } from '@/src/components/KeyboardSafe';
@@ -19,6 +20,7 @@ import { palette, radii } from '@/src/theme/colors';
 import type { Period } from '@/src/types/finance';
 import { categoryLabel } from '@/src/utils/categoryLabel';
 import { tapFeedback } from '@/src/utils/selectFeedback';
+import { spendByPocket } from '@/src/utils/pockets';
 import {
   answerFinanceQuery,
   buildSearchSuggestions,
@@ -31,13 +33,14 @@ export default function InsightsScreen() {
   const { format } = useMoney();
   const { settings } = useSettings();
   const spendConcepts = settings.spendConcepts ?? [];
-  const { insightsForPeriod, totalForPeriod, transactions, budgetStatus, debts, availableCash, accounts } =
+  const { insightsForPeriod, totalForPeriod, transactions, transactionsForPeriod, budgetStatus, debts, availableCash, accounts } =
     useFinance();
   const [period, setPeriod] = useState<Period>('mes');
   const [query, setQuery] = useState('');
   const [answer, setAnswer] = useState('');
   const [activeSuggestion, setActiveSuggestion] = useState<string | null>(null);
   const [rankingOpen, setRankingOpen] = useState(false);
+  const [pocketsOpen, setPocketsOpen] = useState(true);
   const [smartOpen, setSmartOpen] = useState(true);
 
   const insights = insightsForPeriod(period);
@@ -77,6 +80,11 @@ export default function InsightsScreen() {
         { transactions, debts }
       ),
     [spendConcepts, language, period, transactions, debts]
+  );
+
+  const pocketSpend = useMemo(
+    () => spendByPocket(transactionsForPeriod(period, 'mine'), accounts, t),
+    [period, transactionsForPeriod, accounts, t]
   );
 
   function ask(nextQuery?: string) {
@@ -294,6 +302,16 @@ export default function InsightsScreen() {
             onToggle={() => setRankingOpen((v) => !v)}
             summary={t('insights.rankingCollapsed', { count: insights.length })}>
             <CategoryBreakdown insights={insights} budgetStatus={budgetStatus} />
+          </CollapsibleSection>
+        </FadeInBlock>
+
+        <FadeInBlock index={5}>
+          <CollapsibleSection
+            title={t('insights.pocketsTitle')}
+            open={pocketsOpen}
+            onToggle={() => setPocketsOpen((v) => !v)}
+            summary={t('insights.pocketsCollapsed', { count: pocketSpend.length })}>
+            <PocketBreakdown pockets={pocketSpend} />
           </CollapsibleSection>
         </FadeInBlock>
       </KeyboardSafeScroll>

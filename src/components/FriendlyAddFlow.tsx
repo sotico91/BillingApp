@@ -37,9 +37,11 @@ import { useKeyboardVisible } from '@/src/hooks/useKeyboardVisible';
 import type { SavedMovement } from '@/src/components/ExpenseForm';
 import {
   accountDisplayName,
+  accountsForPaymentMethod,
   defaultIncomeAccountId,
   defaultSpendAccountId,
   defaultTransferDestinationId,
+  firstAccountId,
 } from '@/src/utils/accounts';
 
 type Props = {
@@ -91,44 +93,29 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
       ?.accountId;
   }, [transactions, categoryId]);
 
+  const methodAccounts = useMemo(
+    () =>
+      accountsForPaymentMethod(accounts, method, {
+        debts,
+        debtLabel: (debt) =>
+          debt.nameKey
+            ? t(debt.nameKey as TranslationKey)
+            : debt.name ?? t('debt.mainCard'),
+      }),
+    [accounts, method, debts, t]
+  );
+
+  const accountChoices = intent === 'earn' ? incomeAccounts : methodAccounts;
+
   useEffect(() => {
     if (intent === 'earn') {
-      if (!accounts.some((a) => a.id === accountId)) {
-        setAccountId(defaultIncomeAccountId(accounts));
-      }
+      const next = firstAccountId(incomeAccounts, accountId);
+      if (next && next !== accountId) setAccountId(next);
       return;
     }
-    if (intent === 'move') {
-      if (!accounts.some((a) => a.id === accountId)) {
-        setAccountId(defaultIncomeAccountId(accounts));
-      }
-      return;
-    }
-    const parsed = parse(amount);
-    const current = accounts.find((a) => a.id === accountId);
-    const need = parsed ?? 0;
-    const covers =
-      current &&
-      (need > 0 ? current.balance >= need : current.balance > 0);
-    if (covers) return;
-    const next = defaultSpendAccountId(accounts, {
-      lastAccountId: lastSpendAccountId,
-      amount: need || undefined,
-    });
-    if (next !== accountId) setAccountId(next);
-  }, [accounts, accountId, intent, lastSpendAccountId, amount, parse]);
-
-  useEffect(() => {
-    if (intent !== 'spend' && intent !== 'debt') return;
-    const parsed = parse(amount);
-    const next = defaultSpendAccountId(accounts, {
-      lastAccountId: lastSpendAccountId,
-      amount: parsed ?? undefined,
-    });
-    if (next !== accountId) setAccountId(next);
-  }, [categoryId]);
-
-  const accountChoices = intent === 'earn' ? incomeAccounts : accounts;
+    const next = firstAccountId(methodAccounts, accountId);
+    if (next && next !== accountId) setAccountId(next);
+  }, [intent, methodAccounts, incomeAccounts, accountId]);
 
   const incomeChoices = useMemo(
     () => categoriesForKind('income', settings.enabledCategoryIds),
@@ -606,6 +593,15 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
                       onPress={() => {
                         tapFeedback();
                         setMethod(m);
+                        const nextList = accountsForPaymentMethod(accounts, m, {
+                          debts,
+                          debtLabel: (debt) =>
+                            debt.nameKey
+                              ? t(debt.nameKey as TranslationKey)
+                              : debt.name ?? t('debt.mainCard'),
+                        });
+                        const nextId = firstAccountId(nextList, accountId);
+                        if (nextId) setAccountId(nextId);
                       }}
                       style={[styles.catCard, method === m && styles.catCardOn]}>
                       <Text style={[styles.catText, method === m && styles.catTextOn]}>
@@ -624,16 +620,23 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
               ]}>
               {intent === 'earn'
                 ? t('flow.whichAccountIncome')
-                : intent === 'spend'
-                  ? t('flow.whichAccountSpend')
-                  : t('flow.whichAccount')}
+                : method === 'credit'
+                  ? t('flow.whichCard')
+                  : intent === 'spend'
+                    ? t('flow.whichAccountSpend')
+                    : t('flow.whichAccount')}
             </Text>
-            <AccountChoiceChips
-              variant={intent === 'move' ? 'card' : 'chip'}
-              accounts={accountChoices}
-              selectedId={accountId}
-              onSelect={setAccountId}
-            />
+            {accountChoices.length === 0 ? (
+              <Text style={styles.intentSub}>{t('flow.payAccountsEmpty')}</Text>
+            ) : (
+              <AccountChoiceChips
+                variant={intent === 'move' ? 'card' : 'chip'}
+                accounts={accountChoices}
+                selectedId={accountId}
+                onSelect={setAccountId}
+                allowAddWallet={intent === 'earn' || method === 'transfer'}
+              />
+            )}
             {intent === 'move' ? (
               <>
                 <Text style={[styles.title, { marginTop: 18, fontSize: 24 }]}>
@@ -693,9 +696,10 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
                     : t('flow.summaryAccount')
                 }
                 value={accountDisplayName(
-                  accounts.find((a) => a.id === accountId) ?? {
-                    nameKey: 'account.cash',
-                  },
+                  accountChoices.find((a) => a.id === accountId) ??
+                    accounts.find((a) => a.id === accountId) ?? {
+                      nameKey: 'account.cash',
+                    },
                   t
                 )}
               />

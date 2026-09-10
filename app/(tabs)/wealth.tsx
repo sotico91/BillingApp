@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { router } from 'expo-router';
 
-import { WalletQuickAdd } from '@/src/components/AccountChoiceChips';
+import { WalletQuickAdd, BankQuickAdd } from '@/src/components/AccountChoiceChips';
 import { CollapsibleSection } from '@/src/components/CollapsibleSection';
 import { FadeInBlock } from '@/src/components/FadeInBlock';
 import { HowToGuideButton } from '@/src/components/HowToGuideButton';
@@ -17,14 +17,22 @@ import { useSettings } from '@/src/hooks/useSettings';
 import { useLanguage } from '@/src/i18n/LanguageContext';
 import type { TranslationKey } from '@/src/i18n/translations';
 import { palette, radii } from '@/src/theme/colors';
-import type { Debt } from '@/src/types/finance';
+import type { Debt, DebtKind, RevolvingProduct } from '@/src/types/finance';
 import { categoryLabel } from '@/src/utils/categoryLabel';
 import { tapFeedback } from '@/src/utils/selectFeedback';
 import {
   accountRoleKey,
   accountDisplayName,
   isRemovableWallet,
+  isRemovableBank,
 } from '@/src/utils/accounts';
+import {
+  creditAvailable,
+  debtKind,
+  parseNonNegativeAmount,
+  productLabelKey,
+  revolvingProduct,
+} from '@/src/utils/debts';
 
 function clampPayDay(raw: number): number | null {
   if (!Number.isFinite(raw)) return null;
@@ -41,6 +49,35 @@ function nextPaymentIsoFromDay(day: number, from = new Date()): string {
   return d.toISOString();
 }
 
+function OptionChips<T extends string>({
+  options,
+  value,
+  onChange,
+}: {
+  options: { id: T; label: string }[];
+  value: T;
+  onChange: (id: T) => void;
+}) {
+  return (
+    <View style={styles.chipWrap}>
+      {options.map((opt) => {
+        const on = opt.id === value;
+        return (
+          <Pressable
+            key={opt.id}
+            onPress={() => {
+              tapFeedback();
+              onChange(opt.id);
+            }}
+            style={[styles.chip, on && styles.chipOn]}>
+            <Text style={[styles.chipText, on && styles.chipTextOn]}>{opt.label}</Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
 export default function WealthScreen() {
   const { t, language } = useLanguage();
   const { format, parse } = useMoney();
@@ -54,7 +91,9 @@ export default function WealthScreen() {
     updateDebt,
     removeDebt,
     renameWallet,
+    renameBank,
     removeWallet,
+    removeBank,
     updateBudget,
     transactionsForPeriod,
     budgetStatus,
@@ -68,6 +107,9 @@ export default function WealthScreen() {
   const [balance, setBalance] = useState('');
   const [installment, setInstallment] = useState('');
   const [payDay, setPayDay] = useState('1');
+  const [kind, setKind] = useState<DebtKind>('installment');
+  const [product, setProduct] = useState<RevolvingProduct>('card');
+  const [creditLimit, setCreditLimit] = useState('');
   const [saving, setSaving] = useState(false);
   const [editingWalletId, setEditingWalletId] = useState<string | null>(null);
   const [walletNameDraft, setWalletNameDraft] = useState('');
@@ -96,6 +138,9 @@ export default function WealthScreen() {
     setBalance('');
     setInstallment('');
     setPayDay('1');
+    setKind('installment');
+    setProduct('card');
+    setCreditLimit('');
     setEditingId(null);
     setShowForm(false);
   }
@@ -111,6 +156,9 @@ export default function WealthScreen() {
     setBalance('');
     setInstallment('');
     setPayDay('1');
+    setKind('installment');
+    setProduct('card');
+    setCreditLimit('');
     setShowForm(true);
   }
 
@@ -120,18 +168,41 @@ export default function WealthScreen() {
       ? t(debt.nameKey as TranslationKey)
       : debt.name ?? '';
     const day = new Date(debt.nextPaymentDate).getDate();
+    const nextKind = debtKind(debt);
     setEditingId(debt.id);
     setName(label);
     setBalance(String(debt.balance || ''));
     setInstallment(String(debt.installment || ''));
     setPayDay(String(Number.isNaN(day) ? 1 : Math.min(28, Math.max(1, day))));
+    setKind(nextKind);
+    setProduct(revolvingProduct(debt));
+    setCreditLimit(debt.creditLimit ? String(debt.creditLimit) : '');
     setShowForm(true);
   }
 
   async function handleSaveDebt() {
-    const parsedBalance = parse(balance);
-    const parsedInstallment = parse(installment);
-    if (!name.trim() || !parsedBalance || !parsedInstallment) {
+    const revolving = kind === 'revolving';
+    const parsedLimit = revolving ? parse(creditLimit) : null;
+    const parsedBalance = revolving
+      ? parseNonNegativeAmount(balance, parse)
+      : parse(balance);
+    const parsedInstallment = revolving
+      ? parseNonNegativeAmount(installment, parse)
+      : parse(installment);
+    if (!name.trim()) {
+      Alert.alert(t('wealth.addDebt'), revolving ? t('wealth.debtNeedRevolving') : t('wealth.debtNeed'));
+      return;
+    }
+    if (revolving) {
+      if (!parsedLimit) {
+        Alert.alert(t('wealth.addDebt'), t('wealth.debtNeedLimit'));
+        return;
+      }
+      if (parsedBalance == null || parsedInstallment == null) {
+        Alert.alert(t('wealth.addDebt'), t('wealth.debtNeedRevolving'));
+        return;
+      }
+    } else if (!parsedBalance || !parsedInstallment) {
       Alert.alert(t('wealth.addDebt'), t('wealth.debtNeed'));
       return;
     }
@@ -144,29 +215,26 @@ export default function WealthScreen() {
 
     setSaving(true);
     try {
+      const payload = {
+        name: name.trim(),
+        balance: parsedBalance as number,
+        installment: parsedInstallment as number,
+        interestRate: 0,
+        nextPaymentDate,
+        kind,
+        revolvingProduct: revolving ? product : undefined,
+        creditLimit: revolving ? parsedLimit ?? undefined : undefined,
+      };
       if (editingId) {
         const existing = debts.find((d) => d.id === editingId);
         const categoryId =
           existing?.categoryId ?? (await ensureDebtCategory(name.trim()));
-        await updateDebt(editingId, {
-          name: name.trim(),
-          balance: parsedBalance,
-          installment: parsedInstallment,
-          interestRate: 0,
-          nextPaymentDate,
-          categoryId,
-        });
-        await updateBudget(categoryId, parsedInstallment);
+        await updateDebt(editingId, { ...payload, categoryId });
+        await updateBudget(categoryId, parsedInstallment as number);
       } else {
         const categoryId = await ensureDebtCategory(name.trim());
-        await addDebt({
-          name: name.trim(),
-          balance: parsedBalance,
-          installment: parsedInstallment,
-          nextPaymentDate,
-          categoryId,
-        });
-        await updateBudget(categoryId, parsedInstallment);
+        await addDebt({ ...payload, categoryId });
+        await updateBudget(categoryId, parsedInstallment as number);
       }
       resetForm();
     } finally {
@@ -197,15 +265,23 @@ export default function WealthScreen() {
 
   async function handleSaveWalletName() {
     if (!editingWalletId || savingWallet) return;
+    const current = accounts.find((a) => a.id === editingWalletId);
     setSavingWallet(true);
     try {
-      const result = await renameWallet(editingWalletId, walletNameDraft);
+      const result =
+        current?.type === 'bank'
+          ? await renameBank(editingWalletId, walletNameDraft)
+          : await renameWallet(editingWalletId, walletNameDraft);
       if ('error' in result) {
         Alert.alert(
           t('wealth.walletRename'),
           result.error === 'duplicate'
-            ? t('wealth.walletNameTaken')
-            : t('wealth.walletNameNeed')
+            ? current?.type === 'bank'
+              ? t('wealth.bankNameTaken')
+              : t('wealth.walletNameTaken')
+            : current?.type === 'bank'
+              ? t('wealth.bankNameNeed')
+              : t('wealth.walletNameNeed')
         );
         return;
       }
@@ -216,22 +292,30 @@ export default function WealthScreen() {
     }
   }
 
-  function confirmRemoveWallet(id: string, label: string, balance: number) {
+  function confirmRemovePocket(
+    id: string,
+    label: string,
+    balance: number,
+    kind: 'wallet' | 'bank'
+  ) {
+    const deleteTitle =
+      kind === 'bank' ? t('wealth.bankDelete') : t('wealth.walletDelete');
     if (Math.abs(balance) >= 0.01) {
-      Alert.alert(t('wealth.walletDelete'), t('wealth.walletDeleteNeedEmpty'));
+      Alert.alert(deleteTitle, t('wealth.walletDeleteNeedEmpty'));
       return;
     }
-    Alert.alert(t('wealth.walletDelete'), label, [
+    Alert.alert(deleteTitle, label, [
       { text: t('history.cancel'), style: 'cancel' },
       {
-        text: t('wealth.walletDelete'),
+        text: deleteTitle,
         style: 'destructive',
         onPress: () => {
           void (async () => {
-            const result = await removeWallet(id);
+            const result =
+              kind === 'bank' ? await removeBank(id) : await removeWallet(id);
             if ('error' in result) {
               Alert.alert(
-                t('wealth.walletDelete'),
+                deleteTitle,
                 result.error === 'hasBalance'
                   ? t('wealth.walletDeleteNeedEmpty')
                   : t('wealth.walletDeleteProtected')
@@ -279,7 +363,9 @@ export default function WealthScreen() {
             summary={t('wealth.accountsCollapsed', { count: accounts.length })}>
             <Text style={styles.accountsHint}>{t('wealth.accountsHint')}</Text>
             {accounts.map((acc) => {
-              const isWallet = acc.type === 'wallet';
+              const canRename = acc.type === 'wallet' || acc.type === 'bank';
+              const canRemove =
+                isRemovableWallet(acc) || isRemovableBank(acc);
               const renaming = editingWalletId === acc.id;
               const label = accountDisplayName(acc, t);
               return (
@@ -291,18 +377,25 @@ export default function WealthScreen() {
                       <Text style={styles.cardTitle}>{label}</Text>
                       <Text style={styles.meta}>{t(accountRoleKey(acc.type))}</Text>
                     </View>
-                    {isWallet ? (
+                    {canRename ? (
                       <View style={styles.cardActions}>
                         <Pressable onPress={() => startRenameWallet(acc)}>
                           <Text style={styles.editText}>{t('wealth.walletRename')}</Text>
                         </Pressable>
-                        {isRemovableWallet(acc) ? (
+                        {canRemove ? (
                           <Pressable
                             onPress={() =>
-                              confirmRemoveWallet(acc.id, label, acc.balance)
+                              confirmRemovePocket(
+                                acc.id,
+                                label,
+                                acc.balance,
+                                acc.type === 'bank' ? 'bank' : 'wallet'
+                              )
                             }>
                             <Text style={styles.deleteText}>
-                              {t('wealth.walletDelete')}
+                              {acc.type === 'bank'
+                                ? t('wealth.bankDelete')
+                                : t('wealth.walletDelete')}
                             </Text>
                           </Pressable>
                         ) : null}
@@ -323,7 +416,11 @@ export default function WealthScreen() {
                       <TextInput
                         value={walletNameDraft}
                         onChangeText={setWalletNameDraft}
-                        placeholder={t('flow.walletNamePlaceholder')}
+                        placeholder={
+                          acc.type === 'bank'
+                            ? t('flow.bankNamePlaceholder')
+                            : t('flow.walletNamePlaceholder')
+                        }
                         placeholderTextColor={palette.inkSoft}
                         style={styles.input}
                         autoFocus
@@ -368,6 +465,10 @@ export default function WealthScreen() {
           <View style={styles.addWalletCard}>
             <Text style={styles.addWalletHint}>{t('wealth.walletManageHint')}</Text>
             <WalletQuickAdd />
+            <Text style={[styles.addWalletHint, { marginTop: 14 }]}>
+              {t('wealth.bankManageHint')}
+            </Text>
+            <BankQuickAdd />
           </View>
         </FadeInBlock>
 
@@ -418,17 +519,63 @@ export default function WealthScreen() {
                 {editingId ? (
                   <Text style={styles.formTitle}>{t('wealth.debtEditing')}</Text>
                 ) : (
-                  <Text style={styles.copyHint}>{t('wealth.debtPermanentHint')}</Text>
+                  <Text style={styles.copyHint}>
+                    {kind === 'revolving'
+                      ? t('wealth.revolvingHint')
+                      : t('wealth.debtPermanentHint')}
+                  </Text>
                 )}
+                <Text style={styles.label}>{t('wealth.kindLabel')}</Text>
+                <OptionChips
+                  value={kind}
+                  onChange={setKind}
+                  options={[
+                    { id: 'installment', label: t('wealth.kindInstallment') },
+                    { id: 'revolving', label: t('wealth.kindRevolving') },
+                  ]}
+                />
+                {kind === 'revolving' ? (
+                  <>
+                    <Text style={styles.label}>{t('wealth.productLabel')}</Text>
+                    <OptionChips
+                      value={product}
+                      onChange={setProduct}
+                      options={[
+                        { id: 'card', label: t('wealth.productCard') },
+                        { id: 'credicheque', label: t('wealth.productCredicheque') },
+                        { id: 'line', label: t('wealth.productLine') },
+                      ]}
+                    />
+                  </>
+                ) : null}
                 <Text style={styles.label}>{t('wealth.debtName')}</Text>
                 <TextInput
                   value={name}
                   onChangeText={setName}
-                  placeholder={t('wealth.debtNamePlaceholder')}
+                  placeholder={
+                    kind === 'revolving'
+                      ? t('wealth.debtNamePlaceholderRevolving')
+                      : t('wealth.debtNamePlaceholder')
+                  }
                   placeholderTextColor={palette.inkSoft}
                   style={styles.input}
                 />
-                <Text style={styles.label}>{t('wealth.debtBalance')}</Text>
+                {kind === 'revolving' ? (
+                  <>
+                    <Text style={styles.label}>{t('wealth.debtLimit')}</Text>
+                    <TextInput
+                      value={creditLimit}
+                      onChangeText={setCreditLimit}
+                      keyboardType="decimal-pad"
+                      placeholder="0"
+                      placeholderTextColor={palette.inkSoft}
+                      style={styles.input}
+                    />
+                  </>
+                ) : null}
+                <Text style={styles.label}>
+                  {kind === 'revolving' ? t('wealth.debtUsed') : t('wealth.debtBalance')}
+                </Text>
                 <TextInput
                   value={balance}
                   onChangeText={setBalance}
@@ -437,7 +584,11 @@ export default function WealthScreen() {
                   placeholderTextColor={palette.inkSoft}
                   style={styles.input}
                 />
-                <Text style={styles.label}>{t('wealth.debtInstallment')}</Text>
+                <Text style={styles.label}>
+                  {kind === 'revolving'
+                    ? t('wealth.debtMonthPay')
+                    : t('wealth.debtInstallment')}
+                </Text>
                 <TextInput
                   value={installment}
                   onChangeText={setInstallment}
@@ -509,6 +660,11 @@ export default function WealthScreen() {
               const ratio = due > 0 ? paid / due : 0;
               const over = due > 0 && paid > due;
               const isEditing = editingId === debt.id;
+              const revolving = debtKind(debt) === 'revolving';
+              const available = creditAvailable(debt);
+              const tag = revolving
+                ? t(productLabelKey(revolvingProduct(debt)))
+                : t('wealth.kindTagInstallment');
 
               return (
                 <View
@@ -517,6 +673,7 @@ export default function WealthScreen() {
                   <View style={styles.sectionRow}>
                     <View style={{ flex: 1 }}>
                       <Text style={styles.cardTitle}>{label}</Text>
+                      <Text style={styles.conceptChip}>{tag}</Text>
                       <Text style={styles.conceptChip}>
                         {hit
                           ? t('wealth.linkedConcept', { concept: conceptLabel })
@@ -534,6 +691,11 @@ export default function WealthScreen() {
                   </View>
                   <MoneyText style={styles.amount}>{format(debt.balance)}</MoneyText>
                   <Text style={styles.meta}>{t('wealth.balanceLeft')}</Text>
+                  {revolving ? (
+                    <Text style={styles.meta}>
+                      {t('wealth.creditAvailable', { amount: format(available) })}
+                    </Text>
+                  ) : null}
                   {due > 0 ? (
                     <>
                       <Text style={styles.meta}>
@@ -671,6 +833,32 @@ const styles = StyleSheet.create({
     color: palette.inkMuted,
     lineHeight: 18,
     marginBottom: 8,
+  },
+  chipWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 4,
+  },
+  chip: {
+    borderWidth: 1,
+    borderColor: palette.border,
+    borderRadius: radii.sm,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    backgroundColor: '#fff',
+  },
+  chipOn: {
+    borderColor: palette.accent,
+    backgroundColor: palette.accentSoft,
+  },
+  chipText: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 13,
+    color: palette.inkMuted,
+  },
+  chipTextOn: {
+    color: palette.ink,
   },
   formTitle: {
     fontFamily: 'DMSans_600SemiBold',

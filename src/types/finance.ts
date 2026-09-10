@@ -51,6 +51,8 @@ export type Transaction = {
   toAccountId?: string;
   /** Linked debt when type is debt_payment. */
   debtId?: string;
+  /** Revolving card/cupo charged when paying with credit. */
+  creditDebtId?: string;
   note?: string;
   createdAt: string;
   isRecurring?: boolean;
@@ -77,6 +79,9 @@ export type Budget = {
   limit: number;
 };
 
+export type DebtKind = 'installment' | 'revolving';
+export type RevolvingProduct = 'card' | 'credicheque' | 'line';
+
 export type Debt = {
   id: string;
   /** Custom label; used when nameKey is absent. */
@@ -94,6 +99,11 @@ export type Debt = {
   categoryId?: string;
   /** Monthly installment treated as permanent expense. */
   isPermanent?: boolean;
+  /** Omit or `installment` = fixed cuota. `revolving` = card / credicheque / cupo. */
+  kind?: DebtKind;
+  revolvingProduct?: RevolvingProduct;
+  /** Credit limit (cupo). Used when kind is revolving. */
+  creditLimit?: number;
 };
 
 export type Subscription = {

@@ -52,7 +52,11 @@ import {
   sumByType,
   type PredictedSpend,
 } from '@/src/utils/financeMath';
-import { mapLiquidAccounts, mergeDefaultAccounts, ensureWalletAccount, renameWalletAccount, removeWalletAccount, resolveSpendAccountId, settleLiquidOverdrafts } from '@/src/utils/accounts';
+import { mapLiquidAccounts, mergeDefaultAccounts, ensureWalletAccount, renameWalletAccount, removeWalletAccount, ensureBankAccount, renameBankAccount, removeBankAccount, resolveSpendAccountId, settleLiquidOverdrafts } from '@/src/utils/accounts';
+import {
+  applyRevolvingCharge,
+  debtIdFromPayAccountId,
+} from '@/src/utils/debts';
 import { computeNetWorth } from '@/src/utils/netWorth';
 import {
   filterByPersonScope,
@@ -68,6 +72,7 @@ type NewTxInput = {
   accountId?: string;
   toAccountId?: string;
   debtId?: string;
+  creditDebtId?: string;
   note?: string;
   createdAt?: string;
   isRecurring?: boolean;
@@ -97,11 +102,25 @@ type FinanceContextValue = {
     interestRate?: number;
     nextPaymentDate?: string;
     categoryId?: string;
+    kind?: Debt['kind'];
+    revolvingProduct?: Debt['revolvingProduct'];
+    creditLimit?: number;
   }) => Promise<Debt>;
   updateDebt: (
     id: string,
     patch: Partial<
-      Pick<Debt, 'name' | 'balance' | 'installment' | 'interestRate' | 'nextPaymentDate' | 'categoryId'>
+      Pick<
+        Debt,
+        | 'name'
+        | 'balance'
+        | 'installment'
+        | 'interestRate'
+        | 'nextPaymentDate'
+        | 'categoryId'
+        | 'kind'
+        | 'revolvingProduct'
+        | 'creditLimit'
+      >
     >
   ) => Promise<Debt | null>;
   removeDebt: (id: string) => Promise<void>;
@@ -118,6 +137,8 @@ type FinanceContextValue = {
         | 'toAccountId'
         | 'note'
         | 'createdAt'
+        | 'creditDebtId'
+        | 'debtId'
       >
     >
   ) => Promise<Transaction | null>;
@@ -132,11 +153,19 @@ type FinanceContextValue = {
     subscriptions: Subscription[];
   }) => Promise<void>;
   addWallet: (name: string) => Promise<Account | null>;
+  addBank: (name: string) => Promise<Account | null>;
   renameWallet: (
     id: string,
     name: string
   ) => Promise<{ account: Account } | { error: 'missing' | 'empty' | 'duplicate' }>;
+  renameBank: (
+    id: string,
+    name: string
+  ) => Promise<{ account: Account } | { error: 'missing' | 'empty' | 'duplicate' }>;
   removeWallet: (
+    id: string
+  ) => Promise<{ ok: true } | { error: 'missing' | 'protected' | 'hasBalance' }>;
+  removeBank: (
     id: string
   ) => Promise<{ ok: true } | { error: 'missing' | 'protected' | 'hasBalance' }>;
   updateBudget: (categoryId: string, limit: number) => Promise<void>;
@@ -231,6 +260,47 @@ function applyAccountDelta(
   return next;
 }
 
+function applyDebtPayment(
+  list: Debt[],
+  tx: Transaction,
+  direction: 1 | -1
+): Debt[] {
+  if (tx.type !== 'debt_payment' || !tx.debtId) return list;
+  return list.map((d) => {
+    if (d.id !== tx.debtId) return d;
+    if (direction === 1) {
+      const paid = Math.min(tx.amount, d.balance);
+      const nextDate = new Date();
+      nextDate.setMonth(nextDate.getMonth() + 1);
+      return {
+        ...d,
+        balance: Math.max(0, d.balance - paid),
+        paidCapital: d.paidCapital + paid,
+        nextPaymentDate: nextDate.toISOString(),
+      };
+    }
+    return {
+      ...d,
+      balance: d.balance + tx.amount,
+      paidCapital: Math.max(0, (d.paidCapital || 0) - tx.amount),
+    };
+  });
+}
+
+function applyTxDebts(list: Debt[], tx: Transaction, direction: 1 | -1): Debt[] {
+  const charged = applyRevolvingCharge(list, tx.creditDebtId, tx.amount, direction);
+  return applyDebtPayment(charged, tx, direction);
+}
+
+function applyTxAccounts(
+  list: Account[],
+  tx: Transaction,
+  direction: 1 | -1
+): Account[] {
+  if (tx.creditDebtId) return list;
+  return applyAccountDelta(list, tx, direction);
+}
+
 export function FinanceProvider({ children }: { children: React.ReactNode }) {
   const { settings, ready: settingsReady, pruneQuickTemplatesToExistingExpenses } =
     useSettings();
@@ -312,25 +382,33 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
 
   const addTransaction = useCallback(
     async (input: NewTxInput) => {
+      const chargedFromPicker = debtIdFromPayAccountId(input.accountId);
+      const creditDebtId = input.creditDebtId ?? chargedFromPicker;
       const tx: Transaction = {
         id: createId(),
         type: input.type,
         amount: input.amount,
         categoryId: input.categoryId,
         paymentMethod: input.paymentMethod,
-        accountId: input.accountId ?? 'cash',
+        accountId: creditDebtId
+          ? accounts.find((a) => a.type === 'credit')?.id ?? 'credit-card'
+          : input.accountId ?? 'cash',
         toAccountId: input.toAccountId,
         debtId: input.debtId,
+        creditDebtId,
         note: input.note?.trim() || undefined,
         createdAt: input.createdAt ?? new Date().toISOString(),
         isRecurring: input.isRecurring,
         registeredById: settings.personId || undefined,
         registeredByName: settings.userName.trim() || undefined,
       };
+      const chosenExists = accounts.some((a) => a.id === tx.accountId);
       if (
-        tx.type === 'expense' ||
-        tx.type === 'withdrawal' ||
-        tx.type === 'debt_payment'
+        !creditDebtId &&
+        !chosenExists &&
+        (tx.type === 'expense' ||
+          tx.type === 'withdrawal' ||
+          tx.type === 'debt_payment')
       ) {
         tx.accountId = resolveSpendAccountId(
           accounts,
@@ -341,23 +419,11 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       const nextTx = [tx, ...transactions].sort((a, b) =>
         b.createdAt.localeCompare(a.createdAt)
       );
-      const applied = applyAccountDelta(accounts, tx);
-      const { accounts: nextAccounts } = settleLiquidOverdrafts(applied);
-      let nextDebts = debts;
-      if (tx.type === 'debt_payment' && tx.debtId) {
-        nextDebts = debts.map((d) => {
-          if (d.id !== tx.debtId) return d;
-          const paid = Math.min(tx.amount, d.balance);
-          const nextDate = new Date();
-          nextDate.setMonth(nextDate.getMonth() + 1);
-          return {
-            ...d,
-            balance: Math.max(0, d.balance - paid),
-            paidCapital: d.paidCapital + paid,
-            nextPaymentDate: nextDate.toISOString(),
-          };
-        });
+      let nextAccounts = applyTxAccounts(accounts, tx, 1);
+      if (!tx.creditDebtId && !tx.paymentMethod) {
+        nextAccounts = settleLiquidOverdrafts(nextAccounts).accounts;
       }
+      const nextDebts = applyTxDebts(debts, tx, 1);
       setTransactions(nextTx);
       setAccounts(nextAccounts);
       setDebts(nextDebts);
@@ -379,6 +445,9 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       interestRate?: number;
       nextPaymentDate?: string;
       categoryId?: string;
+      kind?: Debt['kind'];
+      revolvingProduct?: Debt['revolvingProduct'];
+      creditLimit?: number;
     }) => {
       const nextDate =
         input.nextPaymentDate ??
@@ -387,6 +456,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
           d.setMonth(d.getMonth() + 1);
           return d.toISOString();
         })();
+      const kind = input.kind === 'revolving' ? 'revolving' : 'installment';
       const debt: Debt = {
         id: createId(),
         name: input.name.trim(),
@@ -400,6 +470,9 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
         otherCharges: 0,
         categoryId: input.categoryId,
         isPermanent: true,
+        kind,
+        revolvingProduct: kind === 'revolving' ? (input.revolvingProduct ?? 'card') : undefined,
+        creditLimit: kind === 'revolving' ? input.creditLimit : undefined,
       };
       const next = [debt, ...debts];
       setDebts(next);
@@ -415,16 +488,36 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       patch: Partial<
         Pick<
           Debt,
-          'name' | 'balance' | 'installment' | 'interestRate' | 'nextPaymentDate' | 'categoryId'
+          | 'name'
+          | 'balance'
+          | 'installment'
+          | 'interestRate'
+          | 'nextPaymentDate'
+          | 'categoryId'
+          | 'kind'
+          | 'revolvingProduct'
+          | 'creditLimit'
         >
       >
     ) => {
       const existing = debts.find((d) => d.id === id);
       if (!existing) return null;
+      const kind =
+        patch.kind === 'revolving' || patch.kind === 'installment'
+          ? patch.kind
+          : existing.kind === 'revolving'
+            ? 'revolving'
+            : 'installment';
       const updated: Debt = {
         ...existing,
         ...patch,
         name: patch.name !== undefined ? patch.name.trim() : existing.name,
+        kind,
+        revolvingProduct:
+          kind === 'revolving'
+            ? (patch.revolvingProduct ?? existing.revolvingProduct ?? 'card')
+            : undefined,
+        creditLimit: kind === 'revolving' ? (patch.creditLimit ?? existing.creditLimit) : undefined,
       };
       const next = debts.map((d) => (d.id === id ? updated : d));
       setDebts(next);
@@ -457,9 +550,34 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
     [accounts]
   );
 
+  const addBank = useCallback(
+    async (name: string) => {
+      const trimmed = name.trim();
+      if (!trimmed) return null;
+      const { accounts: next, account } = ensureBankAccount(accounts, trimmed);
+      if (next !== accounts) {
+        setAccounts(next);
+        await saveAccounts(next);
+      }
+      return account;
+    },
+    [accounts]
+  );
+
   const renameWallet = useCallback(
     async (id: string, name: string) => {
       const result = renameWalletAccount(accounts, id, name);
+      if ('error' in result) return result;
+      setAccounts(result.accounts);
+      await saveAccounts(result.accounts);
+      return { account: result.account };
+    },
+    [accounts]
+  );
+
+  const renameBank = useCallback(
+    async (id: string, name: string) => {
+      const result = renameBankAccount(accounts, id, name);
       if ('error' in result) return result;
       setAccounts(result.accounts);
       await saveAccounts(result.accounts);
@@ -479,6 +597,17 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
     [accounts]
   );
 
+  const removeBank = useCallback(
+    async (id: string) => {
+      const result = removeBankAccount(accounts, id);
+      if ('error' in result) return result;
+      setAccounts(result.accounts);
+      await saveAccounts(result.accounts);
+      return { ok: true as const };
+    },
+    [accounts]
+  );
+
   const canEditTransaction = useCallback(
     (tx: Transaction) => isRegisteredByMe(tx, settings.personId),
     [settings.personId]
@@ -490,10 +619,16 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       if (!existing) return;
       if (!isRegisteredByMe(existing, settings.personId)) return;
       const nextTx = transactions.filter((t) => t.id !== id);
-      const nextAccounts = applyAccountDelta(accounts, existing, -1);
+      const nextAccounts = applyTxAccounts(accounts, existing, -1);
+      const nextDebts = applyTxDebts(debts, existing, -1);
       setTransactions(nextTx);
       setAccounts(nextAccounts);
-      await Promise.all([saveTransactions(nextTx), saveAccounts(nextAccounts)]);
+      setDebts(nextDebts);
+      await Promise.all([
+        saveTransactions(nextTx),
+        saveAccounts(nextAccounts),
+        saveDebts(nextDebts),
+      ]);
       // One-tap = repeat an existing spend; drop chips when nothing remains to repeat.
       if (existing.type === 'expense') {
         await pruneQuickTemplatesToExistingExpenses(
@@ -503,7 +638,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
         );
       }
     },
-    [transactions, accounts, settings.personId, pruneQuickTemplatesToExistingExpenses]
+    [transactions, accounts, debts, settings.personId, pruneQuickTemplatesToExistingExpenses]
   );
 
   const updateTransaction = useCallback(
@@ -520,6 +655,8 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
           | 'toAccountId'
           | 'note'
           | 'createdAt'
+          | 'creditDebtId'
+          | 'debtId'
         >
       >
     ) => {
@@ -539,11 +676,24 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
             : existing.note,
       };
 
-      let nextAccounts = applyAccountDelta(accounts, existing, -1);
+      const chargedFromPicker = debtIdFromPayAccountId(updated.accountId);
+      if (chargedFromPicker) {
+        updated.creditDebtId = chargedFromPicker;
+        updated.accountId =
+          accounts.find((a) => a.type === 'credit')?.id ?? 'credit-card';
+      } else if (patch.accountId !== undefined && patch.creditDebtId === undefined) {
+        updated.creditDebtId = undefined;
+      }
+
+      let nextAccounts = applyTxAccounts(accounts, existing, -1);
+      let nextDebts = applyTxDebts(debts, existing, -1);
+      const chosenExists = nextAccounts.some((a) => a.id === updated.accountId);
       if (
-        updated.type === 'expense' ||
-        updated.type === 'withdrawal' ||
-        updated.type === 'debt_payment'
+        !updated.creditDebtId &&
+        !chosenExists &&
+        (updated.type === 'expense' ||
+          updated.type === 'withdrawal' ||
+          updated.type === 'debt_payment')
       ) {
         updated.accountId = resolveSpendAccountId(
           nextAccounts,
@@ -556,15 +706,23 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
         .map((t) => (t.id === id ? updated : t))
         .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
-      nextAccounts = applyAccountDelta(nextAccounts, updated, 1);
-      nextAccounts = settleLiquidOverdrafts(nextAccounts).accounts;
+      nextAccounts = applyTxAccounts(nextAccounts, updated, 1);
+      nextDebts = applyTxDebts(nextDebts, updated, 1);
+      if (!updated.creditDebtId && !updated.paymentMethod) {
+        nextAccounts = settleLiquidOverdrafts(nextAccounts).accounts;
+      }
 
       setTransactions(nextTx);
       setAccounts(nextAccounts);
-      await Promise.all([saveTransactions(nextTx), saveAccounts(nextAccounts)]);
+      setDebts(nextDebts);
+      await Promise.all([
+        saveTransactions(nextTx),
+        saveAccounts(nextAccounts),
+        saveDebts(nextDebts),
+      ]);
       return updated;
     },
-    [transactions, accounts, settings.personId]
+    [transactions, accounts, debts, settings.personId]
   );
 
   const resetFinance = useCallback(async () => {
@@ -817,8 +975,11 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       updateDebt,
       removeDebt,
       addWallet,
+      addBank,
       renameWallet,
+      renameBank,
       removeWallet,
+      removeBank,
       updateTransaction,
       removeTransaction,
       canEditTransaction,
@@ -857,8 +1018,11 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       updateDebt,
       removeDebt,
       addWallet,
+      addBank,
       renameWallet,
+      renameBank,
       removeWallet,
+      removeBank,
       updateTransaction,
       removeTransaction,
       canEditTransaction,

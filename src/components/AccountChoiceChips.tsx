@@ -14,9 +14,11 @@ import { useLanguage } from '@/src/i18n/LanguageContext';
 import { palette, radii } from '@/src/theme/colors';
 import type { Account } from '@/src/types/finance';
 import {
+  BANK_PRESETS,
   WALLET_PRESETS,
   accountDisplayName,
   accountRoleKey,
+  findBankByName,
   findWalletByName,
 } from '@/src/utils/accounts';
 import { tapFeedback } from '@/src/utils/selectFeedback';
@@ -142,6 +144,79 @@ export function WalletQuickAdd({
         />
         <Pressable
           onPress={() => void createWallet(custom)}
+          disabled={busy || !custom.trim()}
+          style={[
+            styles.addBtn,
+            (!custom.trim() || busy) && styles.addBtnDisabled,
+          ]}>
+          {busy ? (
+            <ActivityIndicator size="small" color={palette.white} />
+          ) : (
+            <Text style={styles.addBtnText}>{t('flow.addSubButton')}</Text>
+          )}
+        </Pressable>
+      </View>
+    </View>
+  );
+}
+
+export function BankQuickAdd({
+  onAdded,
+}: {
+  onAdded?: (id: string) => void;
+}) {
+  const { t } = useLanguage();
+  const { accounts, addBank } = useFinance();
+  const [custom, setCustom] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  async function createBank(name: string) {
+    const trimmed = name.trim();
+    if (!trimmed || busy) return;
+    setBusy(true);
+    try {
+      const acc = await addBank(trimmed);
+      if (!acc) return;
+      tapFeedback();
+      setCustom('');
+      onAdded?.(acc.id);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const unusedPresets = BANK_PRESETS.filter((name) => !findBankByName(accounts, name));
+
+  return (
+    <View style={styles.addBlock}>
+      {unusedPresets.length > 0 ? (
+        <View style={styles.wrap}>
+          {unusedPresets.map((name) => (
+            <Pressable
+              key={name}
+              onPress={() => void createBank(name)}
+              disabled={busy}
+              style={styles.preset}>
+              <Text style={styles.presetText}>+ {name}</Text>
+            </Pressable>
+          ))}
+        </View>
+      ) : null}
+      <Text style={styles.addLabel}>{t('flow.bankAdd')}</Text>
+      <Text style={styles.addHint}>{t('flow.bankAddHint')}</Text>
+      <View style={styles.row}>
+        <TextInput
+          value={custom}
+          onChangeText={setCustom}
+          placeholder={t('flow.bankNamePlaceholder')}
+          placeholderTextColor={palette.inkSoft}
+          style={styles.input}
+          editable={!busy}
+          onSubmitEditing={() => void createBank(custom)}
+          returnKeyType="done"
+        />
+        <Pressable
+          onPress={() => void createBank(custom)}
           disabled={busy || !custom.trim()}
           style={[
             styles.addBtn,

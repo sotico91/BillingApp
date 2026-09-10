@@ -12,6 +12,7 @@ import {
 import Animated, { FadeInDown, ZoomIn } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { PocketFlowList } from '@/src/components/PocketFlowList';
 import { useFinance } from '@/src/hooks/useFinance';
 import { useKeyboardVisible } from '@/src/hooks/useKeyboardVisible';
 import { useMoney } from '@/src/hooks/useMoney';
@@ -30,7 +31,6 @@ export function FloatingGlanceFab() {
   const {
     insightsForPeriod,
     totalForPeriod,
-    availableCash,
     budgetStatus,
     resetFinance,
   } = useFinance();
@@ -113,16 +113,19 @@ export function FloatingGlanceFab() {
             </View>
 
             <View style={styles.kpiRow}>
-              <Kpi label={t('home.expenses')} value={format(expenses)} tone="danger" />
               <Kpi label={t('home.income')} value={format(income)} tone="good" />
+              <Kpi label={t('home.expenses')} value={format(expenses)} tone="danger" />
               <Kpi
                 label={t('home.savings')}
                 value={format(savings)}
                 tone={savings >= 0 ? 'good' : 'danger'}
               />
             </View>
-            <View style={[styles.kpiRow, { marginTop: -2 }]}>
-              <Kpi label={t('home.available')} value={format(availableCash)} tone="neutral" />
+
+            <Text style={styles.section}>{t('fab.whereTitle')}</Text>
+            <Text style={styles.sectionHint}>{t('fab.whereHint')}</Text>
+            <View style={styles.pocketBlock}>
+              <PocketFlowList />
             </View>
 
             {alerts > 0 ? (
@@ -371,6 +374,9 @@ const styles = StyleSheet.create({
     color: palette.inkSoft,
     lineHeight: 15,
     marginBottom: 8,
+  },
+  pocketBlock: {
+    marginBottom: 12,
   },
   list: {
     maxHeight: 220,

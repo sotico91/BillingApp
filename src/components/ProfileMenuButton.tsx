@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
   Alert,
+  Linking,
   Modal,
   Pressable,
   StyleSheet,
@@ -17,6 +18,7 @@ import { useSettings } from '@/src/hooks/useSettings';
 import { useHowToGuide } from '@/src/hooks/useHowToGuide';
 import { useLanguage } from '@/src/i18n/LanguageContext';
 import { palette, radii } from '@/src/theme/colors';
+import { SUPPORT_EMAIL } from '@/src/constants/store';
 import {
   pickAndReadBackupFile,
   shareBackupJson,
@@ -183,6 +185,16 @@ export function ProfileMenuButton({ light = true }: Props) {
     router.push('/privacidad');
   }
 
+  function reportProblem() {
+    setMenuOpen(false);
+    const subject = encodeURIComponent(t('support.reportSubject'));
+    const body = encodeURIComponent(t('support.reportBody'));
+    const url = `mailto:${SUPPORT_EMAIL}?subject=${subject}&body=${body}`;
+    void Linking.openURL(url).catch(() => {
+      Alert.alert(t('support.report'), t('support.reportError'));
+    });
+  }
+
   return (
     <>
       <Pressable
@@ -256,6 +268,14 @@ export function ProfileMenuButton({ light = true }: Props) {
               <Text style={[styles.menuItemText, styles.menuDanger]}>
                 {t('backup.restore')}
               </Text>
+            </Pressable>
+            <Pressable
+              onPress={() => {
+                tapFeedback();
+                reportProblem();
+              }}
+              style={styles.menuItem}>
+              <Text style={styles.menuItemText}>{t('support.report')}</Text>
             </Pressable>
             <Pressable
               onPress={() => {

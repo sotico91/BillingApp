@@ -25,6 +25,8 @@ import { categoryLabel } from '@/src/utils/categoryLabel';
 import { incomeDestinationAccounts } from '@/src/utils/netWorth';
 import { AccountChoiceChips } from '@/src/components/AccountChoiceChips';
 import { KeyboardSafeOverlay, KeyboardSafeScroll } from '@/src/components/KeyboardSafe';
+import { accountsForPaymentMethod, firstAccountId } from '@/src/utils/accounts';
+import { payAccountIdForDebt } from '@/src/utils/debts';
 
 type Props = {
   transaction: Transaction | null;
@@ -48,7 +50,7 @@ export function EditTransactionModal({ transaction, visible, onClose }: Props) {
   const { t } = useLanguage();
   const { format, parse, currency } = useMoney();
   const { settings } = useSettings();
-  const { updateTransaction, accounts } = useFinance();
+  const { updateTransaction, accounts, debts } = useFinance();
   const keyboardVisible = useKeyboardVisible();
 
   const [amount, setAmount] = useState('');
@@ -68,10 +70,16 @@ export function EditTransactionModal({ transaction, visible, onClose }: Props) {
     return spendSubsAsCategories(settings.spendConcepts ?? []);
   }, [type, settings.enabledCategoryIds, settings.spendConcepts]);
 
-  const accountChoices = useMemo(
-    () => (type === 'income' ? incomeDestinationAccounts(accounts) : accounts),
-    [type, accounts]
-  );
+  const accountChoices = useMemo(() => {
+    if (type === 'income') return incomeDestinationAccounts(accounts);
+    return accountsForPaymentMethod(accounts, method, {
+      debts,
+      debtLabel: (debt) =>
+        debt.nameKey
+          ? t(debt.nameKey as TranslationKey)
+          : debt.name ?? t('debt.mainCard'),
+    });
+  }, [type, accounts, method, debts, t]);
 
   useEffect(() => {
     if (!transaction) return;
@@ -81,11 +89,21 @@ export function EditTransactionModal({ transaction, visible, onClose }: Props) {
       transaction.categoryId ??
         (settings.spendConcepts?.[0]?.subs[0]?.id ?? 'otros')
     );
-    setMethod(transaction.paymentMethod ?? 'cash');
-    setAccountId(transaction.accountId ?? 'cash');
+    const nextMethod = transaction.paymentMethod ?? 'cash';
+    setMethod(nextMethod);
+    const chargedId = transaction.creditDebtId
+      ? payAccountIdForDebt(transaction.creditDebtId)
+      : transaction.accountId ?? 'cash';
+    setAccountId(chargedId);
     setToAccountId(transaction.toAccountId ?? 'savings');
     setNote(transaction.note ?? '');
   }, [transaction, settings.spendConcepts]);
+
+  useEffect(() => {
+    if (type === 'income') return;
+    const next = firstAccountId(accountChoices, accountId);
+    if (next && next !== accountId) setAccountId(next);
+  }, [method, type, accountChoices, accountId]);
 
   function selectType(next: TransactionType) {
     setType(next);
@@ -208,15 +226,22 @@ export function EditTransactionModal({ transaction, visible, onClose }: Props) {
             <Text style={styles.label}>
               {type === 'income'
                 ? t('flow.whichAccountIncome')
-                : type === 'expense'
-                  ? t('flow.whichAccountSpend')
-                  : t('flow.whichAccount')}
+                : method === 'credit' && type !== 'income'
+                  ? t('flow.whichCard')
+                  : type === 'expense'
+                    ? t('flow.whichAccountSpend')
+                    : t('flow.whichAccount')}
             </Text>
-            <AccountChoiceChips
-              accounts={accountChoices}
-              selectedId={accountId}
-              onSelect={setAccountId}
-            />
+            {accountChoices.length === 0 ? (
+              <Text style={styles.hint}>{t('flow.payAccountsEmpty')}</Text>
+            ) : (
+              <AccountChoiceChips
+                accounts={accountChoices}
+                selectedId={accountId}
+                onSelect={setAccountId}
+                allowAddWallet={type === 'income' || method === 'transfer'}
+              />
+            )}
 
             {needsDestination ? (
               <>
