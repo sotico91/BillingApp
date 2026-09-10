@@ -3,6 +3,7 @@ import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useHowToGuide } from '@/src/hooks/useHowToGuide';
 import { useSettings } from '@/src/hooks/useSettings';
 import { useLanguage } from '@/src/i18n/LanguageContext';
 import type { TranslationKey } from '@/src/i18n/translations';
@@ -29,6 +30,7 @@ export function CoachMarksOverlay() {
   const insets = useSafeAreaInsets();
   const { t } = useLanguage();
   const { settings, ready, coachMarksPending, completeCoachMarks } = useSettings();
+  const { openGuide } = useHowToGuide();
   const [step, setStep] = useState(0);
   const [dismissing, setDismissing] = useState(false);
 
@@ -43,6 +45,7 @@ export function CoachMarksOverlay() {
     if (dismissing) return;
     setDismissing(true);
     await completeCoachMarks();
+    setTimeout(() => openGuide(), 450);
   }
 
   function goNext() {

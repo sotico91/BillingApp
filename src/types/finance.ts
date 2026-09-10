@@ -10,6 +10,11 @@ export type TransactionType =
   | 'investment'
   | 'withdrawal';
 
+/** Moving money between own pockets — not a spend, not income. */
+export function isPocketMove(type: TransactionType): boolean {
+  return type === 'transfer' || type === 'investment';
+}
+
 export type PaymentMethod = 'cash' | 'debit' | 'credit' | 'transfer';
 
 export type AccountType =

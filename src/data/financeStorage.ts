@@ -14,6 +14,7 @@ import type {
   Subscription,
   Transaction,
 } from '@/src/types/finance';
+import { isPocketMove } from '@/src/types/finance';
 
 const TX_KEY = 'billing-app:transactions:v2';
 const ACCOUNTS_KEY = 'billing-app:accounts:v2';
@@ -35,7 +36,24 @@ async function loadJson<T>(key: string, fallback: T): Promise<T> {
 export async function loadTransactions(): Promise<Transaction[]> {
   const existing = await loadJson<Transaction[] | null>(TX_KEY, null);
   if (existing && Array.isArray(existing)) {
-    return existing.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    let changed = false;
+    const cleaned = existing.map((tx) => {
+      if (!isPocketMove(tx.type)) return tx;
+      if (!tx.categoryId && !tx.paymentMethod && !tx.creditDebtId && !tx.debtId) {
+        return tx;
+      }
+      changed = true;
+      return {
+        ...tx,
+        categoryId: undefined,
+        paymentMethod: undefined,
+        creditDebtId: undefined,
+        debtId: undefined,
+      };
+    });
+    const sorted = cleaned.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    if (changed) await saveTransactions(sorted);
+    return sorted;
   }
 
   const legacy = await loadJson<Expense[]>(LEGACY_EXPENSES, []);

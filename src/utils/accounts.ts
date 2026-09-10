@@ -319,6 +319,19 @@ export function isSpendableLiquid(type: AccountType): boolean {
   );
 }
 
+/** Pockets you can move money between (not a spend). */
+export function pocketMoveAccounts(
+  accounts: Account[],
+  kind: 'transfer' | 'investment' = 'transfer'
+): Account[] {
+  if (kind === 'investment') {
+    return accounts.filter(
+      (a) => isSpendableLiquid(a.type) || a.type === 'investment'
+    );
+  }
+  return accounts.filter((a) => isSpendableLiquid(a.type));
+}
+
 function liquidWithFunds(accounts: Account[], minBalance: number): Account[] {
   return accounts
     .filter((a) => isSpendableLiquid(a.type) && a.balance >= minBalance)

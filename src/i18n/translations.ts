@@ -198,7 +198,7 @@ export const translations = {
     'insights.searchPlaceholder': 'How much did I spend on delivery {when}?',
     'insights.searchAsk': 'Ask',
     'insights.searchHint':
-      'Ask about a month (August), a year, yesterday, a day, a concept, income % or which pocket money left.',
+      'The chips are shortcuts. You can type any period in the box: last month, August, yesterday, this year. Hoy / Semana / Mes below only change the charts — not the box.',
     'insights.searchSuggestions': 'Try one of these',
     'insights.searchAnswer': 'Answer',
     'insights.searchClear': 'Clear',
@@ -508,7 +508,9 @@ export const translations = {
     'flow.intent.earn': 'I received money',
     'flow.intent.earnSub': 'Salary, freelance, gift…',
     'flow.intent.move': 'I moved money',
-    'flow.intent.moveSub': 'To savings or another account',
+    'flow.intent.moveSub': 'Between cash, banks, wallets or savings. Not a spend.',
+    'flow.moveNotSpend': 'This only moves money you already have. It is not a spend.',
+    'history.moveRoute': '{from} → {to}',
     'flow.intent.debt': 'I paid a debt',
     'flow.intent.debtSub': 'Reduces a registered debt',
     'flow.chooseDebt': 'Which debt did you pay?',
@@ -649,28 +651,37 @@ export const translations = {
     'coach.glanceBody': 'Open this to review totals by concept and spot what needs attention.',
     'coach.tabsTitle': 'The rest lives down here',
     'coach.tabsBody':
-      'Activity to edit, Plan for categories, Wealth for accounts. Lost later? Tap ? or ⋯ → How to use.',
+      'Activity to edit, Plan for categories, Wealth for accounts. Next you’ll get a first-day recipe. Later, tap ? or ⋯ → How to use.',
 
     'guide.menu': 'How to use',
     'guide.openA11y': 'How to use Rumi',
     'guide.title': 'How to use Rumi',
-    'guide.close': 'Got it',
-    'guide.kicker': 'Anytime from ? or ⋯',
-    'guide.ideaTitle': 'Two ideas, that’s it',
-    'guide.ideaBody':
-      'Plan is WHAT you spend on. Accounts are WHERE the money sits. Fixed installments and revolving cupos are reminders — Rumi does not calculate interest.',
-    'guide.spendTitle': 'Expense categories (Plan)',
-    'guide.spendBody':
-      'A concept is broad (Food, Bills). A subcategory is the specific thing (Coffee, Power, Uber). Setup only picked concepts; you add subcategories in Plan. Until you do, everything lands in “General”.',
-    'guide.wealthTitle': 'Fixed accounts and wallets (Wealth)',
-    'guide.wealthBody':
-      'Cash, main bank, savings, investments and the card are already there. Rename the bank or add another (Davivienda…). Wallets (Nequi, Daviplata) you add yourself. A spend or transfer leaves the pocket you choose.',
-    'guide.dayTitle': 'Log what you paid',
-    'guide.dayBody':
-      'Add is for real movements: an expense, income, or “I paid a debt”. That is what changes your accounts. A cuota or card payment in Wealth only reminds you until you log it.',
-    'guide.debtTitle': 'Debts and revolving credit',
-    'guide.debtBody':
-      'Same monthly amount (apartment, car, payroll loan): note it as a fixed installment. Card, credicheque or cupo: revolving credit, with the limit and what you already used. No EA, no simulation. The day you pay, Add logs the expense and lowers the account.',
+    'guide.close': 'Got it — I’ll try it',
+    'guide.kicker': 'First day, in this order',
+    'guide.introTitle': 'Don’t start with the expense',
+    'guide.introBody':
+      'If you’re trying Rumi for the first time, first say WHERE your money sits and WHAT you spend on. Then log one real movement and you’ll know if it fits.',
+    'guide.step1Title': 'Wealth — where your money is',
+    'guide.step1Body':
+      'Open the Wealth tab (bottom). Cash, bank, savings and investments are already there: type the real balance of each. Use Nequi or Daviplata? Add them as a wallet. Another bank? Add it, or rename the main one. That’s your map of pockets.',
+    'guide.step2Title': 'Plan — what you’ll find there',
+    'guide.step2Body':
+      'Open Plan. Inside:\n• My concepts — create the buckets (Food, Bills) and subcategories (Coffee, Uber, Power). Until you add them, spends land in “General”.\n• Monthly limits — tap a subcategory if you want a cap.\n• Ant expenses — mark the small leaks so Insights can show them apart.\n• Reminders — if you want a ping on bill day, set it here.',
+    'guide.step3Title': 'Add — log an expense',
+    'guide.step3Body':
+      'Tap + (Add). Choose I spent. Type the amount. Pick the concept and subcategory. Choose which pocket it left (cash, Nequi, bank…). That lowers that account and counts as this month’s spend. Paid a store by bank transfer? Still I spent — that’s a payment method, not moving money between your pockets.',
+    'guide.step4Title': 'Income, or just moving money',
+    'guide.step4Body':
+      'Got paid? Add → I received money, and pick which account it entered (bank, Nequi, cash).\n\nMoved Nequi to savings, or bank to cash? Add → I moved money. Pick from and to. Not a spend: it was already yours, it only changed pocket.',
+    'guide.step5Title': 'Debts: note in Wealth, pay in Add',
+    'guide.step5Body':
+      'In Wealth → Debts & credit, tap Add a debt. Same amount every month (apartment, car, payroll loan): fixed installment, with balance and cuota. Card, credicheque or cupo: revolving credit, with the limit and what you already used. That’s a reminder — Rumi does not calculate interest.\n\nThe day you pay: Add → I paid a debt. That lowers the debt and the pocket you paid from.',
+    'guide.step6Title': 'Insights — the analysis engine',
+    'guide.step6Body':
+      'Open the Insights tab (bottom). At the top is Ask Rumi: type in the box or tap a chip, then Ask. The chips are shortcuts — last month is not only one chip. You can type “how much last month?”, “last month coffee”, “August”, “yesterday”.\n\nHoy / Semana / Mes only change the charts and notes below (ranking, pockets, smart notes). The text box uses the period you wrote.\n\nIf you want to know about ants or limits, those are marked in Plan; Insights is where you ask how they behaved.',
+    'guide.step7Title': 'Home and Activity',
+    'guide.step7Body':
+      'Home shows what you can still spend and whether this month is in the green. Activity is where you edit or delete a mistake. One-tap on Home appears after you repeat a usual expense a couple of times.',
     'guide.hint': 'Open this again anytime with ? or ⋯ → How to use.',
 
     'reminder.title': 'Expense reminders',
@@ -778,11 +789,11 @@ export const translations = {
     'search.answerDebt': 'Current debt balance: {amount}.',
     'search.answerAvailable':
       'Spendable now: {amount} (cash + main bank + savings + wallets).',
-    'search.needQuestion': 'Type a question first — for example about coffee, salary or this month.',
+    'search.needQuestion': 'Type a question first — for example last month, coffee, or salary.',
     'search.answerUnclear':
       'I could not match that question to your data. Try something like: {examples}',
     'search.examples':
-      '“How much in August?”, “How much this year?”, “What did I spend yesterday?”, “Which pocket did gym leave?”',
+      '“How much last month?”, “How much in August?”, “How much this year?”, “What did I spend yesterday?”, “Which pocket did gym leave?”',
     'search.answerTopWithIncome':
       'Your biggest expense ({period}) is {label}: {amount} ({percent}% of income {income}) across {count} movements.',
     'search.answerNoIncome':
@@ -1021,7 +1032,7 @@ export const translations = {
     'insights.searchPlaceholder': '¿Cuánto gasté en domicilio {when}?',
     'insights.searchAsk': 'Preguntar',
     'insights.searchHint':
-      'Pregunta por un mes (agosto), el año, ayer, un día, un concepto, % del ingreso o de qué bolsillo salió.',
+      'Las chips son atajos. En la caja puedes escribir cualquier período: el mes pasado, agosto, ayer, este año. Hoy / Semana / Mes de abajo solo cambian las gráficas, no la caja.',
     'insights.searchSuggestions': 'Prueba una de estas',
     'insights.searchAnswer': 'Respuesta',
     'insights.searchClear': 'Limpiar',
@@ -1334,7 +1345,9 @@ export const translations = {
     'flow.intent.earn': 'Recibí dinero',
     'flow.intent.earnSub': 'Salario, freelance, regalo…',
     'flow.intent.move': 'Moví dinero',
-    'flow.intent.moveSub': 'A ahorros u otra cuenta',
+    'flow.intent.moveSub': 'Entre efectivo, bancos, billeteras o ahorros. No es un gasto.',
+    'flow.moveNotSpend': 'Solo mueve plata que ya tienes. No es un gasto.',
+    'history.moveRoute': '{from} → {to}',
     'flow.intent.debt': 'Pagué una deuda',
     'flow.intent.debtSub': 'Baja el saldo de una deuda registrada',
     'flow.chooseDebt': '¿Qué deuda pagaste?',
@@ -1475,28 +1488,37 @@ export const translations = {
     'coach.glanceBody': 'Aquí revisas totales por concepto y ves qué merece atención.',
     'coach.tabsTitle': 'El resto está abajo',
     'coach.tabsBody':
-      'Actividad para editar, Plan para categorías, Patrimonio para cuentas. Si te pierdes, toca ? o ⋯ → Cómo usar.',
+      'Actividad para editar, Plan para categorías, Patrimonio para cuentas. Luego verás la receta del primer día. Si te pierdes, toca ? o ⋯ → Cómo usar.',
 
     'guide.menu': 'Cómo usar',
     'guide.openA11y': 'Cómo usar Rumi',
     'guide.title': 'Cómo usar Rumi',
-    'guide.close': 'Entendido',
-    'guide.kicker': 'Cuando quieras, con ? o ⋯',
-    'guide.ideaTitle': 'Dos ideas, no más',
-    'guide.ideaBody':
-      'Plan es EN QUÉ gastas. Las cuentas son DÓNDE está el dinero. Las cuotas fijas y los cupos rotativos son recordatorios — Rumi no calcula interés.',
-    'guide.spendTitle': 'Categorías de gasto (Plan)',
-    'guide.spendBody':
-      'Un concepto es amplio (Alimentación, Recibos). Una subcategoría es lo concreto (Café, Luz, Uber). Al empezar solo elegiste conceptos; las subcategorías se crean en Plan. Hasta que las armes, todo cae en “General”.',
-    'guide.wealthTitle': 'Cuentas fijas y billeteras (Patrimonio)',
-    'guide.wealthBody':
-      'Efectivo, banco principal, ahorros, inversiones y tarjeta ya están. Renombra el banco o agrega otro (Davivienda…). Las billeteras (Nequi, Daviplata) también las agregas tú. Un gasto o un traslado sale del bolsillo que elijas.',
-    'guide.dayTitle': 'Anota lo que pagaste',
-    'guide.dayBody':
-      'Agregar es para movimientos reales: un gasto, un ingreso o “Pagué una deuda”. Eso sí cambia tus cuentas. La cuota o el pago de tarjeta en Patrimonio solo te recuerda hasta que lo registres.',
-    'guide.debtTitle': 'Deudas y créditos rotativos',
-    'guide.debtBody':
-      'Si el banco te cobra siempre lo mismo (apto, carro, libranza), anótalo como cuota fija. Tarjeta, credicheque o cupo: crédito rotativo, con el cupo y lo que ya usaste. Sin tasa EA ni simulación. El día que pagas, Agregar registra el gasto y baja la cuenta.',
+    'guide.close': 'Listo, lo pruebo',
+    'guide.kicker': 'Primer día, en este orden',
+    'guide.introTitle': 'No empieces por el gasto',
+    'guide.introBody':
+      'Si estás probando Rumi por primera vez, primero di DÓNDE está tu plata y EN QUÉ sueles gastar. Después registra un movimiento real y vas a saber si te encaja.',
+    'guide.step1Title': 'Patrimonio: dónde está tu plata',
+    'guide.step1Body':
+      'Abre la pestaña Patrimonio (abajo). Ya están Efectivo, banco, ahorros e inversiones: pon el saldo real de cada una. ¿Usas Nequi o Daviplata? Agrégalas como billetera. ¿Tienes otro banco? Agrégalo, o renombra el principal. Eso es el mapa de tus bolsillos.',
+    'guide.step2Title': 'Plan: qué encuentras ahí',
+    'guide.step2Body':
+      'Abre Plan. En esta sección:\n• Mis conceptos de gasto — arma los cajones (Alimentación, Recibos) y las subcategorías (Café, Uber, Luz). Hasta que las crees, los gastos caen en “General”.\n• Topes mensuales — si quieres un límite, tócalo en la subcategoría.\n• Gastos hormiga — marca lo chico para verlo aparte en Análisis.\n• Recordatorios — si quieres que te avise el día de la luz o la cuota, se configura aquí.',
+    'guide.step3Title': 'Agregar: registra un gasto',
+    'guide.step3Body':
+      'Toca + (Agregar). Elige Gasté. Escribe el monto. Elige el concepto y la subcategoría. Elige de qué bolsillo salió (efectivo, Nequi, banco…). Eso sí baja esa cuenta y cuenta como gasto del mes. ¿Le pagaste a un comercio por transferencia? Sigue siendo Gasté: eso es la forma de pago, no un traslado entre tus bolsillos.',
+    'guide.step4Title': 'Si te pagaron o solo moviste plata',
+    'guide.step4Body':
+      '¿Te llegó el salario o un giro? Agregar → Recibí dinero, y elige en qué cuenta entra (banco, Nequi, efectivo).\n\n¿Pasaste de Nequi a ahorros, o de banco a efectivo? Agregar → Moví dinero. Elige de dónde sale y a dónde llega. No es un gasto: la plata ya era tuya, solo cambió de bolsillo.',
+    'guide.step5Title': 'Deudas: anótalas en Patrimonio, págala en Agregar',
+    'guide.step5Body':
+      'En Patrimonio → Deudas y créditos, toca Agregar deuda. Si el banco te cobra siempre lo mismo (apto, carro, libranza): cuota fija, con saldo y cuota. Si es tarjeta, credicheque o cupo: crédito rotativo, con el cupo y lo que ya usaste. Eso es un recordatorio; Rumi no calcula interés.\n\nEl día que pagas: Agregar → Pagué una deuda. Ahí sí baja el saldo de la deuda y el de la cuenta con la que pagaste.',
+    'guide.step6Title': 'Análisis: el motor de preguntas',
+    'guide.step6Body':
+      'Abre la pestaña Análisis (abajo). Arriba está Pregúntale a Rumi: escribe en la caja o toca una chip y luego Preguntar. Las chips son atajos; el mes pasado no es solo una. Puedes escribir “el mes pasado”, “cuánto gasté el mes pasado en café”, “agosto”, “ayer”.\n\nHoy / Semana / Mes de esa pantalla solo cambian las gráficas y notas de abajo (ranking, bolsillos, notas inteligentes). La caja usa el período que escribiste.\n\nSi quieres saber de hormiga o topes, se marcan en Plan; en Análisis preguntas cómo se comportaron.',
+    'guide.step7Title': 'Inicio y Actividad',
+    'guide.step7Body':
+      'En Inicio ves cuánto puedes gastar y si el mes va a favor. En Actividad editas o borras si te equivocaste. El registro rápido de Inicio aparece cuando ya repetiste un gasto un par de veces.',
     'guide.hint': 'Vuelve a abrir esto con ? o en ⋯ → Cómo usar.',
 
     'reminder.title': 'Recordatorios de gastos',
@@ -1606,11 +1628,11 @@ export const translations = {
     'search.answerAvailable':
       'Disponible ahora: {amount} (efectivo + banco principal + ahorros + billeteras).',
     'search.needQuestion':
-      'Escribe una pregunta primero — por ejemplo sobre café, salario o este mes.',
+      'Escribe una pregunta primero — por ejemplo el mes pasado, café o salario.',
     'search.answerUnclear':
       'No pude relacionar esa pregunta con tus datos. Prueba algo como: {examples}',
     'search.examples':
-      '“¿Cuánto gasté en agosto?”, “¿Cuánto este año?”, “¿Cuánto ayer?”, “¿De qué bolsillo salió el ejercicio?”',
+      '“¿Cuánto gasté el mes pasado?”, “¿Cuánto en agosto?”, “¿Cuánto este año?”, “¿Cuánto ayer?”, “¿De qué bolsillo salió el ejercicio?”',
     'search.answerTopWithIncome':
       'Tu mayor gasto ({period}) es {label}: {amount} ({percent}% del ingreso {income}) en {count} movimientos.',
     'search.answerNoIncome':

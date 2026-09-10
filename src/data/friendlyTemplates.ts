@@ -118,7 +118,6 @@ export const FRIENDLY_TEMPLATES: FriendlyTemplate[] = [
   {
     id: 'tpl-save',
     intent: 'move',
-    categoryId: 'otros',
     emoji: '🐷',
     titleKey: 'flow.tpl.save',
     subtitleKey: 'flow.tpl.saveSub',

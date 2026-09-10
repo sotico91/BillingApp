@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { CategoryBreakdown } from '@/src/components/CategoryBreakdown';
 import { CollapsibleSection } from '@/src/components/CollapsibleSection';
 import { FadeInBlock } from '@/src/components/FadeInBlock';
+import { HowToGuideButton } from '@/src/components/HowToGuideButton';
 import { MoneyText } from '@/src/components/MoneyText';
 import { PeriodToggle } from '@/src/components/PeriodToggle';
 import { PocketBreakdown } from '@/src/components/PocketBreakdown';
@@ -126,7 +127,10 @@ export default function InsightsScreen() {
               <RaisedText style={styles.pageTitle}>{t('insights.title')}</RaisedText>
               <Text style={styles.pageHint}>{t('insights.subtitle')}</Text>
             </View>
-            <SavingsDecor size="md" />
+            <View style={styles.heroActions}>
+              <HowToGuideButton light variant="chip" />
+              <SavingsDecor size="md" />
+            </View>
           </View>
           <PeriodToggle value={period} onChange={setPeriod} />
         </FadeInBlock>
@@ -322,7 +326,8 @@ export default function InsightsScreen() {
 const styles = StyleSheet.create({
   content: { padding: 22, paddingBottom: 168, gap: 14 },
   heroRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
-  heroCopy: { flex: 1 },
+  heroCopy: { flex: 1, paddingRight: 8 },
+  heroActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   pageTitle: {
     fontFamily: 'Fraunces_700Bold',
     fontSize: 34,

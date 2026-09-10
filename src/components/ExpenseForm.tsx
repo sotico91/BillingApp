@@ -25,6 +25,7 @@ import { useLanguage } from '@/src/i18n/LanguageContext';
 import type { TranslationKey } from '@/src/i18n/translations';
 import { palette, radii } from '@/src/theme/colors';
 import type { PaymentMethod, TransactionType } from '@/src/types/finance';
+import { isPocketMove } from '@/src/types/finance';
 import { categoryLabel } from '@/src/utils/categoryLabel';
 import { incomeDestinationAccounts } from '@/src/utils/netWorth';
 import {
@@ -33,6 +34,7 @@ import {
   defaultTransferDestinationId,
   accountsForPaymentMethod,
   firstAccountId,
+  pocketMoveAccounts,
 } from '@/src/utils/accounts';
 import { notifyExpenseRegistered } from '@/src/utils/notifications';
 import { habitExpenseNotifyBody } from '@/src/utils/habitPilot';
@@ -111,6 +113,12 @@ export function ExpenseForm({
 
   const accountChoices = useMemo(() => {
     if (type === 'income') return incomeDestinationAccounts(accounts);
+    if (isPocketMove(type)) {
+      return pocketMoveAccounts(
+        accounts,
+        type === 'investment' ? 'investment' : 'transfer'
+      );
+    }
     return accountsForPaymentMethod(accounts, method, {
       debts,
       debtLabel: (debt) =>
@@ -148,6 +156,13 @@ export function ExpenseForm({
     } else if (next === 'debt_payment') {
       setDebtId(debts[0]?.id ?? null);
       setCategoryId(debts[0]?.categoryId ?? 'otros');
+    } else if (isPocketMove(next)) {
+      setCategoryId('');
+      const fromId = firstAccountId(
+        pocketMoveAccounts(accounts, next === 'investment' ? 'investment' : 'transfer')
+      );
+      if (fromId) setAccountId(fromId);
+      setToAccountId(defaultTransferDestinationId(accounts, fromId));
     }
   }
 
@@ -168,11 +183,12 @@ export function ExpenseForm({
       await addTransaction({
         type,
         amount: parsed,
-        categoryId:
-          type === 'debt_payment'
+        categoryId: isPocketMove(type)
+          ? undefined
+          : type === 'debt_payment'
             ? selectedDebt?.categoryId ?? categoryId
             : categoryId,
-        paymentMethod: type === 'income' ? undefined : method,
+        paymentMethod: type === 'income' || isPocketMove(type) ? undefined : method,
         accountId,
         toAccountId:
           type === 'transfer' || type === 'investment' ? toAccountId : undefined,
@@ -268,7 +284,7 @@ export function ExpenseForm({
         ))}
       </View>
 
-      {type !== 'income' ? (
+      {type !== 'income' && !isPocketMove(type) ? (
         <>
           <Text style={styles.label}>{t('add.method')}</Text>
           <View style={styles.chips}>
@@ -289,7 +305,7 @@ export function ExpenseForm({
       <Text style={styles.label}>
         {type === 'income'
           ? t('flow.whichAccountIncome')
-          : method === 'credit' && type !== 'income'
+          : method === 'credit' && !isPocketMove(type)
             ? t('flow.whichCard')
             : type === 'expense'
               ? t('flow.whichAccountSpend')
@@ -302,7 +318,9 @@ export function ExpenseForm({
           accounts={accountChoices}
           selectedId={accountId}
           onSelect={setAccountId}
-          allowAddWallet={type === 'income' || method === 'transfer'}
+          allowAddWallet={
+            type === 'income' || isPocketMove(type) || method === 'transfer'
+          }
         />
       )}
 
@@ -310,7 +328,7 @@ export function ExpenseForm({
         <>
           <Text style={styles.label}>{t('flow.whichAccountTo')}</Text>
           <AccountChoiceChips
-            accounts={accounts.filter((a) => a.id !== accountId)}
+            accounts={accountChoices.filter((a) => a.id !== accountId)}
             selectedId={toAccountId}
             onSelect={setToAccountId}
           />
@@ -359,7 +377,8 @@ export function ExpenseForm({
             ))}
           </View>
         </>
-      ) : type === 'expense' && categoryChoices.length === 1 ? null : (
+      ) : isPocketMove(type) ? null : type === 'expense' &&
+        categoryChoices.length === 1 ? null : (
         <>
           <Text style={styles.label}>
             {type === 'expense' ? t('flow.chooseSub') : t('add.category')}

@@ -21,11 +21,16 @@ import { useLanguage } from '@/src/i18n/LanguageContext';
 import type { TranslationKey } from '@/src/i18n/translations';
 import { palette, radii } from '@/src/theme/colors';
 import type { PaymentMethod, Transaction, TransactionType } from '@/src/types/finance';
+import { isPocketMove } from '@/src/types/finance';
 import { categoryLabel } from '@/src/utils/categoryLabel';
 import { incomeDestinationAccounts } from '@/src/utils/netWorth';
 import { AccountChoiceChips } from '@/src/components/AccountChoiceChips';
 import { KeyboardSafeOverlay, KeyboardSafeScroll } from '@/src/components/KeyboardSafe';
-import { accountsForPaymentMethod, firstAccountId } from '@/src/utils/accounts';
+import {
+  accountsForPaymentMethod,
+  firstAccountId,
+  pocketMoveAccounts,
+} from '@/src/utils/accounts';
 import { payAccountIdForDebt } from '@/src/utils/debts';
 
 type Props = {
@@ -72,6 +77,12 @@ export function EditTransactionModal({ transaction, visible, onClose }: Props) {
 
   const accountChoices = useMemo(() => {
     if (type === 'income') return incomeDestinationAccounts(accounts);
+    if (isPocketMove(type)) {
+      return pocketMoveAccounts(
+        accounts,
+        type === 'investment' ? 'investment' : 'transfer'
+      );
+    }
     return accountsForPaymentMethod(accounts, method, {
       debts,
       debtLabel: (debt) =>
@@ -100,7 +111,6 @@ export function EditTransactionModal({ transaction, visible, onClose }: Props) {
   }, [transaction, settings.spendConcepts]);
 
   useEffect(() => {
-    if (type === 'income') return;
     const next = firstAccountId(accountChoices, accountId);
     if (next && next !== accountId) setAccountId(next);
   }, [method, type, accountChoices, accountId]);
@@ -111,10 +121,12 @@ export function EditTransactionModal({ transaction, visible, onClose }: Props) {
       setCategoryId('salario');
     } else if (next === 'expense') {
       setCategoryId(settings.spendConcepts?.[0]?.subs[0]?.id ?? 'otros');
+    } else if (isPocketMove(next)) {
+      setCategoryId('');
     }
   }
 
-  const needsDestination = type === 'transfer' || type === 'investment';
+  const needsDestination = isPocketMove(type);
 
   async function handleSave() {
     if (!transaction) return;
@@ -129,8 +141,8 @@ export function EditTransactionModal({ transaction, visible, onClose }: Props) {
       await updateTransaction(transaction.id, {
         type,
         amount: parsed,
-        categoryId: type === 'transfer' ? undefined : categoryId,
-        paymentMethod: type === 'income' ? undefined : method,
+        categoryId: isPocketMove(type) ? undefined : categoryId,
+        paymentMethod: type === 'income' || isPocketMove(type) ? undefined : method,
         accountId,
         toAccountId: needsDestination ? toAccountId : undefined,
         note,
@@ -181,7 +193,7 @@ export function EditTransactionModal({ transaction, visible, onClose }: Props) {
               ))}
             </View>
 
-            {type !== 'transfer' ? (
+            {isPocketMove(type) ? null : (
               <>
                 <Text style={styles.label}>{t('flow.chooseCategory')}</Text>
                 <View style={styles.wrap}>
@@ -203,9 +215,9 @@ export function EditTransactionModal({ transaction, visible, onClose }: Props) {
                   })}
                 </View>
               </>
-            ) : null}
+            )}
 
-            {type !== 'income' ? (
+            {type !== 'income' && !isPocketMove(type) ? (
               <>
                 <Text style={styles.label}>{t('flow.howPaid')}</Text>
                 <View style={styles.wrap}>
@@ -226,7 +238,7 @@ export function EditTransactionModal({ transaction, visible, onClose }: Props) {
             <Text style={styles.label}>
               {type === 'income'
                 ? t('flow.whichAccountIncome')
-                : method === 'credit' && type !== 'income'
+                : method === 'credit' && !isPocketMove(type)
                   ? t('flow.whichCard')
                   : type === 'expense'
                     ? t('flow.whichAccountSpend')
@@ -239,7 +251,9 @@ export function EditTransactionModal({ transaction, visible, onClose }: Props) {
                 accounts={accountChoices}
                 selectedId={accountId}
                 onSelect={setAccountId}
-                allowAddWallet={type === 'income' || method === 'transfer'}
+                allowAddWallet={
+                  type === 'income' || isPocketMove(type) || method === 'transfer'
+                }
               />
             )}
 
@@ -247,9 +261,10 @@ export function EditTransactionModal({ transaction, visible, onClose }: Props) {
               <>
                 <Text style={styles.label}>{t('flow.whichAccountTo')}</Text>
                 <AccountChoiceChips
-                  accounts={accounts.filter((a) => a.id !== accountId)}
+                  accounts={accountChoices.filter((a) => a.id !== accountId)}
                   selectedId={toAccountId}
                   onSelect={setToAccountId}
+                  allowAddWallet
                 />
               </>
             ) : null}

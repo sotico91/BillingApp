@@ -2,12 +2,15 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { MoneyText } from '@/src/components/MoneyText';
 import { resolveConceptColor } from '@/src/data/spendConcepts';
+import { useFinance } from '@/src/hooks/useFinance';
 import { useMoney } from '@/src/hooks/useMoney';
 import { useSettings } from '@/src/hooks/useSettings';
 import { useLanguage } from '@/src/i18n/LanguageContext';
 import type { TranslationKey } from '@/src/i18n/translations';
 import { palette, radii } from '@/src/theme/colors';
 import type { Transaction } from '@/src/types/finance';
+import { isPocketMove } from '@/src/types/finance';
+import { accountDisplayName } from '@/src/utils/accounts';
 import { categoryLabel } from '@/src/utils/categoryLabel';
 import { formatExpenseDate } from '@/src/utils/dates';
 
@@ -29,10 +32,26 @@ export function ExpenseRow({
   const { t, language } = useLanguage();
   const { format } = useMoney();
   const { settings } = useSettings();
+  const { accounts } = useFinance();
   const spendConcepts = settings.spendConcepts ?? [];
-  const color = expense.categoryId
-    ? resolveConceptColor(expense.categoryId, spendConcepts)
-    : palette.inkSoft;
+  const pocketMove = isPocketMove(expense.type);
+  const fromName = accountDisplayName(
+    accounts.find((a) => a.id === expense.accountId) ?? {
+      nameKey: 'account.cash',
+    },
+    t
+  );
+  const toName = accountDisplayName(
+    accounts.find((a) => a.id === expense.toAccountId) ?? {
+      nameKey: 'account.savings',
+    },
+    t
+  );
+  const color = pocketMove
+    ? palette.teal
+    : expense.categoryId
+      ? resolveConceptColor(expense.categoryId, spendConcepts)
+      : palette.inkSoft;
 
   return (
     <View style={[styles.row, last && styles.rowLast]}>
@@ -49,15 +68,19 @@ export function ExpenseRow({
         <View style={styles.top}>
           <Text style={styles.category}>
             {t(`type.${expense.type}` as TranslationKey)}
-            {expense.categoryId
-              ? ` · ${categoryLabel(expense.categoryId, t, spendConcepts)}`
-              : ''}
+            {pocketMove
+              ? expense.toAccountId
+                ? ` · ${t('history.moveRoute', { from: fromName, to: toName })}`
+                : ''
+              : expense.categoryId
+                ? ` · ${categoryLabel(expense.categoryId, t, spendConcepts)}`
+                : ''}
           </Text>
           <MoneyText style={styles.amount}>{format(expense.amount)}</MoneyText>
         </View>
         <Text style={styles.meta} numberOfLines={2}>
           {formatExpenseDate(expense.createdAt, language)}
-          {expense.paymentMethod
+          {!pocketMove && expense.paymentMethod
             ? ` · ${t(`method.${expense.paymentMethod}` as TranslationKey)}`
             : ''}
           {showRegistrant && expense.registeredByName

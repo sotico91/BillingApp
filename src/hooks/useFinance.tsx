@@ -40,6 +40,7 @@ import type {
   TransactionType,
   PaymentMethod,
 } from '@/src/types/finance';
+import { isPocketMove } from '@/src/types/finance';
 import { useSettings } from '@/src/hooks/useSettings';
 import { useCalendarClock } from '@/src/hooks/useCalendarClock';
 import {
@@ -382,19 +383,23 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
 
   const addTransaction = useCallback(
     async (input: NewTxInput) => {
-      const chargedFromPicker = debtIdFromPayAccountId(input.accountId);
-      const creditDebtId = input.creditDebtId ?? chargedFromPicker;
+      const chargedFromPicker = isPocketMove(input.type)
+        ? undefined
+        : debtIdFromPayAccountId(input.accountId);
+      const creditDebtId = isPocketMove(input.type)
+        ? undefined
+        : (input.creditDebtId ?? chargedFromPicker);
       const tx: Transaction = {
         id: createId(),
         type: input.type,
         amount: input.amount,
-        categoryId: input.categoryId,
-        paymentMethod: input.paymentMethod,
+        categoryId: isPocketMove(input.type) ? undefined : input.categoryId,
+        paymentMethod: isPocketMove(input.type) ? undefined : input.paymentMethod,
         accountId: creditDebtId
           ? accounts.find((a) => a.type === 'credit')?.id ?? 'credit-card'
           : input.accountId ?? 'cash',
         toAccountId: input.toAccountId,
-        debtId: input.debtId,
+        debtId: isPocketMove(input.type) ? undefined : input.debtId,
         creditDebtId,
         note: input.note?.trim() || undefined,
         createdAt: input.createdAt ?? new Date().toISOString(),
@@ -420,7 +425,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
         b.createdAt.localeCompare(a.createdAt)
       );
       let nextAccounts = applyTxAccounts(accounts, tx, 1);
-      if (!tx.creditDebtId && !tx.paymentMethod) {
+      if (!tx.creditDebtId && !tx.paymentMethod && !isPocketMove(tx.type)) {
         nextAccounts = settleLiquidOverdrafts(nextAccounts).accounts;
       }
       const nextDebts = applyTxDebts(debts, tx, 1);
@@ -667,7 +672,6 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       const updated: Transaction = {
         ...existing,
         ...patch,
-        // Ownership stays with the person who originally registered it.
         registeredById: existing.registeredById,
         registeredByName: existing.registeredByName,
         note:
@@ -675,14 +679,20 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
             ? patch.note.trim() || undefined
             : existing.note,
       };
-
-      const chargedFromPicker = debtIdFromPayAccountId(updated.accountId);
-      if (chargedFromPicker) {
-        updated.creditDebtId = chargedFromPicker;
-        updated.accountId =
-          accounts.find((a) => a.type === 'credit')?.id ?? 'credit-card';
-      } else if (patch.accountId !== undefined && patch.creditDebtId === undefined) {
+      if (isPocketMove(updated.type)) {
+        updated.categoryId = undefined;
+        updated.paymentMethod = undefined;
         updated.creditDebtId = undefined;
+        updated.debtId = undefined;
+      } else {
+        const chargedFromPicker = debtIdFromPayAccountId(updated.accountId);
+        if (chargedFromPicker) {
+          updated.creditDebtId = chargedFromPicker;
+          updated.accountId =
+            accounts.find((a) => a.type === 'credit')?.id ?? 'credit-card';
+        } else if (patch.accountId !== undefined && patch.creditDebtId === undefined) {
+          updated.creditDebtId = undefined;
+        }
       }
 
       let nextAccounts = applyTxAccounts(accounts, existing, -1);
@@ -708,7 +718,11 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
 
       nextAccounts = applyTxAccounts(nextAccounts, updated, 1);
       nextDebts = applyTxDebts(nextDebts, updated, 1);
-      if (!updated.creditDebtId && !updated.paymentMethod) {
+      if (
+        !updated.creditDebtId &&
+        !updated.paymentMethod &&
+        !isPocketMove(updated.type)
+      ) {
         nextAccounts = settleLiquidOverdrafts(nextAccounts).accounts;
       }
 

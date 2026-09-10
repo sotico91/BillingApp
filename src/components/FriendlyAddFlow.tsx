@@ -43,6 +43,7 @@ import {
   defaultSpendAccountId,
   defaultTransferDestinationId,
   firstAccountId,
+  pocketMoveAccounts,
 } from '@/src/utils/accounts';
 
 type Props = {
@@ -106,7 +107,17 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
     [accounts, method, debts, t]
   );
 
-  const accountChoices = intent === 'earn' ? incomeAccounts : methodAccounts;
+  const moveAccounts = useMemo(
+    () => pocketMoveAccounts(accounts, 'transfer'),
+    [accounts]
+  );
+
+  const accountChoices =
+    intent === 'earn'
+      ? incomeAccounts
+      : intent === 'move'
+        ? moveAccounts
+        : methodAccounts;
 
   useEffect(() => {
     if (intent === 'earn') {
@@ -114,9 +125,14 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
       if (next && next !== accountId) setAccountId(next);
       return;
     }
+    if (intent === 'move') {
+      const next = firstAccountId(moveAccounts, accountId);
+      if (next && next !== accountId) setAccountId(next);
+      return;
+    }
     const next = firstAccountId(methodAccounts, accountId);
     if (next && next !== accountId) setAccountId(next);
-  }, [intent, methodAccounts, incomeAccounts, accountId]);
+  }, [intent, methodAccounts, incomeAccounts, moveAccounts, accountId]);
 
   const incomeChoices = useMemo(
     () => categoriesForKind('income', settings.enabledCategoryIds),
@@ -130,11 +146,11 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
 
   const templates = FRIENDLY_TEMPLATES;
 
-  const asksPaymentMethod = intent === 'spend' || intent === 'move' || intent === 'debt';
-  const totalSteps = intent === 'spend' ? 6 : 5;
+  const asksPaymentMethod = intent === 'spend' || intent === 'debt';
+  const totalSteps = intent === 'spend' ? 6 : intent === 'move' ? 4 : 5;
   const progress = ((step + 1) / totalSteps) * 100;
-  const paymentStep = intent === 'spend' ? 4 : 3;
-  const reviewStep = intent === 'spend' ? 5 : 4;
+  const paymentStep = intent === 'spend' ? 4 : intent === 'move' ? 2 : 3;
+  const reviewStep = totalSteps - 1;
 
   async function applyTemplate(id: string) {
     const tpl = FRIENDLY_TEMPLATES.find((x) => x.id === id);
@@ -181,7 +197,7 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
         setFromTemplate(true);
       } else {
         setConceptId(null);
-        setCategoryId(tpl.categoryId ?? 'otros');
+        setCategoryId(tpl.intent === 'move' ? '' : (tpl.categoryId ?? 'otros'));
         setFromTemplate(false);
       }
       setStep(1);
@@ -260,7 +276,11 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
           : selectedDebt.name ?? t('debt.mainCard')
         : categoryLabel(categoryId, t, spendConcepts);
       const resolvedCategoryId =
-        intent === 'debt' ? selectedDebt?.categoryId ?? 'otros' : categoryId;
+        intent === 'move'
+          ? undefined
+          : intent === 'debt'
+            ? selectedDebt?.categoryId ?? 'otros'
+            : categoryId;
 
       await addTransaction({
         type,
@@ -275,7 +295,7 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
 
       if (type === 'expense') {
         await updateQuickTemplate({
-          categoryId: resolvedCategoryId,
+          categoryId,
           amount: parsed,
           note: note.trim() || undefined,
         });
@@ -293,7 +313,7 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
             ? habitExpenseNotifyBody({
                 t,
                 transactions,
-                categoryId: resolvedCategoryId,
+                categoryId,
                 amount: formatPlain(parsed),
                 label: category,
                 concepts: spendConcepts,
@@ -364,7 +384,7 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
                     }
                     if (item.id === 'move') {
                       setConceptId(null);
-                      setCategoryId('otros');
+                      setCategoryId('');
                       setAccountId(defaultIncomeAccountId(accounts));
                       setToAccountId(
                         defaultTransferDestinationId(
@@ -439,7 +459,7 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
           </Animated.View>
         ) : null}
 
-        {step === 2 ? (
+        {step === 2 && intent !== 'move' ? (
           <Animated.View entering={FadeInDown.springify()} style={styles.block}>
             {intent === 'debt' ? (
               <>
@@ -592,6 +612,11 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
 
         {step === paymentStep ? (
           <Animated.View entering={FadeInDown.springify()} style={styles.block}>
+            {intent === 'move' ? (
+              <Text style={[styles.intentSub, { marginBottom: 12 }]}>
+                {t('flow.moveNotSpend')}
+              </Text>
+            ) : null}
             {asksPaymentMethod ? (
               <>
                 <Text style={styles.title}>{t('flow.howPaid')}</Text>
@@ -629,7 +654,7 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
               ]}>
               {intent === 'earn'
                 ? t('flow.whichAccountIncome')
-                : method === 'credit'
+                : method === 'credit' && intent !== 'move'
                   ? t('flow.whichCard')
                   : intent === 'spend'
                     ? t('flow.whichAccountSpend')
@@ -643,7 +668,9 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
                 accounts={accountChoices}
                 selectedId={accountId}
                 onSelect={setAccountId}
-                allowAddWallet={intent === 'earn' || method === 'transfer'}
+                allowAddWallet={
+                  intent === 'earn' || intent === 'move' || method === 'transfer'
+                }
               />
             )}
             {intent === 'move' ? (
@@ -653,9 +680,10 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
                 </Text>
                 <AccountChoiceChips
                   variant="card"
-                  accounts={accounts.filter((a) => a.id !== accountId)}
+                  accounts={moveAccounts.filter((a) => a.id !== accountId)}
                   selectedId={toAccountId}
                   onSelect={setToAccountId}
+                  allowAddWallet
                 />
               </>
             ) : null}

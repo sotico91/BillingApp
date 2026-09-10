@@ -7,16 +7,20 @@ import { palette, radii } from '@/src/theme/colors';
 import { tapFeedback } from '@/src/utils/selectFeedback';
 
 type Section = {
+  step?: string;
   title: TranslationKey;
   body: TranslationKey;
 };
 
 const SECTIONS: Section[] = [
-  { title: 'guide.ideaTitle', body: 'guide.ideaBody' },
-  { title: 'guide.spendTitle', body: 'guide.spendBody' },
-  { title: 'guide.wealthTitle', body: 'guide.wealthBody' },
-  { title: 'guide.debtTitle', body: 'guide.debtBody' },
-  { title: 'guide.dayTitle', body: 'guide.dayBody' },
+  { title: 'guide.introTitle', body: 'guide.introBody' },
+  { step: '1', title: 'guide.step1Title', body: 'guide.step1Body' },
+  { step: '2', title: 'guide.step2Title', body: 'guide.step2Body' },
+  { step: '3', title: 'guide.step3Title', body: 'guide.step3Body' },
+  { step: '4', title: 'guide.step4Title', body: 'guide.step4Body' },
+  { step: '5', title: 'guide.step5Title', body: 'guide.step5Body' },
+  { step: '6', title: 'guide.step6Title', body: 'guide.step6Body' },
+  { step: '7', title: 'guide.step7Title', body: 'guide.step7Body' },
 ];
 
 type Props = {
@@ -50,7 +54,14 @@ export function HowToGuideSheet({ visible, onClose }: Props) {
             showsVerticalScrollIndicator={false}>
             {SECTIONS.map((section) => (
               <View key={section.title} style={styles.card}>
-                <Text style={styles.cardTitle}>{t(section.title)}</Text>
+                <View style={styles.cardHead}>
+                  {section.step ? (
+                    <View style={styles.stepBadge}>
+                      <Text style={styles.stepBadgeText}>{section.step}</Text>
+                    </View>
+                  ) : null}
+                  <Text style={styles.cardTitle}>{t(section.title)}</Text>
+                </View>
                 <Text style={styles.cardBody}>{t(section.body)}</Text>
               </View>
             ))}
@@ -122,7 +133,27 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
   },
+  cardHead: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+  },
+  stepBadge: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: palette.accent,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 1,
+  },
+  stepBadgeText: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 12,
+    color: palette.white,
+  },
   cardTitle: {
+    flex: 1,
     fontFamily: 'DMSans_600SemiBold',
     fontSize: 15,
     color: palette.ink,
@@ -131,7 +162,7 @@ const styles = StyleSheet.create({
     marginTop: 6,
     fontFamily: 'DMSans_400Regular',
     fontSize: 14,
-    lineHeight: 20,
+    lineHeight: 21,
     color: palette.inkMuted,
   },
   hint: {

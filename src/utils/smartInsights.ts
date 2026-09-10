@@ -416,6 +416,8 @@ type QueryPeriod = {
   from: Date;
   to: Date;
   analog: 'day' | 'week' | 'month' | 'year' | 'range';
+  /** True when the question named a time (last month, August, yesterday…). */
+  explicit: boolean;
 };
 
 function startOfDay(date: Date): Date {
@@ -451,7 +453,7 @@ function dayPeriod(day: Date, language: 'en' | 'es'): QueryPeriod {
     language === 'es'
       ? `${from.getDate()} de ${monthLabel(from.getMonth(), 'es').toLowerCase()} ${from.getFullYear()}`
       : `${monthLabel(from.getMonth(), 'en')} ${from.getDate()}, ${from.getFullYear()}`;
-  return { label, from, to, analog: 'day' };
+  return { label, from, to, analog: 'day', explicit: true };
 }
 
 function monthPeriod(
@@ -465,6 +467,7 @@ function monthPeriod(
     from,
     to,
     analog: 'month',
+    explicit: true,
   };
 }
 
@@ -474,6 +477,7 @@ function yearPeriod(year: number, language: 'en' | 'es'): QueryPeriod {
     from: new Date(year, 0, 1),
     to: new Date(year + 1, 0, 1),
     analog: 'year',
+    explicit: true,
   };
 }
 
@@ -490,6 +494,7 @@ function presetPeriod(
       from,
       to,
       analog: 'month',
+      explicit: true,
     };
   }
   if (preset === 'anio') {
@@ -502,6 +507,7 @@ function presetPeriod(
       from,
       to: addDays(from, 1),
       analog: 'day',
+      explicit: true,
     };
   }
   if (preset === 'semana') {
@@ -514,10 +520,11 @@ function presetPeriod(
       from,
       to: addDays(startOfDay(now), 1),
       analog: 'week',
+      explicit: true,
     };
   }
   const { from, to } = calendarMonthRange(now.getFullYear(), now.getMonth());
-  return { label: t('period.mes'), from, to, analog: 'month' };
+  return { label: t('period.mes'), from, to, analog: 'month', explicit: true };
 }
 
 function analogRange(period: QueryPeriod): { from: Date; to: Date } {
@@ -580,6 +587,39 @@ function resolvePeriod(
   const namedMonth = q.match(
     new RegExp(`\\b(?:en\\s+)?(${months})(?:\\s+(?:de\\s+)?(\\d{4}))?\\b`)
   );
+
+  const hasLastMonth = includesAny(q, [
+    'mes pasado',
+    'last month',
+    'el mes anterior',
+    'mes anterior',
+    'ultimo mes',
+    'último mes',
+    'el ultimo mes',
+    'el último mes',
+    'previous month',
+  ]);
+  const hasThisMonth = includesAny(q, ['este mes', 'this month']);
+  const hasCompare = includesAny(q, [
+    'mas que',
+    'más que',
+    'more than',
+    'menos que',
+    'less than',
+    'compar',
+    'vs',
+    'versus',
+    'respecto',
+    'contra el mes',
+  ]);
+  // "más que el mes pasado" is this month vs last — don't switch the window to last month.
+  if (hasLastMonth && (hasThisMonth || hasCompare)) {
+    return presetPeriod('mes', language, t, now);
+  }
+  if (hasLastMonth) {
+    return presetPeriod('mesPasado', language, t, now);
+  }
+
   if (namedMonth) {
     const monthIndex = MONTH_INDEX[namedMonth[1]];
     if (monthIndex != null) {
@@ -597,9 +637,6 @@ function resolvePeriod(
   if (includesAny(q, ['ayer', 'yesterday'])) {
     return dayPeriod(addDays(now, -1), language);
   }
-  if (includesAny(q, ['mes pasado', 'last month', 'el mes anterior', 'mes anterior'])) {
-    return presetPeriod('mesPasado', language, t, now);
-  }
   if (includesAny(q, ['ano pasado', 'año pasado', 'el ano pasado', 'el año pasado', 'last year'])) {
     return yearPeriod(yearNow - 1, language);
   }
@@ -616,7 +653,7 @@ function resolvePeriod(
   if (onlyYear) {
     return yearPeriod(Number(onlyYear[1]), language);
   }
-  if (includesAny(q, ['este mes', 'this month'])) {
+  if (hasThisMonth) {
     return presetPeriod('mes', language, t, now);
   }
   if (includesAny(q, ['semana', 'week']) && !includesAny(q, ['fin de semana', 'weekend'])) {
@@ -628,7 +665,7 @@ function resolvePeriod(
   if (includesAny(q, ['mes', 'month'])) {
     return presetPeriod('mes', language, t, now);
   }
-  return presetPeriod(defaultPeriod, language, t, now);
+  return { ...presetPeriod(defaultPeriod, language, t, now), explicit: false };
 }
 
 function txsForPeriod(
@@ -1345,6 +1382,10 @@ export function buildSearchSuggestions(
     prompts.push(`¿Qué % de mi ingreso gasté ${when}?`);
     prompts.push(`¿Cuánto gasté ${when}?`);
     prompts.push('¿Cuánto gasté el mes pasado?');
+    prompts.push('¿En qué gasté más el mes pasado?');
+    if (topName) {
+      prompts.push(`¿Cuánto gasté en ${topName} el mes pasado?`);
+    }
     prompts.push('¿Cuánto gasté este año?');
     if (pastMonthName) {
       prompts.push(`¿Cuánto gasté en ${pastMonthName}?`);
@@ -1378,6 +1419,10 @@ export function buildSearchSuggestions(
     prompts.push(`What % of my income did I spend ${when}?`);
     prompts.push(`How much did I spend ${when}?`);
     prompts.push('How much did I spend last month?');
+    prompts.push('Where did I spend the most last month?');
+    if (topName) {
+      prompts.push(`How much on ${topName} last month?`);
+    }
     prompts.push('How much did I spend this year?');
     if (pastMonthName) {
       prompts.push(`How much did I spend in ${pastMonthName}?`);
@@ -1408,7 +1453,7 @@ export function buildSearchSuggestions(
     prompts.push('How much available cash do I have?');
     if (hasDebts) prompts.push('How much do I still owe?');
   }
-  return prompts.slice(0, 14);
+  return prompts.slice(0, 16);
 }
 
 /**
@@ -1906,20 +1951,21 @@ export function answerFinanceQuery(
   }
 
   if (
-    !wantsSavings &&
-    includesAny(q, [
-      'gaste',
-      'gasté',
-      'gasto',
-      'gastos',
-      'spend',
-      'spent',
-      'expense',
-      'expenses',
-      'cuanto',
-      'cuánto',
-      'total',
-    ])
+    period.explicit ||
+    (!wantsSavings &&
+      includesAny(q, [
+        'gaste',
+        'gasté',
+        'gasto',
+        'gastos',
+        'spend',
+        'spent',
+        'expense',
+        'expenses',
+        'cuanto',
+        'cuánto',
+        'total',
+      ]))
   ) {
     const expenses = list.filter(
       (x) => x.type === 'expense' || x.type === 'debt_payment'
