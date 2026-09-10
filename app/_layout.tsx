@@ -18,6 +18,8 @@ import { AppLockOverlay } from '@/src/components/AppLockOverlay';
 import { CoachMarksOverlay } from '@/src/components/CoachMarksOverlay';
 import { NamePromptOverlay } from '@/src/components/NamePromptOverlay';
 import { OnboardingOverlay } from '@/src/components/OnboardingOverlay';
+import { HabitPilotHygiene } from '@/src/components/HabitPilotHygiene';
+import { ReminderDeepLink } from '@/src/components/ReminderDeepLink';
 import { ReminderHygiene } from '@/src/components/ReminderHygiene';
 import { HowToGuideProvider } from '@/src/hooks/useHowToGuide';
 import { AmountPrivacyProvider } from '@/src/hooks/useAmountPrivacy';
@@ -74,6 +76,8 @@ export default function RootLayout() {
               <StatusBar style="light" />
               <RootNavigator />
               <ReminderHygiene />
+              <HabitPilotHygiene />
+              <ReminderDeepLink />
               <OnboardingOverlay />
               <NamePromptOverlay />
               <CoachMarksOverlay />

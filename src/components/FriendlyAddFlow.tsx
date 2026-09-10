@@ -29,6 +29,7 @@ import type { PaymentMethod } from '@/src/types/finance';
 import { categoryLabel } from '@/src/utils/categoryLabel';
 import { incomeDestinationAccounts } from '@/src/utils/netWorth';
 import { notifyExpenseRegistered } from '@/src/utils/notifications';
+import { habitExpenseNotifyBody } from '@/src/utils/habitPilot';
 import { tapFeedback } from '@/src/utils/selectFeedback';
 import { AccountChoiceChips } from '@/src/components/AccountChoiceChips';
 import { InlineSubAdd } from '@/src/components/InlineSubAdd';
@@ -287,10 +288,18 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
           type === 'income'
             ? categoryLabel(categoryId, t, spendConcepts)
             : debtLabel;
-        void notifyExpenseRegistered(
-          t('notify.title'),
-          t('notify.body', { amount: formatPlain(parsed), category })
-        ).catch(() => undefined);
+        const body =
+          type === 'expense'
+            ? habitExpenseNotifyBody({
+                t,
+                transactions,
+                categoryId: resolvedCategoryId,
+                amount: formatPlain(parsed),
+                label: category,
+                concepts: spendConcepts,
+              })
+            : t('notify.body', { amount: formatPlain(parsed), category });
+        void notifyExpenseRegistered(t('notify.title'), body).catch(() => undefined);
       }
 
       if (type === 'expense') {

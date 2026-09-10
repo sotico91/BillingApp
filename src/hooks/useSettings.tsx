@@ -24,6 +24,7 @@ import {
 } from '@/src/data/settingsStorage';
 import type {
   Currency,
+  HabitCue,
   QuickTemplate,
   ReminderRule,
   SpendConcept,
@@ -34,6 +35,7 @@ import {
   ensureNotificationPermission,
   syncRemindersFromRules,
 } from '@/src/utils/notifications';
+import { appendUniqueDay, localDateKey } from '@/src/utils/habitPilot';
 
 type ReminderLabels = Record<string, { title: string; body: string }>;
 
@@ -99,6 +101,10 @@ type SettingsContextValue = {
     settings: UserSettings;
     quickTemplates: QuickTemplate[];
   }) => Promise<void>;
+  updateHabitCue: (cue: HabitCue) => Promise<void>;
+  startHabitPilot: () => Promise<void>;
+  dismissHabitPilot: () => Promise<void>;
+  recordHabitOpenDay: () => Promise<void>;
 };
 
 const SettingsContext = createContext<SettingsContextValue | null>(null);
@@ -187,6 +193,10 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         reminderCustomConcepts: [],
         reminderHour,
         reminderMinute: 0,
+        habitPilotStartedAt: localDateKey(),
+        habitCue: 'afterPay',
+        habitOpenDays: [localDateKey()],
+        habitPilotDismissed: false,
       };
       const seeded: QuickTemplate[] = [];
       setSettings(next);
@@ -476,6 +486,38 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     [settings.personId]
   );
 
+  const updateHabitCue = useCallback(
+    async (cue: HabitCue) => {
+      await persist({ ...settings, habitCue: cue });
+    },
+    [settings, persist]
+  );
+
+  const startHabitPilot = useCallback(async () => {
+    const today = localDateKey();
+    await persist({
+      ...settings,
+      habitPilotStartedAt: today,
+      habitPilotDismissed: false,
+      habitOpenDays: appendUniqueDay([], today),
+    });
+  }, [settings, persist]);
+
+  const dismissHabitPilot = useCallback(async () => {
+    await persist({ ...settings, habitPilotDismissed: true });
+  }, [settings, persist]);
+
+  const recordHabitOpenDay = useCallback(async () => {
+    if (!settings.onboardingDone) return;
+    const today = localDateKey();
+    const days = settings.habitOpenDays ?? [];
+    if (days.includes(today)) return;
+    await persist({
+      ...settings,
+      habitOpenDays: appendUniqueDay(days, today),
+    });
+  }, [settings, persist]);
+
   const value = useMemo(
     () => ({
       settings,
@@ -500,6 +542,10 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       removeQuickTemplate,
       pruneQuickTemplatesToExistingExpenses,
       restoreSettingsFromBackup,
+      updateHabitCue,
+      startHabitPilot,
+      dismissHabitPilot,
+      recordHabitOpenDay,
     }),
     [
       settings,
@@ -524,6 +570,10 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       removeQuickTemplate,
       pruneQuickTemplatesToExistingExpenses,
       restoreSettingsFromBackup,
+      updateHabitCue,
+      startHabitPilot,
+      dismissHabitPilot,
+      recordHabitOpenDay,
     ]
   );
 

@@ -560,6 +560,8 @@ export const translations = {
 
     'notify.title': 'Movement registered',
     'notify.body': '{amount} · {category}',
+    'notify.bodyHabit': '{count}× {category} this week · {amount}',
+    'notify.bodyHabitAnt': '{count}× {category} this week · {amount} · ant spend',
 
     'period.hoy': 'Today',
     'period.semana': 'This week',
@@ -707,6 +709,31 @@ export const translations = {
     'reminder.pushTitle': 'Rumi reminder',
     'reminder.pushBody': 'Did you log {category} yet?',
     'reminder.pickCategories': 'Concepts to remind',
+
+    'habit.title': '14-day diary',
+    'habit.dayOf': 'Day {day} of {total}',
+    'habit.logged': '{logged} of {total} days with a log',
+    'habit.opened': 'Opened the app {opened} days',
+    'habit.cueAfterPay': 'After I pay',
+    'habit.cueEvening': 'Evening, one minute',
+    'habit.cueHintAfterPay': 'Today: log right after you pay.',
+    'habit.cueHintEvening': 'Today: one minute at 8pm for what you spent.',
+    'habit.todayDone': 'Logged today. Same cue tomorrow.',
+    'habit.enableReminder': 'Turn on 8pm reminder',
+    'habit.reminderOn': 'Evening reminder is on — tap the alert to log.',
+    'habit.reminderPush': 'One minute for today — what did you spend?',
+    'habit.wrapTitle': '14 days done',
+    'habit.wrapPass':
+      'You logged on {logged} of 14 days. That’s the diary forming — keep the same cue.',
+    'habit.wrapFail':
+      'You logged on {logged} of 14 days (target was 8+). Try tying it to paying, not only the alert.',
+    'habit.gotIt': 'Got it',
+    'habit.share': 'Share summary',
+    'habit.restart': 'Start another 14 days',
+    'habit.restartTitle': 'Start another 14 days?',
+    'habit.restartBody':
+      'This resets the diary counter from today. Your movements stay.',
+    'habit.restartConfirm': 'Start',
 
     'smart.spentMore': 'You spent {percent}% more than {compare}.',
     'smart.spentLess': 'You spent {percent}% less than {compare}.',
@@ -1359,6 +1386,8 @@ export const translations = {
 
     'notify.title': 'Movimiento registrado',
     'notify.body': '{amount} · {category}',
+    'notify.bodyHabit': '{count}× {category} esta semana · {amount}',
+    'notify.bodyHabitAnt': '{count}× {category} esta semana · {amount} · hormiga',
 
     'period.hoy': 'Hoy',
     'period.semana': 'Esta semana',
@@ -1507,6 +1536,31 @@ export const translations = {
     'reminder.pushTitle': 'Recordatorio Rumi',
     'reminder.pushBody': '¿Ya registraste {category}?',
     'reminder.pickCategories': 'Conceptos a recordar',
+
+    'habit.title': 'Diario de 14 días',
+    'habit.dayOf': 'Día {day} de {total}',
+    'habit.logged': '{logged} de {total} días con registro',
+    'habit.opened': 'Abriste la app {opened} días',
+    'habit.cueAfterPay': 'Después de pagar',
+    'habit.cueEvening': 'En la tarde, un minuto',
+    'habit.cueHintAfterPay': 'Hoy: anota justo después de pagar.',
+    'habit.cueHintEvening': 'Hoy: un minuto a las 8pm para lo que gastaste.',
+    'habit.todayDone': 'Hoy ya hay registro. Mañana, el mismo cue.',
+    'habit.enableReminder': 'Activar aviso a las 8pm',
+    'habit.reminderOn': 'El aviso de la tarde está activo — tócalo para anotar.',
+    'habit.reminderPush': 'Un minuto para lo de hoy. ¿Qué gastaste?',
+    'habit.wrapTitle': 'Se cumplieron 14 días',
+    'habit.wrapPass':
+      'Registraste {logged} de 14 días. El diario está formándose — sigue el mismo cue.',
+    'habit.wrapFail':
+      'Registraste {logged} de 14 días (la meta era 8+). Prueba atarlo a pagar, no solo al aviso.',
+    'habit.gotIt': 'Entendido',
+    'habit.share': 'Compartir resumen',
+    'habit.restart': 'Empezar otros 14 días',
+    'habit.restartTitle': '¿Empezar otros 14 días?',
+    'habit.restartBody':
+      'Reinicia el contador del diario desde hoy. Tus movimientos se quedan.',
+    'habit.restartConfirm': 'Empezar',
 
     'smart.spentMore': 'Gastaste {percent}% más que {compare}.',
     'smart.spentLess': 'Gastaste {percent}% menos que {compare}.',

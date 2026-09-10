@@ -8,6 +8,7 @@ import { ConceptGlanceSheet } from '@/src/components/ConceptGlanceSheet';
 import { EditTransactionModal } from '@/src/components/EditTransactionModal';
 import { ExpenseRow } from '@/src/components/ExpenseRow';
 import { FadeInBlock } from '@/src/components/FadeInBlock';
+import { HabitPilotCard } from '@/src/components/HabitPilotCard';
 import { HowToGuideButton } from '@/src/components/HowToGuideButton';
 import { KeyboardSafeScroll } from '@/src/components/KeyboardSafe';
 import { LanguageSwitcher } from '@/src/components/LanguageSwitcher';
@@ -248,6 +249,10 @@ export default function HomeScreen() {
         </FadeInBlock>
 
         <FadeInBlock index={6}>
+          <HabitPilotCard />
+        </FadeInBlock>
+
+        <FadeInBlock index={7}>
           <CollapsibleSection
             title={t('home.attention')}
             open={attentionOpen}
@@ -284,9 +289,7 @@ export default function HomeScreen() {
           </CollapsibleSection>
         </FadeInBlock>
 
-        <FadeInBlock index={7}>
-          <CollapsibleSection
-            title={t('home.predictTitle')}
+        <FadeInBlock index={8}>
             open={predictOpen}
             onToggle={() => setPredictOpen((v) => !v)}
             summary={
@@ -302,7 +305,7 @@ export default function HomeScreen() {
         </FadeInBlock>
 
         {recent.length > 0 ? (
-          <FadeInBlock index={8}>
+          <FadeInBlock index={9}>
             <CollapsibleSection
               title={t('home.todayList')}
               open={todayOpen}
@@ -329,7 +332,7 @@ export default function HomeScreen() {
           </FadeInBlock>
         ) : null}
 
-        <FadeInBlock index={9}>
+        <FadeInBlock index={10}>
           <CollapsibleSection
             title={t('home.antTitle')}
             open={antOpen}

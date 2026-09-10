@@ -18,6 +18,7 @@ import {
   uniquifySpendSubIds,
 } from '@/src/data/spendConcepts';
 import type { QuickTemplate, ReminderRule, UserSettings } from '@/src/types/settings';
+import { localDateKey } from '@/src/utils/habitPilot';
 
 const SETTINGS_KEY = 'billing-app:settings:v1';
 const QUICK_KEY = 'billing-app:quick-templates:v2';
@@ -45,6 +46,9 @@ export const DEFAULT_SETTINGS: UserSettings = {
   reminderCustomConcepts: [],
   reminderHour: 20,
   reminderMinute: 0,
+  habitCue: 'afterPay',
+  habitOpenDays: [],
+  habitPilotDismissed: false,
 };
 
 /** One-tap chips are created only after the user logs a real spend. */
@@ -95,6 +99,14 @@ function migrateSettings(settings: UserSettings): {
       reminderCategoryIds: reminderRules.map((r) => r.subId),
       reminderMinute: settings.reminderMinute ?? 0,
       catalogVersion: CURRENT_CATALOG_VERSION,
+      habitCue: settings.habitCue === 'evening' ? 'evening' : 'afterPay',
+      habitOpenDays: Array.isArray(settings.habitOpenDays)
+        ? settings.habitOpenDays
+        : [],
+      habitPilotDismissed: settings.habitPilotDismissed === true,
+      habitPilotStartedAt:
+        settings.habitPilotStartedAt ??
+        (settings.onboardingDone ? localDateKey() : undefined),
     },
     remaps: changed ? remaps : {},
   };

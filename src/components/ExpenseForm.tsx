@@ -35,6 +35,7 @@ import {
   firstAccountId,
 } from '@/src/utils/accounts';
 import { notifyExpenseRegistered } from '@/src/utils/notifications';
+import { habitExpenseNotifyBody } from '@/src/utils/habitPilot';
 
 export type SavedMovement = {
   kind: 'expense' | 'income' | 'other';
@@ -70,7 +71,7 @@ export function ExpenseForm({
   const { t } = useLanguage();
   const { format, formatPlain, parse, currency } = useMoney();
   const { settings, updateQuickTemplate } = useSettings();
-  const { addTransaction, totalForPeriod, accounts, debts } = useFinance();
+  const { addTransaction, totalForPeriod, accounts, debts, transactions } = useFinance();
   const spendConcepts = settings.spendConcepts ?? [];
 
   const prefilledHit = initialCategoryId
@@ -196,17 +197,26 @@ export function ExpenseForm({
         settings.notifyOnExpense &&
         (type === 'expense' || type === 'income')
       ) {
-        void notifyExpenseRegistered(
-          t('notify.title'),
-          t('notify.body', {
-            amount: formatPlain(parsed),
-            category: categoryLabel(
-              type === 'expense' ? resolvedCategoryId : categoryId,
-              t,
-              spendConcepts
-            ),
-          })
-        ).catch(() => undefined);
+        const label = categoryLabel(
+          type === 'expense' ? resolvedCategoryId : categoryId,
+          t,
+          spendConcepts
+        );
+        const body =
+          type === 'expense'
+            ? habitExpenseNotifyBody({
+                t,
+                transactions,
+                categoryId: resolvedCategoryId,
+                amount: formatPlain(parsed),
+                label,
+                concepts: spendConcepts,
+              })
+            : t('notify.body', {
+                amount: formatPlain(parsed),
+                category: label,
+              });
+        void notifyExpenseRegistered(t('notify.title'), body).catch(() => undefined);
       }
 
       setAmount('');

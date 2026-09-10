@@ -67,7 +67,16 @@ export type UserSettings = {
   reminderHour: number;
   /** Default minute when creating a new rule. */
   reminderMinute: number;
+  /** 14-day logging diary start (YYYY-MM-DD). */
+  habitPilotStartedAt?: string;
+  /** Local days the app was opened during the diary. */
+  habitOpenDays?: string[];
+  habitPilotDismissed?: boolean;
+  /** When to cue a log: right after paying, or one minute in the evening. */
+  habitCue?: HabitCue;
 };
+
+export type HabitCue = 'afterPay' | 'evening';
 
 export type QuickTemplate = {
   id: string;

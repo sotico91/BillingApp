@@ -19,6 +19,7 @@ import { useLanguage } from '@/src/i18n/LanguageContext';
 import { palette, radii } from '@/src/theme/colors';
 import { categoryLabel } from '@/src/utils/categoryLabel';
 import { notifyExpenseRegistered } from '@/src/utils/notifications';
+import { habitExpenseNotifyBody } from '@/src/utils/habitPilot';
 import { buildOneTapHabits, type OneTapHabit } from '@/src/utils/oneTapHabits';
 import { tapFeedback } from '@/src/utils/selectFeedback';
 
@@ -80,11 +81,16 @@ export function QuickAddBar() {
       });
 
       if (settings.notifyOnExpense) {
+        const label = categoryLabel(habit.categoryId, t, spendConcepts);
         await notifyExpenseRegistered(
           t('notify.title'),
-          t('notify.body', {
+          habitExpenseNotifyBody({
+            t,
+            transactions,
+            categoryId: habit.categoryId,
             amount: formatPlain(amount),
-            category: categoryLabel(habit.categoryId, t, spendConcepts),
+            label,
+            concepts: spendConcepts,
           })
         );
       }
