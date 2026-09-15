@@ -159,6 +159,7 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
     setApplyingTemplate(true);
     try {
       setIntent(tpl.intent);
+      if (tpl.intent !== 'debt') setDebtId(null);
       if (tpl.amountHint) setAmount(String(tpl.amountHint));
       if (tpl.intent === 'move') {
         setAccountId(defaultIncomeAccountId(accounts));
@@ -269,12 +270,12 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
       const type = intentToType(intent);
       const beforeExpense = totalForPeriod('hoy', 'expense');
       const beforeIncome = totalForPeriod('hoy', 'income');
-      const selectedDebt = debts.find((d) => d.id === debtId);
+      const selectedDebt = intent === 'debt' ? debts.find((d) => d.id === debtId) : undefined;
       const debtLabel = selectedDebt
         ? selectedDebt.nameKey
           ? t(selectedDebt.nameKey as TranslationKey)
           : selectedDebt.name ?? t('debt.mainCard')
-        : categoryLabel(categoryId, t, spendConcepts);
+        : '';
       const resolvedCategoryId =
         intent === 'move'
           ? undefined
@@ -302,18 +303,17 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
       }
 
       // Never block save on notification permission / scheduling (esp. Android).
-      // Only expense/income confirms — transfers must not reuse a prior category label.
+      // Label must match the intent that was saved, not a leftover debt pick.
       if (settings.notifyOnExpense && (type === 'expense' || type === 'income')) {
         const category =
-          type === 'income'
-            ? categoryLabel(categoryId, t, spendConcepts)
-            : debtLabel;
+          note.trim() ||
+          categoryLabel(resolvedCategoryId ?? categoryId, t, spendConcepts);
         const body =
           type === 'expense'
             ? habitExpenseNotifyBody({
                 t,
                 transactions,
-                categoryId,
+                categoryId: resolvedCategoryId ?? categoryId,
                 amount: formatPlain(parsed),
                 label: category,
                 concepts: spendConcepts,
@@ -365,6 +365,7 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
                     tapFeedback();
                     setFromTemplate(false);
                     setIntent(item.id);
+                    if (item.id !== 'debt') setDebtId(null);
                     if (item.id === 'earn') {
                       setConceptId(null);
                       setCategoryId(
