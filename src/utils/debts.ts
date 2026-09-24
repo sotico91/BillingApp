@@ -1,4 +1,7 @@
-import type { Account, Debt, DebtKind, RevolvingProduct } from '@/src/types/finance';
+import type { Account, Debt, DebtKind, RevolvingProduct, Transaction } from '@/src/types/finance';
+
+/** Treat remaining balances at or below this as paid off. */
+export const SETTLED_EPS = 0.01;
 
 const DEBT_PAY_PREFIX = 'debt:';
 
@@ -15,11 +18,118 @@ export function debtIdFromPayAccountId(id: string | undefined): string | undefin
   return id.slice(DEBT_PAY_PREFIX.length) || undefined;
 }
 
+export function isSettledBalance(balance: number): boolean {
+  return !(balance > SETTLED_EPS);
+}
+
+export function isOpenDebt(debt: Pick<Debt, 'closedAt'>): boolean {
+  return !debt.closedAt;
+}
+
+export function openDebts<T extends Pick<Debt, 'closedAt'>>(list: T[]): T[] {
+  return list.filter(isOpenDebt);
+}
+
+export function closedDebts<T extends Pick<Debt, 'closedAt'>>(list: T[]): T[] {
+  return list.filter((d) => Boolean(d.closedAt));
+}
+
+/** Amount to suggest when logging a payment: cuota, or remaining if this is the last one. */
+export function suggestedDebtPayAmount(debt: Pick<Debt, 'balance' | 'installment'>): number {
+  const remaining = Math.max(0, debt.balance || 0);
+  if (!(remaining > 0)) return 0;
+  if (debt.installment > 0) return Math.min(debt.installment, remaining);
+  return remaining;
+}
+
+export type InstallmentPayScope = 'cuota' | 'full' | 'other';
+
+export type InstallmentPayChoices = {
+  cuota: number;
+  remaining: number;
+  canChooseFull: boolean;
+};
+
+/** Fixed installments only. Revolving cards never get “pay off vs other”. */
+export function installmentPayChoices(
+  debt: Pick<Debt, 'kind' | 'balance' | 'installment'> | undefined
+): InstallmentPayChoices | null {
+  if (!debt || isRevolving(debt)) return null;
+  const remaining = Math.max(0, debt.balance || 0);
+  const cuota = suggestedDebtPayAmount(debt);
+  if (!(remaining > SETTLED_EPS) || !(cuota > 0)) return null;
+  return {
+    cuota,
+    remaining,
+    canChooseFull: remaining > cuota + SETTLED_EPS,
+  };
+}
+
+export function amountsMatch(a: number, b: number): boolean {
+  return Math.abs(a - b) <= SETTLED_EPS;
+}
+
+export function inferInstallmentPayScope(
+  choices: InstallmentPayChoices,
+  amount: number | null
+): InstallmentPayScope {
+  if (amount == null || !(amount > 0)) return 'cuota';
+  if (amountsMatch(amount, choices.remaining)) return 'full';
+  if (amountsMatch(amount, choices.cuota)) return 'cuota';
+  return 'other';
+}
+
+/** True when this payment brings a fixed loan’s remaining balance to 0. */
+export function paymentSettlesInstallment(
+  debt: Pick<Debt, 'kind' | 'balance'> | undefined,
+  paid: number
+): boolean {
+  if (!debt || isRevolving(debt) || !(paid > 0)) return false;
+  return isSettledBalance(Math.max(0, (debt.balance || 0) - paid));
+}
+
+/**
+ * Installment loans close when remaining hits 0.
+ * Revolving cards/cupos stay open even at 0 used — the line still exists.
+ */
+export function closedAtAfterBalance(
+  debt: Pick<Debt, 'kind' | 'closedAt'>,
+  nextBalance: number,
+  closedAt: string
+): string | undefined {
+  if (isRevolving(debt)) return debt.closedAt;
+  if (isSettledBalance(nextBalance)) return debt.closedAt ?? closedAt;
+  return undefined;
+}
+
+/** Mark already-zero installment loans as settled (migration + first load). */
+export function closePaidInstallments(
+  debts: Debt[],
+  transactions: Transaction[],
+  nowIso = new Date().toISOString()
+): { debts: Debt[]; changed: boolean } {
+  const lastPay = new Map<string, string>();
+  for (const tx of transactions) {
+    if (tx.type !== 'debt_payment' || !tx.debtId) continue;
+    const prev = lastPay.get(tx.debtId);
+    if (!prev || tx.createdAt > prev) lastPay.set(tx.debtId, tx.createdAt);
+  }
+  let changed = false;
+  const next = debts.map((debt) => {
+    if (isRevolving(debt) || debt.closedAt || !isSettledBalance(debt.balance)) {
+      return debt;
+    }
+    changed = true;
+    return { ...debt, closedAt: lastPay.get(debt.id) ?? nowIso };
+  });
+  return { debts: next, changed };
+}
+
 export function revolvingAsPayAccounts(
   debts: Debt[],
   labelFor: (debt: Debt) => string
 ): Account[] {
-  return debts.filter(isRevolving).map((debt) => ({
+  return debts.filter((debt) => isRevolving(debt) && isOpenDebt(debt)).map((debt) => ({
     id: payAccountIdForDebt(debt.id),
     nameKey: 'account.creditCard',
     name: labelFor(debt),
@@ -69,7 +179,7 @@ export function totalOwed(debts: Debt[]): number {
 }
 
 export function monthlyDue(debts: Debt[]): number {
-  return debts.reduce((sum, debt) => sum + (debt.installment || 0), 0);
+  return openDebts(debts).reduce((sum, debt) => sum + (debt.installment || 0), 0);
 }
 
 export function revolvingAvailableTotal(debts: Debt[]): number {

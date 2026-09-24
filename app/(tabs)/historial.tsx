@@ -16,6 +16,7 @@ import { useLanguage } from '@/src/i18n/LanguageContext';
 import type { TranslationKey } from '@/src/i18n/translations';
 import { palette, radii } from '@/src/theme/colors';
 import type { Period, Transaction } from '@/src/types/finance';
+import { closedDebts } from '@/src/utils/debts';
 import { shiftMonth, sumByType, sumSpendOut } from '@/src/utils/financeMath';
 import { tapFeedback } from '@/src/utils/selectFeedback';
 
@@ -30,6 +31,7 @@ export default function HistorialScreen() {
     totalForPeriod,
     removeTransaction,
     canEditTransaction,
+    debts,
   } = useFinance();
 
   const now = new Date();
@@ -41,7 +43,14 @@ export default function HistorialScreen() {
   const [editing, setEditing] = useState<Transaction | null>(null);
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [listOpen, setListOpen] = useState(false);
+  const [settledOpen, setSettledOpen] = useState(false);
   const [page, setPage] = useState(0);
+
+  const settled = useMemo(
+    () =>
+      closedDebts(debts).sort((a, b) => (b.closedAt ?? '').localeCompare(a.closedAt ?? '')),
+    [debts]
+  );
 
   const isCurrentMonth =
     monthCursor.year === now.getFullYear() &&
@@ -298,6 +307,43 @@ export default function HistorialScreen() {
             )}
           </CollapsibleSection>
         </FadeInBlock>
+
+        {settled.length > 0 ? (
+          <FadeInBlock index={4}>
+            <CollapsibleSection
+              title={t('history.settledTitle')}
+              open={settledOpen}
+              onToggle={() => setSettledOpen((v) => !v)}
+              summary={t('history.settledCollapsed', { count: settled.length })}>
+              <Text style={styles.settledHint}>{t('history.settledHint')}</Text>
+              {settled.map((debt) => {
+                const label = debt.nameKey
+                  ? t(debt.nameKey as TranslationKey)
+                  : debt.name ?? t('debt.mainCard');
+                const closedDate = debt.closedAt
+                  ? new Date(debt.closedAt).toLocaleDateString(
+                      language === 'es' ? 'es-CO' : 'en-US'
+                    )
+                  : '';
+                return (
+                  <View key={debt.id} style={styles.settledCard}>
+                    <Text style={styles.settledName}>{label}</Text>
+                    {closedDate ? (
+                      <Text style={styles.settledMeta}>
+                        {t('history.settledOn', { date: closedDate })}
+                      </Text>
+                    ) : null}
+                    {debt.paidCapital > 0 ? (
+                      <Text style={styles.settledMeta}>
+                        {t('history.settledPaid', { amount: format(debt.paidCapital) })}
+                      </Text>
+                    ) : null}
+                  </View>
+                );
+              })}
+            </CollapsibleSection>
+          </FadeInBlock>
+        ) : null}
       </KeyboardSafeScroll>
 
       <EditTransactionModal
@@ -459,6 +505,32 @@ const styles = StyleSheet.create({
   empty: {
     marginTop: 6,
     fontFamily: 'DMSans_400Regular',
+    color: palette.inkMuted,
+  },
+  settledHint: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
+    color: palette.inkMuted,
+    lineHeight: 18,
+    marginBottom: 10,
+  },
+  settledCard: {
+    backgroundColor: palette.surfaceSolid,
+    borderRadius: radii.md,
+    borderWidth: 1,
+    borderColor: palette.border,
+    padding: 14,
+    marginBottom: 10,
+  },
+  settledName: {
+    fontFamily: 'Fraunces_600SemiBold',
+    fontSize: 18,
+    color: palette.ink,
+  },
+  settledMeta: {
+    marginTop: 4,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
     color: palette.inkMuted,
   },
 });

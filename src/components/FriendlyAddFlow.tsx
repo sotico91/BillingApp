@@ -33,6 +33,7 @@ import { habitExpenseNotifyBody } from '@/src/utils/habitPilot';
 import { tapFeedback } from '@/src/utils/selectFeedback';
 import { AccountChoiceChips } from '@/src/components/AccountChoiceChips';
 import { InlineSubAdd } from '@/src/components/InlineSubAdd';
+import { InstallmentPayScopePicker } from '@/src/components/InstallmentPayScopePicker';
 import { KeyboardSafeScroll } from '@/src/components/KeyboardSafe';
 import { useKeyboardVisible } from '@/src/hooks/useKeyboardVisible';
 import type { SavedMovement } from '@/src/components/ExpenseForm';
@@ -45,6 +46,14 @@ import {
   firstAccountId,
   pocketMoveAccounts,
 } from '@/src/utils/accounts';
+import {
+  inferInstallmentPayScope,
+  installmentPayChoices,
+  openDebts,
+  paymentSettlesInstallment,
+  suggestedDebtPayAmount,
+  type InstallmentPayScope,
+} from '@/src/utils/debts';
 
 type Props = {
   onSaved?: (result: SavedMovement) => void;
@@ -61,6 +70,7 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
   const keyboardVisible = useKeyboardVisible();
 
   const spendConcepts = settings.spendConcepts ?? [];
+  const liveDebts = useMemo(() => openDebts(debts), [debts]);
   const incomeAccounts = useMemo(() => incomeDestinationAccounts(accounts), [accounts]);
 
   const [step, setStep] = useState(0);
@@ -69,6 +79,7 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
   const [conceptId, setConceptId] = useState<string | null>(null);
   const [categoryId, setCategoryId] = useState('cafe');
   const [debtId, setDebtId] = useState<string | null>(null);
+  const [payScope, setPayScope] = useState<InstallmentPayScope | null>(null);
   const [method, setMethod] = useState<PaymentMethod>('debit');
   const [accountId, setAccountId] = useState(() =>
     defaultSpendAccountId(accounts)
@@ -152,6 +163,37 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
   const paymentStep = intent === 'spend' ? 4 : intent === 'move' ? 2 : 3;
   const reviewStep = totalSteps - 1;
 
+  const selectedPayDebt = useMemo(
+    () => liveDebts.find((d) => d.id === debtId),
+    [liveDebts, debtId]
+  );
+  const payChoices = installmentPayChoices(selectedPayDebt);
+
+  function applyPayScope(scope: InstallmentPayScope) {
+    if (!payChoices) return;
+    setPayScope(scope);
+    if (scope === 'cuota') setAmount(String(payChoices.cuota));
+    if (scope === 'full') setAmount(String(payChoices.remaining));
+  }
+
+  function pickDebt(debt: (typeof liveDebts)[number]) {
+    setDebtId(debt.id);
+    const choices = installmentPayChoices(debt);
+    const parsed = parse(amount);
+    if (!choices?.canChooseFull) {
+      setPayScope(null);
+      const suggest = suggestedDebtPayAmount(debt);
+      if (suggest > 0) setAmount(String(suggest));
+      return;
+    }
+    const scope = inferInstallmentPayScope(choices, parsed);
+    setPayScope(scope);
+    if (scope === 'cuota' && (!parsed || parsed <= 0)) {
+      setAmount(String(choices.cuota));
+    }
+    if (scope === 'full') setAmount(String(choices.remaining));
+  }
+
   async function applyTemplate(id: string) {
     const tpl = FRIENDLY_TEMPLATES.find((x) => x.id === id);
     if (!tpl || applyingTemplate) return;
@@ -159,7 +201,10 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
     setApplyingTemplate(true);
     try {
       setIntent(tpl.intent);
-      if (tpl.intent !== 'debt') setDebtId(null);
+      if (tpl.intent !== 'debt') {
+        setDebtId(null);
+        setPayScope(null);
+      }
       if (tpl.amountHint) setAmount(String(tpl.amountHint));
       if (tpl.intent === 'move') {
         setAccountId(defaultIncomeAccountId(accounts));
@@ -223,12 +268,34 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
         setStep(paymentStep);
         return;
       }
+      if (intent === 'debt') {
+        const debt = liveDebts.find((d) => d.id === debtId) ?? liveDebts[0];
+        if (debt) pickDebt(debt);
+      }
     }
     if (step === 2 && intent === 'debt') {
-      if (debts.length === 0) return;
+      if (liveDebts.length === 0) return;
       if (!debtId) {
         Alert.alert(t('flow.chooseDebt'), t('wealth.debtNeed'));
         return;
+      }
+      const choices = installmentPayChoices(liveDebts.find((d) => d.id === debtId));
+      if (choices?.canChooseFull) {
+        const parsed = parse(amount);
+        const inferred = inferInstallmentPayScope(choices, parsed);
+        if (!payScope) {
+          Alert.alert(t('flow.payScopeTitle'), t('flow.payScopeNeed'));
+          return;
+        }
+        if (payScope === 'cuota' && inferred !== 'cuota') {
+          Alert.alert(t('flow.payScopeTitle'), t('flow.payScopeNeed'));
+          setPayScope(inferred);
+          return;
+        }
+        if (payScope === 'other' && !parsed) {
+          Alert.alert(t('add.invalidTitle'), t('add.invalidMessage'));
+          return;
+        }
       }
     }
     if (step === 2 && intent === 'spend') {
@@ -262,6 +329,15 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
     if (!parsed) {
       Alert.alert(t('add.invalidTitle'), t('add.invalidMessage'));
       return;
+    }
+    if (intent === 'debt' && payChoices?.canChooseFull) {
+      const inferred = inferInstallmentPayScope(payChoices, parsed);
+      if (!payScope || (payScope === 'cuota' && inferred !== 'cuota')) {
+        Alert.alert(t('flow.payScopeTitle'), t('flow.payScopeNeed'));
+        setPayScope(inferred);
+        setStep(2);
+        return;
+      }
     }
 
     savingLock.current = true;
@@ -303,13 +379,26 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
       }
 
       // Never block save on notification permission / scheduling (esp. Android).
-      // Label must match the intent that was saved, not a leftover debt pick.
-      if (settings.notifyOnExpense && (type === 'expense' || type === 'income')) {
+      // Expense, income, and debt payments all confirm; pocket moves do not.
+      if (
+        settings.notifyOnExpense &&
+        (type === 'expense' || type === 'income' || type === 'debt_payment')
+      ) {
+        const debtName = debtLabel || categoryLabel(resolvedCategoryId ?? categoryId, t, spendConcepts);
         const category =
-          note.trim() ||
-          categoryLabel(resolvedCategoryId ?? categoryId, t, spendConcepts);
+          type === 'debt_payment'
+            ? note.trim() || debtName
+            : note.trim() ||
+              categoryLabel(resolvedCategoryId ?? categoryId, t, spendConcepts);
         const body =
-          type === 'expense'
+          type === 'debt_payment'
+            ? t(
+                paymentSettlesInstallment(selectedDebt, parsed)
+                  ? 'notify.bodyDebtSettled'
+                  : 'notify.bodyDebt',
+                { amount: formatPlain(parsed), debt: category }
+              )
+            : type === 'expense'
             ? habitExpenseNotifyBody({
                 t,
                 transactions,
@@ -338,7 +427,7 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
   }
 
   const hideNext =
-    (intent === 'debt' && step === 2 && debts.length === 0) ||
+    (intent === 'debt' && step === 2 && liveDebts.length === 0) ||
     (intent === 'spend' && step === 2 && spendConcepts.length === 0);
 
   return (
@@ -365,7 +454,10 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
                     tapFeedback();
                     setFromTemplate(false);
                     setIntent(item.id);
-                    if (item.id !== 'debt') setDebtId(null);
+                    if (item.id !== 'debt') {
+                      setDebtId(null);
+                      setPayScope(null);
+                    }
                     if (item.id === 'earn') {
                       setConceptId(null);
                       setCategoryId(
@@ -397,7 +489,7 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
                     if (item.id === 'debt') {
                       setConceptId(null);
                       setCategoryId('otros');
-                      setDebtId(debts[0]?.id ?? null);
+                      setDebtId(liveDebts[0]?.id ?? null);
                     }
                     goNext();
                   }}
@@ -456,7 +548,9 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
                 autoFocus
               />
             </View>
-            <Text style={styles.amountHint}>{t('add.amountDecimalHint')}</Text>
+            <Text style={styles.amountHint}>
+              {intent === 'debt' ? t('flow.howMuchDebtHint') : t('add.amountDecimalHint')}
+            </Text>
           </Animated.View>
         ) : null}
 
@@ -465,7 +559,7 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
             {intent === 'debt' ? (
               <>
                 <Text style={styles.title}>{t('flow.chooseDebt')}</Text>
-                {debts.length === 0 ? (
+                {liveDebts.length === 0 ? (
                   <View style={styles.emptyDebt}>
                     <Text style={styles.emptyDebtTitle}>{t('flow.noDebtsTitle')}</Text>
                     <Text style={styles.emptyDebtBody}>{t('flow.noDebtsBody')}</Text>
@@ -477,7 +571,7 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
                   </View>
                 ) : (
                   <View style={styles.catGrid}>
-                    {debts.map((debt) => {
+                    {liveDebts.map((debt) => {
                       const label = debt.nameKey
                         ? t(debt.nameKey as TranslationKey)
                         : debt.name ?? t('debt.mainCard');
@@ -486,10 +580,8 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
                         <Pressable
                           key={debt.id}
                           onPress={() => {
-                            setDebtId(debt.id);
-                            if (debt.installment > 0) {
-                              setAmount(String(debt.installment));
-                            }
+                            tapFeedback();
+                            pickDebt(debt);
                           }}
                           style={[styles.catCard, selected && styles.catCardOn]}>
                           <Text style={[styles.catText, selected && styles.catTextOn]}>
@@ -506,6 +598,28 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
                     })}
                   </View>
                 )}
+                {payChoices?.canChooseFull ? (
+                  <>
+                    <InstallmentPayScopePicker
+                      choices={payChoices}
+                      scope={payScope}
+                      onChange={applyPayScope}
+                    />
+                    {payScope === 'other' ? (
+                      <View style={[styles.amountRow, { marginTop: 12 }]}>
+                        <Text style={styles.currency}>$</Text>
+                        <TextInput
+                          value={amount}
+                          onChangeText={setAmount}
+                          keyboardType="decimal-pad"
+                          placeholder="0"
+                          placeholderTextColor={palette.inkSoft}
+                          style={styles.amountInput}
+                        />
+                      </View>
+                    ) : null}
+                  </>
+                ) : null}
               </>
             ) : intent === 'spend' ? (
               <>

@@ -28,6 +28,7 @@ import { palette, radii } from '@/src/theme/colors';
 import type { Transaction } from '@/src/types/finance';
 import { categoryLabel } from '@/src/utils/categoryLabel';
 import {
+  openDebts,
   totalOwed,
 } from '@/src/utils/debts';
 import { tapFeedback } from '@/src/utils/selectFeedback';
@@ -79,6 +80,7 @@ export default function HomeScreen() {
   const expenses = totalForPeriod('mes', 'expense');
   const savings = income - expenses;
   const debtTotal = totalOwed(debts);
+  const liveDebtCount = openDebts(debts).length;
   const ant = antForPeriod('mes');
   const recent = transactionsForPeriod('hoy');
   const expenseConcepts = insightsForPeriod('mes', 'expense');
@@ -222,9 +224,9 @@ export default function HomeScreen() {
               value={format(debtTotal)}
               tone={debtTotal > 0 ? 'warn' : 'neutral'}
               hint={
-                debts.length > 1
-                  ? t('home.debtsManyHint', { count: debts.length })
-                  : debts.length === 1
+                liveDebtCount > 1
+                  ? t('home.debtsManyHint', { count: liveDebtCount })
+                  : liveDebtCount === 1
                     ? t('home.debtsOneHint')
                     : undefined
               }

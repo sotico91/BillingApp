@@ -56,6 +56,8 @@ import {
 import { mapLiquidAccounts, mergeDefaultAccounts, ensureWalletAccount, renameWalletAccount, removeWalletAccount, ensureBankAccount, renameBankAccount, removeBankAccount, resolveSpendAccountId, settleLiquidOverdrafts } from '@/src/utils/accounts';
 import {
   applyRevolvingCharge,
+  closePaidInstallments,
+  closedAtAfterBalance,
   debtIdFromPayAccountId,
 } from '@/src/utils/debts';
 import { computeNetWorth } from '@/src/utils/netWorth';
@@ -271,19 +273,23 @@ function applyDebtPayment(
     if (d.id !== tx.debtId) return d;
     if (direction === 1) {
       const paid = Math.min(tx.amount, d.balance);
+      const nextBalance = Math.max(0, d.balance - paid);
       const nextDate = new Date();
       nextDate.setMonth(nextDate.getMonth() + 1);
       return {
         ...d,
-        balance: Math.max(0, d.balance - paid),
+        balance: nextBalance,
         paidCapital: d.paidCapital + paid,
         nextPaymentDate: nextDate.toISOString(),
+        closedAt: closedAtAfterBalance(d, nextBalance, tx.createdAt),
       };
     }
+    const nextBalance = d.balance + tx.amount;
     return {
       ...d,
-      balance: d.balance + tx.amount,
+      balance: nextBalance,
       paidCapital: Math.max(0, (d.paidCapital || 0) - tx.amount),
+      closedAt: closedAtAfterBalance(d, nextBalance, d.closedAt ?? tx.createdAt),
     };
   });
 }
@@ -327,12 +333,14 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
         loadSubscriptions(),
       ]);
       if (!mounted) return;
+      const settled = closePaidInstallments(deb, tx);
       setTransactions(tx);
       setAccounts(acc);
       setBudgets(bud);
-      setDebts(deb);
+      setDebts(settled.debts);
       setSubscriptions(sub);
       setLoading(false);
+      if (settled.changed) void saveDebts(settled.debts);
     })();
     return () => {
       mounted = false;
@@ -523,6 +531,11 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
             ? (patch.revolvingProduct ?? existing.revolvingProduct ?? 'card')
             : undefined,
         creditLimit: kind === 'revolving' ? (patch.creditLimit ?? existing.creditLimit) : undefined,
+        closedAt: closedAtAfterBalance(
+          { kind, closedAt: existing.closedAt },
+          patch.balance !== undefined ? patch.balance : existing.balance,
+          existing.closedAt ?? new Date().toISOString()
+        ),
       };
       const next = debts.map((d) => (d.id === id ? updated : d));
       setDebts(next);

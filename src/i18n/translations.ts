@@ -159,6 +159,12 @@ export const translations = {
     'history.onlyOwn': 'You can only edit or delete what you registered.',
     'history.personHint':
       'Shared view shows who logged each expense. You only manage your own entries.',
+    'history.settledTitle': 'Paid-off accounts',
+    'history.settledCollapsed': '{count} settled — tap to open',
+    'history.settledOn': 'Settled {date}',
+    'history.settledPaid': 'Paid in total {amount}',
+    'history.settledHint':
+      'A payment that clears the remaining balance leaves Wealth and stays here, along with every movement.',
 
     'insights.title': 'Insights',
     'insights.subtitle': 'What is happening with your money',
@@ -417,7 +423,7 @@ export const translations = {
     'wealth.debtDelete': 'Remove',
     'wealth.debtNeed': 'Name, balance and monthly installment must be greater than 0.',
     'wealth.howToPay':
-      'Saving a cuota here does not spend money. When you actually pay: ◎ → Add movement → “I paid a debt”.',
+      'Saving a cuota here does not spend money. When you actually pay: ◎ → Add movement → “I paid a debt”. Pay the remaining balance and that loan leaves Wealth; it stays in Activity.',
     'wealth.debtPermanentHint':
       'Only the fixed installment amount — a reminder, not a loan calculator. It becomes spend when you log the payment with Add movement.',
     'wealth.debtConceptHint':
@@ -516,6 +522,16 @@ export const translations = {
     'flow.intent.debt': 'I paid a debt',
     'flow.intent.debtSub': 'Reduces a registered debt',
     'flow.chooseDebt': 'Which debt did you pay?',
+    'flow.howMuchDebtHint':
+      'If you pay more than this month’s cuota, next you choose: remaining total, or another amount. Cards and cupos stay as they are.',
+    'flow.payScopeTitle': 'What are you paying on this loan?',
+    'flow.payScopeHint':
+      'Only for fixed installments. Pay this month’s cuota, settle the remaining total, or type another amount.',
+    'flow.payScopeCuota': 'This month’s cuota',
+    'flow.payScopeFull': 'Pay off the remaining total',
+    'flow.payScopeOther': 'Another amount',
+    'flow.payScopeOtherSub': 'Keep or change what you typed',
+    'flow.payScopeNeed': 'Choose the monthly cuota, the remaining total, or another amount.',
     'flow.noDebtsTitle': 'No debts registered',
     'flow.noDebtsBody': 'First add the debt in Wealth (balance of your card or loan). Then come back to log the payment.',
     'flow.goToWealth': 'Go to Wealth',
@@ -564,6 +580,8 @@ export const translations = {
 
     'notify.title': 'Movement registered',
     'notify.body': '{amount} · {category}',
+    'notify.bodyDebt': '{amount} · {debt}',
+    'notify.bodyDebtSettled': '{amount} · {debt} · paid off',
     'notify.bodyHabit': '{count}× {category} this week · {amount}',
     'notify.bodyHabitAnt': '{count}× {category} this week · {amount} · ant spend',
 
@@ -679,7 +697,7 @@ export const translations = {
       'Got paid? ◎ → Add movement → I received money, and pick which account it entered (bank, Nequi, cash).\n\nMoved Nequi to savings, or bank to cash? ◎ → Add movement → I moved money. Pick from and to. Not a spend: it was already yours, it only changed pocket.',
     'guide.step5Title': 'Debts: note in Wealth, pay with Add movement',
     'guide.step5Body':
-      'In Wealth → Debts & credit, tap Add a debt. Same amount every month (apartment, car, payroll loan): fixed installment, with balance and cuota. Card, credicheque or cupo: revolving credit, with the limit and what you already used. That’s a reminder — Rumi does not calculate interest.\n\nThe day you pay: ◎ → Add movement → I paid a debt. That lowers the debt and the pocket you paid from.',
+      'In Wealth → Debts & credit, tap Add a debt. Same amount every month (apartment, car, payroll loan): fixed installment, with balance and cuota. Card, credicheque or cupo: revolving credit, with the limit and what you already used. That’s a reminder — Rumi does not calculate interest.\n\nThe day you pay: ◎ → Add movement → I paid a debt. That lowers the debt and the pocket you paid from. When a fixed loan is fully paid, it leaves Wealth and stays in Activity.',
     'guide.step6Title': 'Insights — the analysis engine',
     'guide.step6Body':
       'Open the Insights tab (bottom). At the top is Ask Rumi: type the month you care about and tap Ask. Examples: “July”, “how much in March 2025”, “2 months ago”, “coffee last month”. A few chips are only examples — not a list of every month.\n\nHoy / Semana / Mes only change the charts and notes below. The box uses the period you wrote.\n\nAnts and limits are marked in Plan; Insights is where you ask how they behaved.',
@@ -997,6 +1015,12 @@ export const translations = {
     'history.onlyOwn': 'Solo puedes editar o borrar lo que tú registraste.',
     'history.personHint':
       'La vista compartida muestra quién anotó cada gasto. Solo gestionas los tuyos.',
+    'history.settledTitle': 'Cuentas saldadas',
+    'history.settledCollapsed': '{count} saldadas — toca para abrir',
+    'history.settledOn': 'Saldada el {date}',
+    'history.settledPaid': 'Pagaste en total {amount}',
+    'history.settledHint':
+      'Un pago que cierra el saldo sale de Patrimonio y queda aquí, junto a cada movimiento.',
 
     'insights.title': 'Análisis',
     'insights.subtitle': 'qué está pasando con tu dinero',
@@ -1256,7 +1280,7 @@ export const translations = {
     'wealth.debtDelete': 'Eliminar',
     'wealth.debtNeed': 'Nombre, saldo y cuota mensual mayores a 0.',
     'wealth.howToPay':
-      'Anotar la cuota aquí no gasta plata. Cuando pagues de verdad: ◎ → Registrar → “Pagué una deuda”.',
+      'Anotar la cuota aquí no gasta plata. Cuando pagues de verdad: ◎ → Registrar → “Pagué una deuda”. Si pagas el saldo que queda, esa cuenta sale de Patrimonio y queda en Actividad.',
     'wealth.debtPermanentHint':
       'Solo el valor de la cuota fija — un recordatorio, no una calculadora de crédito. Es gasto cuando registras el pago con Registrar.',
     'wealth.debtConceptHint':
@@ -1357,6 +1381,16 @@ export const translations = {
     'flow.intent.debt': 'Pagué una deuda',
     'flow.intent.debtSub': 'Baja el saldo de una deuda registrada',
     'flow.chooseDebt': '¿Qué deuda pagaste?',
+    'flow.howMuchDebtHint':
+      'Si pagas más que la cuota de este mes, en el siguiente paso eliges: el saldo completo, u otro valor. Tarjetas y cupos no cambian.',
+    'flow.payScopeTitle': '¿Qué vas a pagar de esta cuota?',
+    'flow.payScopeHint':
+      'Solo en cuotas fijas. La cuota de este mes, saldar el total que queda, u otro valor.',
+    'flow.payScopeCuota': 'Cuota de este mes',
+    'flow.payScopeFull': 'Saldar el total que queda',
+    'flow.payScopeOther': 'Otro valor',
+    'flow.payScopeOtherSub': 'Deja o cambia el monto que escribiste',
+    'flow.payScopeNeed': 'Elige la cuota del mes, el saldo completo u otro valor.',
     'flow.noDebtsTitle': 'No hay deudas registradas',
     'flow.noDebtsBody': 'Primero agrega la deuda en Patrimonio (saldo de tu tarjeta o préstamo). Después vuelve a registrar el pago.',
     'flow.goToWealth': 'Ir a Patrimonio',
@@ -1405,6 +1439,8 @@ export const translations = {
 
     'notify.title': 'Movimiento registrado',
     'notify.body': '{amount} · {category}',
+    'notify.bodyDebt': '{amount} · {debt}',
+    'notify.bodyDebtSettled': '{amount} · {debt} · cuenta saldada',
     'notify.bodyHabit': '{count}× {category} esta semana · {amount}',
     'notify.bodyHabitAnt': '{count}× {category} esta semana · {amount} · hormiga',
 
@@ -1520,7 +1556,7 @@ export const translations = {
       '¿Te llegó el salario o un giro? ◎ → Registrar → Recibí dinero, y elige en qué cuenta entra (banco, Nequi, efectivo).\n\n¿Pasaste de Nequi a ahorros, o de banco a efectivo? ◎ → Registrar → Moví dinero. Elige de dónde sale y a dónde llega. No es un gasto: la plata ya era tuya, solo cambió de bolsillo.',
     'guide.step5Title': 'Deudas: anótalas en Patrimonio, págala con Registrar',
     'guide.step5Body':
-      'En Patrimonio → Deudas y créditos, toca Agregar deuda. Si el banco te cobra siempre lo mismo (apto, carro, libranza): cuota fija, con saldo y cuota. Si es tarjeta, credicheque o cupo: crédito rotativo, con el cupo y lo que ya usaste. Eso es un recordatorio; Rumi no calcula interés.\n\nEl día que pagas: ◎ → Registrar → Pagué una deuda. Ahí sí baja el saldo de la deuda y el de la cuenta con la que pagaste.',
+      'En Patrimonio → Deudas y créditos, toca Agregar deuda. Si el banco te cobra siempre lo mismo (apto, carro, libranza): cuota fija, con saldo y cuota. Si es tarjeta, credicheque o cupo: crédito rotativo, con el cupo y lo que ya usaste. Eso es un recordatorio; Rumi no calcula interés.\n\nEl día que pagas: ◎ → Registrar → Pagué una deuda. Ahí sí baja el saldo de la deuda y el de la cuenta con la que pagaste. Si cierras el saldo de una cuota fija, sale de Patrimonio y queda en Actividad.',
     'guide.step6Title': 'Análisis: el motor de preguntas',
     'guide.step6Body':
       'Abre la pestaña Análisis (abajo). Arriba está Pregúntale a Rumi: escribe el mes que te interesa y toca Preguntar. Ejemplos: “julio”, “cuánto gasté en marzo 2025”, “hace 2 meses”, “café el mes pasado”. Las chips son solo ejemplos, no una lista de todos los meses.\n\nHoy / Semana / Mes de esa pantalla solo cambian las gráficas y notas de abajo. La caja usa el período que escribiste.\n\nSi quieres saber de hormiga o topes, se marcan en Plan; en Análisis preguntas cómo se comportaron.',

@@ -157,7 +157,7 @@ export function unpaidInstallmentsForMonth(
 
   const extra: AccruedInstallment[] = [];
   for (const debt of debts) {
-    if (!(debt.installment > 0) || !(debt.balance > 0)) continue;
+    if (debt.closedAt || !(debt.installment > 0) || !(debt.balance > 0)) continue;
     const due = Math.min(debt.installment, debt.balance);
     const paidDirect = paidByDebt.get(debt.id) ?? 0;
     const paidCat = debt.categoryId ? paidByCategory.get(debt.categoryId) ?? 0 : 0;
@@ -337,6 +337,7 @@ export function predictMonthlySpends(
   const coveredCategories = new Set<string>();
 
   for (const debt of debts) {
+    if (debt.closedAt) continue;
     if (!(debt.installment > 0)) continue;
     const categoryId = debt.categoryId ?? `debt-${debt.id}`;
     let typicalDay = 1;

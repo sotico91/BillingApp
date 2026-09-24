@@ -16,6 +16,7 @@ import Animated, {
 import { CategoryChip } from '@/src/components/CategoryChip';
 import { InlineSubAdd } from '@/src/components/InlineSubAdd';
 import { AccountChoiceChips } from '@/src/components/AccountChoiceChips';
+import { InstallmentPayScopePicker } from '@/src/components/InstallmentPayScopePicker';
 import { categoriesForKind } from '@/src/data/categories';
 import { findSpendSub, spendSubsAsCategories } from '@/src/data/spendConcepts';
 import { useFinance } from '@/src/hooks/useFinance';
@@ -38,6 +39,14 @@ import {
 } from '@/src/utils/accounts';
 import { notifyExpenseRegistered } from '@/src/utils/notifications';
 import { habitExpenseNotifyBody } from '@/src/utils/habitPilot';
+import {
+  inferInstallmentPayScope,
+  installmentPayChoices,
+  openDebts,
+  paymentSettlesInstallment,
+  suggestedDebtPayAmount,
+  type InstallmentPayScope,
+} from '@/src/utils/debts';
 
 export type SavedMovement = {
   kind: 'expense' | 'income' | 'other';
@@ -75,6 +84,7 @@ export function ExpenseForm({
   const { settings, updateQuickTemplate } = useSettings();
   const { addTransaction, totalForPeriod, accounts, debts, transactions } = useFinance();
   const spendConcepts = settings.spendConcepts ?? [];
+  const liveDebts = useMemo(() => openDebts(debts), [debts]);
 
   const prefilledHit = initialCategoryId
     ? findSpendSub(spendConcepts, initialCategoryId)
@@ -87,7 +97,10 @@ export function ExpenseForm({
   const [categoryId, setCategoryId] = useState(
     initialCategoryId ?? spendConcepts[0]?.subs[0]?.id ?? 'otros'
   );
-  const [debtId, setDebtId] = useState<string | null>(debts[0]?.id ?? null);
+  const [debtId, setDebtId] = useState<string | null>(
+    () => openDebts(debts)[0]?.id ?? null
+  );
+  const [payScope, setPayScope] = useState<InstallmentPayScope | null>(null);
   const [method, setMethod] = useState<PaymentMethod>('cash');
   const [accountId, setAccountId] = useState(() =>
     defaultSpendAccountId(accounts)
@@ -128,6 +141,38 @@ export function ExpenseForm({
     });
   }, [type, accounts, method, debts, t]);
 
+  const selectedPayDebt = useMemo(
+    () => liveDebts.find((d) => d.id === debtId),
+    [liveDebts, debtId]
+  );
+  const payChoices = installmentPayChoices(selectedPayDebt);
+
+  function applyPayScope(scope: InstallmentPayScope) {
+    if (!payChoices) return;
+    setPayScope(scope);
+    if (scope === 'cuota') setAmount(String(payChoices.cuota));
+    if (scope === 'full') setAmount(String(payChoices.remaining));
+  }
+
+  function pickDebt(debt: (typeof liveDebts)[number]) {
+    setDebtId(debt.id);
+    setCategoryId(debt.categoryId ?? 'otros');
+    const choices = installmentPayChoices(debt);
+    const parsed = parse(amount);
+    if (!choices?.canChooseFull) {
+      setPayScope(null);
+      const suggest = suggestedDebtPayAmount(debt);
+      if (suggest > 0) setAmount(String(suggest));
+      return;
+    }
+    const scope = inferInstallmentPayScope(choices, parsed);
+    setPayScope(scope);
+    if (scope === 'cuota' && (!parsed || parsed <= 0)) {
+      setAmount(String(choices.cuota));
+    }
+    if (scope === 'full') setAmount(String(choices.remaining));
+  }
+
   useEffect(() => {
     if (type === 'income') {
       const next = firstAccountId(accountChoices, accountId);
@@ -145,6 +190,7 @@ export function ExpenseForm({
 
   function selectType(next: TransactionType) {
     setType(next);
+    if (next !== 'debt_payment') setPayScope(null);
     if (next === 'income') {
       setCategoryId('salario');
       setAccountId(defaultIncomeAccountId(accounts));
@@ -154,8 +200,11 @@ export function ExpenseForm({
       setCategoryId(first?.subs[0]?.id ?? 'otros');
       setAccountId(defaultSpendAccountId(accounts, { amount: parse(amount) ?? undefined }));
     } else if (next === 'debt_payment') {
-      setDebtId(debts[0]?.id ?? null);
-      setCategoryId(debts[0]?.categoryId ?? 'otros');
+      const first = liveDebts[0];
+      setDebtId(first?.id ?? null);
+      setCategoryId(first?.categoryId ?? 'otros');
+      setPayScope(null);
+      if (first) pickDebt(first);
     } else if (isPocketMove(next)) {
       setCategoryId('');
       const fromId = firstAccountId(
@@ -172,6 +221,14 @@ export function ExpenseForm({
     if (!parsed) {
       Alert.alert(t('add.invalidTitle'), t('add.invalidMessage'));
       return;
+    }
+    if (type === 'debt_payment' && payChoices?.canChooseFull) {
+      const inferred = inferInstallmentPayScope(payChoices, parsed);
+      if (!payScope || (payScope === 'cuota' && inferred !== 'cuota')) {
+        Alert.alert(t('flow.payScopeTitle'), t('flow.payScopeNeed'));
+        setPayScope(inferred);
+        return;
+      }
     }
 
     savingLock.current = true;
@@ -211,15 +268,30 @@ export function ExpenseForm({
 
       if (
         settings.notifyOnExpense &&
-        (type === 'expense' || type === 'income')
+        (type === 'expense' || type === 'income' || type === 'debt_payment')
       ) {
-        const label = categoryLabel(
-          type === 'expense' ? resolvedCategoryId : categoryId,
-          t,
-          spendConcepts
-        );
+        const debtName = selectedDebt
+          ? selectedDebt.nameKey
+            ? t(selectedDebt.nameKey as TranslationKey)
+            : selectedDebt.name ?? t('debt.mainCard')
+          : categoryLabel(resolvedCategoryId, t, spendConcepts);
+        const label =
+          type === 'debt_payment'
+            ? note.trim() || debtName
+            : categoryLabel(
+                type === 'expense' ? resolvedCategoryId : categoryId,
+                t,
+                spendConcepts
+              );
         const body =
-          type === 'expense'
+          type === 'debt_payment'
+            ? t(
+                paymentSettlesInstallment(selectedDebt, parsed)
+                  ? 'notify.bodyDebtSettled'
+                  : 'notify.bodyDebt',
+                { amount: formatPlain(parsed), debt: label }
+              )
+            : type === 'expense'
             ? habitExpenseNotifyBody({
                 t,
                 transactions,
@@ -361,14 +433,10 @@ export function ExpenseForm({
         <>
           <Text style={styles.label}>{t('flow.chooseDebt')}</Text>
           <View style={styles.chips}>
-            {debts.map((debt) => (
+            {liveDebts.map((debt) => (
               <Pressable
                 key={debt.id}
-                onPress={() => {
-                  setDebtId(debt.id);
-                  if (debt.installment > 0) setAmount(String(debt.installment));
-                  setCategoryId(debt.categoryId ?? 'otros');
-                }}
+                onPress={() => pickDebt(debt)}
                 style={[styles.pill, debtId === debt.id && styles.pillOn]}>
                 <Text style={[styles.pillText, debtId === debt.id && styles.pillTextOn]}>
                   {debt.name ?? t('debt.mainCard')}
@@ -376,6 +444,13 @@ export function ExpenseForm({
               </Pressable>
             ))}
           </View>
+          {payChoices?.canChooseFull ? (
+            <InstallmentPayScopePicker
+              choices={payChoices}
+              scope={payScope}
+              onChange={applyPayScope}
+            />
+          ) : null}
         </>
       ) : isPocketMove(type) ? null : type === 'expense' &&
         categoryChoices.length === 1 ? null : (

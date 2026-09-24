@@ -31,6 +31,7 @@ import {
 import {
   creditAvailable,
   debtKind,
+  openDebts,
   parseNonNegativeAmount,
   productLabelKey,
   revolvingProduct,
@@ -118,11 +119,12 @@ export default function WealthScreen() {
   const [savingWallet, setSavingWallet] = useState(false);
 
   const monthTx = transactionsForPeriod('mes', 'mine');
+  const liveDebts = useMemo(() => openDebts(debts), [debts]);
 
   const groupedAccounts = useMemo(() => sortAccountsByKind(accounts), [accounts]);
   const groupedDebts = useMemo(
     () =>
-      [...debts].sort((a, b) => {
+      [...liveDebts].sort((a, b) => {
         const ka = debtKind(a) === 'revolving' ? 1 : 0;
         const kb = debtKind(b) === 'revolving' ? 1 : 0;
         if (ka !== kb) return ka - kb;
@@ -130,7 +132,7 @@ export default function WealthScreen() {
         const nb = (b.name ?? b.nameKey ?? '').toLocaleLowerCase();
         return na.localeCompare(nb);
       }),
-    [debts]
+    [liveDebts]
   );
 
   const paidByCategory = useMemo(() => {
@@ -143,8 +145,8 @@ export default function WealthScreen() {
     return map;
   }, [monthTx]);
 
-  const monthlyInstallments = debts.reduce((s, d) => s + (d.installment || 0), 0);
-  const paidInstallmentsThisMonth = debts.reduce((sum, debt) => {
+  const monthlyInstallments = liveDebts.reduce((s, d) => s + (d.installment || 0), 0);
+  const paidInstallmentsThisMonth = liveDebts.reduce((sum, debt) => {
     if (!debt.categoryId) return sum;
     return sum + (paidByCategory.get(debt.categoryId) ?? 0);
   }, 0);
@@ -506,10 +508,10 @@ export default function WealthScreen() {
             open={debtsOpen}
             onToggle={() => setDebtsOpen((v) => !v)}
             summary={
-              debts.length === 0
+              liveDebts.length === 0
                 ? t('wealth.debtsEmptyShort')
                 : t('wealth.debtsCollapsed', {
-                    count: debts.length,
+                    count: liveDebts.length,
                     amount: format(monthlyInstallments),
                   })
             }>
@@ -522,7 +524,7 @@ export default function WealthScreen() {
               </View>
             ) : null}
 
-            {debts.length > 0 ? (
+            {liveDebts.length > 0 ? (
               <View style={styles.summaryCard}>
                 <Text style={styles.summaryTitle}>{t('wealth.fixedMonth')}</Text>
                 <MoneyText style={styles.amount}>{format(monthlyInstallments)}</MoneyText>
@@ -661,7 +663,7 @@ export default function WealthScreen() {
               </View>
             ) : null}
 
-            {debts.length === 0 && !showForm ? (
+            {liveDebts.length === 0 && !showForm ? (
               <View style={styles.card}>
                 <Text style={styles.empty}>{t('wealth.debtsEmpty')}</Text>
                 <Text style={[styles.meta, { marginTop: 8 }]}>{t('wealth.howToPay')}</Text>
@@ -783,7 +785,7 @@ export default function WealthScreen() {
               );
             })}
 
-            {debts.length > 0 ? (
+            {liveDebts.length > 0 ? (
               <Text style={styles.hint}>{t('wealth.howToPay')}</Text>
             ) : null}
           </CollapsibleSection>

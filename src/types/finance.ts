@@ -109,6 +109,8 @@ export type Debt = {
   revolvingProduct?: RevolvingProduct;
   /** Credit limit (cupo). Used when kind is revolving. */
   creditLimit?: number;
+  /** Set when an installment loan is paid off; hidden from Wealth, kept for history. */
+  closedAt?: string;
 };
 
 export type Subscription = {
