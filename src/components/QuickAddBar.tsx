@@ -19,7 +19,7 @@ import { useLanguage } from '@/src/i18n/LanguageContext';
 import { palette, radii } from '@/src/theme/colors';
 import { categoryLabel } from '@/src/utils/categoryLabel';
 import { notifyExpenseRegistered } from '@/src/utils/notifications';
-import { habitExpenseNotifyBody } from '@/src/utils/habitPilot';
+import { movementNotifyCopy } from '@/src/utils/movementNotify';
 import { buildOneTapHabits, type OneTapHabit } from '@/src/utils/oneTapHabits';
 import { tapFeedback } from '@/src/utils/selectFeedback';
 
@@ -81,18 +81,18 @@ export function QuickAddBar() {
       });
 
       if (settings.notifyOnExpense) {
-        const label = categoryLabel(habit.categoryId, t, spendConcepts);
-        await notifyExpenseRegistered(
-          t('notify.title'),
-          habitExpenseNotifyBody({
-            t,
-            transactions,
-            categoryId: habit.categoryId,
-            amount: formatPlain(amount),
-            label,
-            concepts: spendConcepts,
-          })
-        );
+        const copy = movementNotifyCopy({
+          t,
+          type: 'expense',
+          amount: formatPlain(amount),
+          transactions,
+          spendConcepts,
+          accounts,
+          categoryId: habit.categoryId,
+          accountId,
+          note: resolvedNote,
+        });
+        await notifyExpenseRegistered(copy.title, copy.body);
       }
       setSheetHabit(null);
     } finally {

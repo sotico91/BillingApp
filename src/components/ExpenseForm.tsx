@@ -38,7 +38,7 @@ import {
   pocketMoveAccounts,
 } from '@/src/utils/accounts';
 import { notifyExpenseRegistered } from '@/src/utils/notifications';
-import { habitExpenseNotifyBody } from '@/src/utils/habitPilot';
+import { movementNotifyCopy } from '@/src/utils/movementNotify';
 import {
   amountsMatch,
   inferInstallmentPayScope,
@@ -269,45 +269,31 @@ export function ExpenseForm({
           ? selectedDebt?.categoryId ?? categoryId
           : categoryId;
 
-      if (
-        settings.notifyOnExpense &&
-        (type === 'expense' || type === 'income' || type === 'debt_payment')
-      ) {
+      if (settings.notifyOnExpense) {
         const debtName = selectedDebt
           ? selectedDebt.nameKey
             ? t(selectedDebt.nameKey as TranslationKey)
             : selectedDebt.name ?? t('debt.mainCard')
-          : categoryLabel(resolvedCategoryId, t, spendConcepts);
-        const label =
-          type === 'debt_payment'
-            ? note.trim() || debtName
-            : categoryLabel(
-                type === 'expense' ? resolvedCategoryId : categoryId,
-                t,
-                spendConcepts
-              );
-        const body =
-          type === 'debt_payment'
-            ? t(
-                paymentSettlesInstallment(selectedDebt, parsed)
-                  ? 'notify.bodyDebtSettled'
-                  : 'notify.bodyDebt',
-                { amount: formatPlain(parsed), debt: label }
-              )
-            : type === 'expense'
-            ? habitExpenseNotifyBody({
-                t,
-                transactions,
-                categoryId: resolvedCategoryId,
-                amount: formatPlain(parsed),
-                label,
-                concepts: spendConcepts,
-              })
-            : t('notify.body', {
-                amount: formatPlain(parsed),
-                category: label,
-              });
-        void notifyExpenseRegistered(t('notify.title'), body).catch(() => undefined);
+          : '';
+        const copy = movementNotifyCopy({
+          t,
+          type,
+          amount: formatPlain(parsed),
+          transactions,
+          spendConcepts,
+          accounts,
+          categoryId: isPocketMove(type) ? undefined : resolvedCategoryId,
+          accountId,
+          toAccountId:
+            type === 'transfer' || type === 'investment' ? toAccountId : undefined,
+          note,
+          debtLabel: type === 'debt_payment' ? debtName : undefined,
+          settled:
+            type === 'debt_payment'
+              ? paymentSettlesInstallment(selectedDebt, parsed)
+              : undefined,
+        });
+        void notifyExpenseRegistered(copy.title, copy.body).catch(() => undefined);
       }
 
       setAmount('');

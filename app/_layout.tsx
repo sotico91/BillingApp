@@ -10,11 +10,13 @@ import {
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 
 import { AppLockOverlay } from '@/src/components/AppLockOverlay';
+import { BootSplash } from '@/src/components/BootSplash';
 import { CoachMarksOverlay } from '@/src/components/CoachMarksOverlay';
 import { NamePromptOverlay } from '@/src/components/NamePromptOverlay';
 import { OnboardingOverlay } from '@/src/components/OnboardingOverlay';
@@ -37,6 +39,7 @@ export const unstable_settings = {
 };
 
 SplashScreen.preventAutoHideAsync();
+SplashScreen.setOptions({ fade: false, duration: 0 });
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({
@@ -46,47 +49,54 @@ export default function RootLayout() {
     Fraunces_600SemiBold,
     Fraunces_700Bold,
   });
+  const [bootDone, setBootDone] = useState(false);
 
   useEffect(() => {
     if (error) throw error;
   }, [error]);
 
   useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync();
-      prepareSelectFeedback();
-    }
-  }, [loaded]);
-
-  useEffect(() => {
-    if (!loaded) return;
+    if (!loaded || !bootDone) return;
+    prepareSelectFeedback();
     return startBadgeClearOnActive();
-  }, [loaded]);
+  }, [loaded, bootDone]);
 
+  // Native splash stays until fonts are ready, then BootSplash takes over.
   if (!loaded) {
     return null;
   }
 
+  // Only the animated mark — do not mount Home underneath or the wink is lost.
+  if (!bootDone) {
+    return (
+      <View style={styles.bootRoot}>
+        <BootSplash onDone={() => setBootDone(true)} />
+      </View>
+    );
+  }
+
   return (
-    <LanguageProvider>
-      <SettingsProvider>
-        <AmountPrivacyProvider>
-          <ExpensesProvider>
-            <HowToGuideProvider>
-              <StatusBar style="light" />
-              <RootNavigator />
-              <ReminderHygiene />
-              <HabitPilotHygiene />
-              <ReminderDeepLink />
-              <OnboardingOverlay />
-              <NamePromptOverlay />
-              <CoachMarksOverlay />
-            </HowToGuideProvider>
-            <AppLockOverlay />
-          </ExpensesProvider>
-        </AmountPrivacyProvider>
-      </SettingsProvider>
-    </LanguageProvider>
+    <View style={styles.appRoot}>
+      <LanguageProvider>
+        <SettingsProvider>
+          <AmountPrivacyProvider>
+            <ExpensesProvider>
+              <HowToGuideProvider>
+                <StatusBar style="light" />
+                <RootNavigator />
+                <ReminderHygiene />
+                <HabitPilotHygiene />
+                <ReminderDeepLink />
+                <OnboardingOverlay />
+                <NamePromptOverlay />
+                <CoachMarksOverlay />
+              </HowToGuideProvider>
+              <AppLockOverlay />
+            </ExpensesProvider>
+          </AmountPrivacyProvider>
+        </SettingsProvider>
+      </LanguageProvider>
+    </View>
   );
 }
 
@@ -124,3 +134,14 @@ function RootNavigator() {
     </Stack>
   );
 }
+
+const styles = StyleSheet.create({
+  bootRoot: {
+    flex: 1,
+    backgroundColor: '#F3E6D8',
+  },
+  appRoot: {
+    flex: 1,
+    backgroundColor: palette.bg,
+  },
+});

@@ -29,7 +29,7 @@ import type { PaymentMethod } from '@/src/types/finance';
 import { categoryLabel } from '@/src/utils/categoryLabel';
 import { incomeDestinationAccounts } from '@/src/utils/netWorth';
 import { notifyExpenseRegistered } from '@/src/utils/notifications';
-import { habitExpenseNotifyBody } from '@/src/utils/habitPilot';
+import { movementNotifyCopy } from '@/src/utils/movementNotify';
 import { tapFeedback } from '@/src/utils/selectFeedback';
 import { AccountChoiceChips } from '@/src/components/AccountChoiceChips';
 import { InlineSubAdd } from '@/src/components/InlineSubAdd';
@@ -382,36 +382,25 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
       }
 
       // Never block save on notification permission / scheduling (esp. Android).
-      // Expense, income, and debt payments all confirm; pocket moves do not.
-      if (
-        settings.notifyOnExpense &&
-        (type === 'expense' || type === 'income' || type === 'debt_payment')
-      ) {
-        const debtName = debtLabel || categoryLabel(resolvedCategoryId ?? categoryId, t, spendConcepts);
-        const category =
-          type === 'debt_payment'
-            ? note.trim() || debtName
-            : note.trim() ||
-              categoryLabel(resolvedCategoryId ?? categoryId, t, spendConcepts);
-        const body =
-          type === 'debt_payment'
-            ? t(
-                paymentSettlesInstallment(selectedDebt, parsed)
-                  ? 'notify.bodyDebtSettled'
-                  : 'notify.bodyDebt',
-                { amount: formatPlain(parsed), debt: category }
-              )
-            : type === 'expense'
-            ? habitExpenseNotifyBody({
-                t,
-                transactions,
-                categoryId: resolvedCategoryId ?? categoryId,
-                amount: formatPlain(parsed),
-                label: category,
-                concepts: spendConcepts,
-              })
-            : t('notify.body', { amount: formatPlain(parsed), category });
-        void notifyExpenseRegistered(t('notify.title'), body).catch(() => undefined);
+      if (settings.notifyOnExpense) {
+        const copy = movementNotifyCopy({
+          t,
+          type,
+          amount: formatPlain(parsed),
+          transactions,
+          spendConcepts,
+          accounts,
+          categoryId: resolvedCategoryId,
+          accountId,
+          toAccountId: intent === 'move' ? toAccountId : undefined,
+          note,
+          debtLabel: intent === 'debt' ? debtLabel : undefined,
+          settled:
+            intent === 'debt'
+              ? paymentSettlesInstallment(selectedDebt, parsed)
+              : undefined,
+        });
+        void notifyExpenseRegistered(copy.title, copy.body).catch(() => undefined);
       }
 
       if (type === 'expense') {

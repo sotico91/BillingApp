@@ -204,7 +204,7 @@ export const translations = {
     'insights.searchPlaceholder': 'How much did I spend in July?',
     'insights.searchAsk': 'Ask',
     'insights.searchHint':
-      'Type any month in the box: July, March 2025, 2 months ago. The chips below are only short examples.',
+      'Spending and paying the card are not the same. The expense is when you buy; a card payment is an obligation. Try July, coffee, or “how much did I pay on the card”.',
     'insights.searchSuggestions': 'Try one of these',
     'insights.searchAnswer': 'Answer',
     'insights.searchClear': 'Clear',
@@ -583,7 +583,14 @@ export const translations = {
     'freq.yearly': 'Yearly',
 
     'notify.title': 'Movement registered',
+    'notify.titleIncome': 'Income registered',
+    'notify.titleMove': 'Transfer registered',
+    'notify.titleInvestment': 'Investment registered',
+    'notify.titleWithdrawal': 'Withdrawal registered',
+    'notify.titleDebt': 'Debt payment registered',
     'notify.body': '{amount} · {category}',
+    'notify.bodyMove': '{amount} · {from} → {to}',
+    'notify.bodyWithdraw': '{amount} · {from}',
     'notify.bodyDebt': '{amount} · {debt}',
     'notify.bodyDebtSettled': '{amount} · {debt} · paid off',
     'notify.bodyHabit': '{count}× {category} this week · {amount}',
@@ -804,6 +811,8 @@ export const translations = {
     'search.answerIncome': 'Your income ({period}): {amount}.',
     'search.answerSavings':
       'You saved {amount} {period} (income {income} − expenses {expenses}).',
+    'search.answerSavingsWithObligations':
+      'Income vs spend {period}: {amount} (income {income} − expenses {expenses}). You also paid {obligations} in obligations (card/installments) — that is not new spend.',
     'search.answerCategory':
       '{label} ({period}): {amount} across {count} movements.',
     'search.answerCategoryMethod':
@@ -819,7 +828,7 @@ export const translations = {
     'search.answerUnclear':
       'I could not match that question to your data. Try something like: {examples}',
     'search.examples':
-      '“How much in July?”, “March 2025”, “2 months ago”, “How much this year?”, “Coffee this month”',
+      '“How much in July?”, “March 2025”, “How much did I pay on the card?”, “Coffee this month”',
     'search.answerTopWithIncome':
       'Your biggest expense ({period}) is {label}: {amount} ({percent}% of income {income}) across {count} movements.',
     'search.answerNoIncome':
@@ -859,6 +868,22 @@ export const translations = {
     'search.answerBudgetOk': 'No limits exceeded in {period}.',
     'search.answerBudgetOver':
       '{count} limits exceeded in {period}. Highest: {label} at {percent}%.',
+    'search.labelCardPay': 'card payments',
+    'search.labelObligation': 'obligations',
+    'search.answerCardCharges':
+      'Card purchases ({period}): {amount} across {count} movements. That is spend — when you bought.',
+    'search.answerCardChargesWithPay':
+      'Card purchases ({period}): {amount} across {count} movements (spend). Payments to the card: {paid} in {paidCount} — an obligation, not new spend.',
+    'search.answerCardPay':
+      'Payments to the card ({period}): {amount} across {count} movements. That is an obligation, not spend: the expense was when you bought.',
+    'search.answerCardPayEmpty': 'No card payments logged in {period}.',
+    'search.answerObligations':
+      'Obligations paid ({period}): {amount} across {count} movements (installments, card, debts). Not new spend.',
+    'search.answerObligationsNamed':
+      '{label} ({period}): {amount} across {count} obligation payments. Not an expense — it settles what you already owed.',
+    'search.answerObligationsEmpty': 'No obligation payments logged in {period}.',
+    'search.answerExpensesVsObligations':
+      'Spend ({period}): {expenses} across {expenseCount} movements. Obligations paid: {obligations} in {obligationCount} (card/installments, not new spend). Highest spend: {detail}.',
   },
   es: {
     'brand.mark': 'RUMI',
@@ -1064,7 +1089,7 @@ export const translations = {
     'insights.searchPlaceholder': '¿Cuánto gasté en julio?',
     'insights.searchAsk': 'Preguntar',
     'insights.searchHint':
-      'Escribe el mes que quieras: julio, marzo 2025, hace 2 meses. Las chips son solo ejemplos cortos.',
+      'Gastar y pagar la tarjeta no es lo mismo: el gasto es cuando compras; el pago de TC es una obligación. Prueba “julio”, “café” o “cuánto pagué de tarjeta”.',
     'insights.searchSuggestions': 'Prueba una de estas',
     'insights.searchAnswer': 'Respuesta',
     'insights.searchClear': 'Limpiar',
@@ -1446,7 +1471,14 @@ export const translations = {
     'freq.yearly': 'Anual',
 
     'notify.title': 'Movimiento registrado',
+    'notify.titleIncome': 'Ingreso registrado',
+    'notify.titleMove': 'Transferencia registrada',
+    'notify.titleInvestment': 'Inversión registrada',
+    'notify.titleWithdrawal': 'Retiro registrado',
+    'notify.titleDebt': 'Pago de deuda registrado',
     'notify.body': '{amount} · {category}',
+    'notify.bodyMove': '{amount} · {from} → {to}',
+    'notify.bodyWithdraw': '{amount} · {from}',
     'notify.bodyDebt': '{amount} · {debt}',
     'notify.bodyDebtSettled': '{amount} · {debt} · cuenta saldada',
     'notify.bodyHabit': '{count}× {category} esta semana · {amount}',
@@ -1668,6 +1700,8 @@ export const translations = {
     'search.answerIncome': 'Tus ingresos ({period}): {amount}.',
     'search.answerSavings':
       'Ahorraste {amount} {period} (ingresos {income} − gastos {expenses}).',
+    'search.answerSavingsWithObligations':
+      'Ingresos vs gastos {period}: {amount} (ingresos {income} − gastos {expenses}). Además pagaste {obligations} en obligaciones (tarjeta/cuotas): eso no es gasto nuevo.',
     'search.answerCategory':
       '{label} ({period}): {amount} en {count} movimientos.',
     'search.answerCategoryMethod':
@@ -1684,7 +1718,7 @@ export const translations = {
     'search.answerUnclear':
       'No pude relacionar esa pregunta con tus datos. Prueba algo como: {examples}',
     'search.examples':
-      '“¿Cuánto gasté en julio?”, “marzo 2025”, “hace 2 meses”, “¿Cuánto este año?”, “café este mes”',
+      '“¿Cuánto gasté en julio?”, “marzo 2025”, “¿Cuánto pagué de tarjeta?”, “café este mes”',
     'search.answerTopWithIncome':
       'Tu mayor gasto ({period}) es {label}: {amount} ({percent}% del ingreso {income}) en {count} movimientos.',
     'search.answerNoIncome':
@@ -1724,6 +1758,22 @@ export const translations = {
     'search.answerBudgetOk': 'Ningún tope superado en {period}.',
     'search.answerBudgetOver':
       '{count} topes superados en {period}. El peor: {label} al {percent}%.',
+    'search.labelCardPay': 'pagos a tarjeta',
+    'search.labelObligation': 'obligaciones',
+    'search.answerCardCharges':
+      'Compras con tarjeta ({period}): {amount} en {count} movimientos. Eso sí es gasto: cuando compraste.',
+    'search.answerCardChargesWithPay':
+      'Compras con tarjeta ({period}): {amount} en {count} movimientos (gasto). Pagos a la tarjeta: {paid} en {paidCount} — eso es obligación, no gasto nuevo.',
+    'search.answerCardPay':
+      'Pagos a la tarjeta ({period}): {amount} en {count} movimientos. Es una obligación, no un gasto: el gasto fue cuando compraste.',
+    'search.answerCardPayEmpty': 'No hay pagos a tarjeta registrados en {period}.',
+    'search.answerObligations':
+      'Obligaciones pagadas ({period}): {amount} en {count} movimientos (cuotas, tarjeta, deudas). No es gasto nuevo.',
+    'search.answerObligationsNamed':
+      '{label} ({period}): {amount} en {count} pagos de obligación. No es un gasto: es saldar lo que ya debías.',
+    'search.answerObligationsEmpty': 'No hay pagos de obligaciones en {period}.',
+    'search.answerExpensesVsObligations':
+      'Gastos ({period}): {expenses} en {expenseCount} movimientos. Obligaciones pagadas: {obligations} en {obligationCount} (tarjeta/cuotas, no es gasto nuevo). Mayor gasto: {detail}.',
   },
 } as const;
 

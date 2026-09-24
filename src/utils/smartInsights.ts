@@ -10,6 +10,7 @@ import type { Account, Period, Transaction, Debt } from '@/src/types/finance';
 import type { SpendConcept } from '@/src/types/settings';
 import { categoryLabel as resolveCategoryLabel } from '@/src/utils/categoryLabel';
 import { accountDisplayName } from '@/src/utils/accounts';
+import { isRevolving } from '@/src/utils/debts';
 import {
   antExpenseBreakdown,
   calendarMonthRange,
@@ -940,15 +941,112 @@ function detectCategories(
   return top;
 }
 
+function isExpenseTx(tx: Transaction): boolean {
+  return tx.type === 'expense';
+}
+
+function isObligationTx(tx: Transaction): boolean {
+  return tx.type === 'debt_payment';
+}
+
+function expenseTxs(list: Transaction[]): Transaction[] {
+  return list.filter(isExpenseTx);
+}
+
+function obligationTxs(list: Transaction[]): Transaction[] {
+  return list.filter(isObligationTx);
+}
+
+function revolvingDebtIds(debts?: Debt[]): Set<string> {
+  return new Set((debts ?? []).filter((d) => isRevolving(d)).map((d) => d.id));
+}
+
+/** Paying the card / cupo / credicheque — not a new spend. */
+function cardObligationTxs(list: Transaction[], debts?: Debt[]): Transaction[] {
+  const ids = revolvingDebtIds(debts);
+  const payments = obligationTxs(list);
+  if (ids.size === 0) return [];
+  return payments.filter((x) => x.debtId && ids.has(x.debtId));
+}
+
+function cardChargeTxs(list: Transaction[]): Transaction[] {
+  return expenseTxs(list).filter((x) => x.paymentMethod === 'credit');
+}
+
+function isCardPaymentQuery(q: string): boolean {
+  return includesAny(q, [
+    'pago de tc',
+    'pago tc',
+    'pague la tc',
+    'pague tc',
+    'pague la tarjeta',
+    'pague tarjeta',
+    'pago de tarjeta',
+    'pago tarjeta',
+    'pagos de tarjeta',
+    'pagos a tarjeta',
+    'abono a tarjeta',
+    'abono a la tarjeta',
+    'abono a la tc',
+    'pague la tarjeta de credito',
+    'pagar la tarjeta',
+    'pagar tarjeta',
+    'pague mi tarjeta',
+    'card payment',
+    'paid my card',
+    'paid the card',
+    'paid the credit card',
+    'credit card payment',
+    'pay the card',
+    'payment to the card',
+  ]);
+}
+
+function isCardTopicQuery(q: string): boolean {
+  return (
+    isCardPaymentQuery(q) ||
+    includesAny(q, [
+      'tarjeta de credito',
+      'tarjeta de crédito',
+      'tarjeta credito',
+      'tarjeta crédito',
+      'credit card',
+      'con tarjeta',
+      'tarjeta',
+      'tarjetas',
+      'tc',
+    ])
+  );
+}
+
+function isCreditsCategoryHit(
+  cats: CategoryHit | null,
+  spendConcepts: SpendConcept[]
+): boolean {
+  if (!cats) return false;
+  if (cats.ids.includes(CREDITS_CONCEPT_ID) || cats.label === CREDITS_CONCEPT_ID) {
+    return true;
+  }
+  return cats.ids.some(
+    (id) => findSpendSub(spendConcepts, id)?.concept.id === CREDITS_CONCEPT_ID
+  );
+}
+
 function matchTransactionsToCategories(
   list: Transaction[],
   cats: CategoryHit,
-  spendConcepts: SpendConcept[]
+  spendConcepts: SpendConcept[],
+  mode: 'expense' | 'obligation' | 'spendOut' = 'expense'
 ): Transaction[] {
   const idSet = new Set(cats.ids);
   return list.filter((x) => {
-    // Debt payments from Wealth land on Credit subs — count them like expenses.
-    if ((x.type !== 'expense' && x.type !== 'debt_payment') || !x.categoryId) {
+    const typeOk =
+      mode === 'obligation'
+        ? isObligationTx(x)
+        : mode === 'expense'
+          ? isExpenseTx(x)
+          : isExpenseTx(x) || isObligationTx(x);
+    if (!typeOk || !x.categoryId) {
       return false;
     }
     const categoryId = x.categoryId;
@@ -974,6 +1072,8 @@ function matchTransactionsToCategories(
 function detectPaymentMethod(q: string): 'cash' | 'debit' | 'credit' | 'transfer' | null {
   if (includesAny(q, ['efectivo', 'cash'])) return 'cash';
   if (includesAny(q, ['debito', 'débito', 'debit'])) return 'debit';
+  // Paying the card is an obligation, not “spent with credit”.
+  if (isCardPaymentQuery(q)) return null;
   // Do NOT treat bare "crédito(s)" as card — that is the Créditos spend concept / installments.
   if (
     includesAny(q, [
@@ -984,6 +1084,7 @@ function detectPaymentMethod(q: string): 'cash' | 'debit' | 'credit' | 'transfer
       'credit card',
       'con tarjeta',
       'tarjeta',
+      'tarjetas',
       'card',
     ])
   ) {
@@ -1029,7 +1130,7 @@ function topExpenseCategory(
 ): { categoryId: string; amount: number; count: number } | null {
   const map = new Map<string, { amount: number; count: number }>();
   for (const tx of list) {
-    if ((tx.type !== 'expense' && tx.type !== 'debt_payment') || !tx.categoryId) continue;
+    if (!isExpenseTx(tx) || !tx.categoryId) continue;
     const cur = map.get(tx.categoryId) ?? { amount: 0, count: 0 };
     cur.amount += tx.amount;
     cur.count += 1;
@@ -1069,7 +1170,7 @@ function expenseTotalsByConcept(
 ): Map<string, { amount: number; count: number }> {
   const map = new Map<string, { amount: number; count: number }>();
   for (const tx of list) {
-    if ((tx.type !== 'expense' && tx.type !== 'debt_payment') || !tx.categoryId) continue;
+    if (!isExpenseTx(tx) || !tx.categoryId) continue;
     const hit = findSpendSub(spendConcepts, tx.categoryId);
     const key = hit?.concept.id ?? tx.categoryId;
     const cur = map.get(key) ?? { amount: 0, count: 0 };
@@ -1108,7 +1209,7 @@ function accountSpendDetail(
 ): string {
   const map = new Map<string, number>();
   for (const tx of list) {
-    if (tx.type !== 'expense' && tx.type !== 'debt_payment') continue;
+    if (!isExpenseTx(tx) && !isObligationTx(tx)) continue;
     const id = tx.accountId ?? 'cash';
     map.set(id, (map.get(id) ?? 0) + tx.amount);
   }
@@ -1226,7 +1327,7 @@ function tryAnswerPercentQuery(
   const income = sumByType(list, 'income');
   if (income <= 0) return t('search.answerNoIncome', { period: periodLabel });
 
-  const spendTotal = sumSpendOut(list);
+  const spendTotal = sumByType(list, 'expense');
 
   let cats = flags.cats;
   if (
@@ -1322,7 +1423,13 @@ function tryAnswerPercentQuery(
   }
 
   if (cats) {
-    let matched = matchTransactionsToCategories(list, cats, spendConcepts);
+    const creditsAsk = isCreditsCategoryHit(cats, spendConcepts);
+    const matched = matchTransactionsToCategories(
+      list,
+      cats,
+      spendConcepts,
+      creditsAsk ? 'obligation' : 'expense'
+    );
     const amount = matched.reduce((s, x) => s + x.amount, 0);
     const label =
       cats.label === 'food-group'
@@ -1398,7 +1505,7 @@ export function buildSearchSuggestions(
   const periodTxs = filterByPeriod(allTxs, period);
   const spentBySub = new Map<string, number>();
   for (const tx of periodTxs) {
-    if ((tx.type !== 'expense' && tx.type !== 'debt_payment') || !tx.categoryId) continue;
+    if (!isExpenseTx(tx) || !tx.categoryId) continue;
     spentBySub.set(tx.categoryId, (spentBySub.get(tx.categoryId) ?? 0) + tx.amount);
   }
 
@@ -1408,9 +1515,19 @@ export function buildSearchSuggestions(
   const topHit = topSub ? findSpendSub(spendConcepts, topSub.id) : undefined;
   const topName = topHit ? `${topHit.concept.name}/${topSub.name}` : topSub?.name;
 
+  const cardPays = cardObligationTxs(periodTxs, options.debts);
+  const anyObligations = obligationTxs(periodTxs);
+  const hasCardTopic = cardPays.length > 0 || revolvingDebtIds(options.debts).size > 0;
+
   if (language === 'es') {
     prompts.push(`¿Cuánto gasté ${when}?`);
-    if (topName) prompts.push(`¿Cuánto gasté en ${topName} ${when}?`);
+    if (hasCardTopic) {
+      prompts.push(`¿Cuánto pagué de tarjeta ${when}?`);
+    } else if (anyObligations.length > 0) {
+      prompts.push(`¿Cuánto pagué en obligaciones ${when}?`);
+    } else if (topName) {
+      prompts.push(`¿Cuánto gasté en ${topName} ${when}?`);
+    }
     prompts.push(
       period === 'mes'
         ? '¿Cuáles son mis gastos hormiga?'
@@ -1419,7 +1536,13 @@ export function buildSearchSuggestions(
     prompts.push('¿Cuánto tengo disponible?');
   } else {
     prompts.push(`How much did I spend ${when}?`);
-    if (topName) prompts.push(`How much on ${topName} ${when}?`);
+    if (hasCardTopic) {
+      prompts.push(`How much did I pay on the card ${when}?`);
+    } else if (anyObligations.length > 0) {
+      prompts.push(`How much did I pay in obligations ${when}?`);
+    } else if (topName) {
+      prompts.push(`How much on ${topName} ${when}?`);
+    }
     prompts.push(
       period === 'mes'
         ? 'What are my ant expenses?'
@@ -1506,6 +1629,29 @@ export function answerFinanceQuery(
     'ant expense',
     'ant expenses',
   ]);
+  const wantsSpendVerb = includesAny(q, [
+    'gaste',
+    'gasté',
+    'gasto',
+    'gastos',
+    'spend',
+    'spent',
+    'expense',
+    'expenses',
+  ]);
+  const wantsPayVerb = includesAny(q, [
+    'pague',
+    'pagué',
+    'pago',
+    'pagos',
+    'abono',
+    'abonos',
+    'paid',
+    'pay',
+    'payment',
+    'payments',
+  ]);
+  const wantsCardPay = isCardPaymentQuery(q) || (isCardTopicQuery(q) && wantsPayVerb && !wantsSpendVerb);
   const wantsDebt = includesAny(q, [
     'deuda',
     'deudas',
@@ -1517,7 +1663,9 @@ export function answerFinanceQuery(
     'cuanto debo',
     'cuánto debo',
   ]);
-  const wantsDebtPayments = includesAny(q, [
+  const wantsDebtPayments =
+    wantsCardPay ||
+    includesAny(q, [
     'cuota',
     'cuotas',
     'pago de deuda',
@@ -1534,9 +1682,14 @@ export function answerFinanceQuery(
     'pagué créditos',
     'pagos a creditos',
     'pagos a créditos',
+    'obligacion',
+    'obligación',
+    'obligaciones',
     'debt payment',
     'installment',
     'installments',
+    'obligations',
+    'obligation',
   ]);
   const wantsAvailable = includesAny(q, [
     'disponible',
@@ -1654,8 +1807,18 @@ export function answerFinanceQuery(
 
   if (wantsSavings) {
     const income = sumByType(list, 'income');
-    const expense = sumSpendOut(list);
+    const expense = sumByType(list, 'expense');
+    const obligations = sumByType(list, 'debt_payment');
     const saved = income - expense;
+    if (obligations > 0) {
+      return t('search.answerSavingsWithObligations', {
+        amount: format(saved),
+        period: periodLabel,
+        income: format(income),
+        expenses: format(expense),
+        obligations: format(obligations),
+      });
+    }
     return t('search.answerSavings', {
       amount: format(saved),
       period: periodLabel,
@@ -1668,10 +1831,52 @@ export function answerFinanceQuery(
     return t('search.answerAvailable', { amount: format(options.availableCash) });
   }
 
+  if (wantsCardPay || (isCardTopicQuery(q) && !wantsSpendVerb && wantsDebtPayments)) {
+    const payments = cardObligationTxs(list, options.debts);
+    const charges = cardChargeTxs(list);
+    const amount = payments.reduce((s, x) => s + x.amount, 0);
+    if (payments.length === 0) {
+      if (charges.length > 0 && wantsSpendVerb) {
+        return t('search.answerCardCharges', {
+          amount: format(charges.reduce((s, x) => s + x.amount, 0)),
+          period: periodLabel,
+          count: charges.length,
+        });
+      }
+      return t('search.answerCardPayEmpty', { period: periodLabel });
+    }
+    if (wantsCount) {
+      return t('search.answerCount', {
+        count: payments.length,
+        label: t('search.labelCardPay'),
+        period: periodLabel,
+      });
+    }
+    if (charges.length > 0 && wantsSpendVerb) {
+      return t('search.answerCardChargesWithPay', {
+        amount: format(charges.reduce((s, x) => s + x.amount, 0)),
+        period: periodLabel,
+        count: charges.length,
+        paid: format(amount),
+        paidCount: payments.length,
+      });
+    }
+    return t('search.answerCardPay', {
+      amount: format(amount),
+      period: periodLabel,
+      count: payments.length,
+    });
+  }
+
   if (wantsDebtPayments) {
-    let payments = list.filter((x) => x.type === 'debt_payment');
+    let payments = obligationTxs(list);
     if (cats) {
-      const matched = matchTransactionsToCategories(payments, cats, spendConcepts);
+      const matched = matchTransactionsToCategories(
+        list,
+        cats,
+        spendConcepts,
+        'obligation'
+      );
       if (matched.length > 0 || cats.score >= 20) {
         payments = matched.length > 0 ? matched : payments;
       }
@@ -1680,9 +1885,9 @@ export function answerFinanceQuery(
     const label =
       cats?.displayName && !cats.displayName.startsWith('concept-')
         ? cats.displayName
-        : t('type.debt_payment');
+        : t('search.labelObligation');
     if (payments.length === 0) {
-      return t('search.answerCategoryEmpty', { label, period: periodLabel });
+      return t('search.answerObligationsEmpty', { period: periodLabel });
     }
     if (wantsCount) {
       return t('search.answerCount', {
@@ -1691,8 +1896,7 @@ export function answerFinanceQuery(
         period: periodLabel,
       });
     }
-    return t('search.answerCategory', {
-      label,
+    return t('search.answerObligations', {
       amount: format(amount),
       period: periodLabel,
       count: payments.length,
@@ -1749,7 +1953,13 @@ export function answerFinanceQuery(
 
   // Category before "ant" so specific concepts win over hormiga.
   if (cats && !cats.ids.some((id) => INCOME_CATEGORY_IDS.includes(id))) {
-    let matched = matchTransactionsToCategories(list, cats, spendConcepts);
+    const creditsAsk = isCreditsCategoryHit(cats, spendConcepts);
+    let matched = matchTransactionsToCategories(
+      list,
+      cats,
+      spendConcepts,
+      creditsAsk ? 'obligation' : 'expense'
+    );
     if (method) {
       matched = matched.filter((x) => x.paymentMethod === method);
     }
@@ -1765,6 +1975,15 @@ export function answerFinanceQuery(
       return t('search.answerCategoryEmpty', {
         label,
         period: periodLabel,
+      });
+    }
+
+    if (creditsAsk) {
+      return t('search.answerObligationsNamed', {
+        label,
+        amount: format(amount),
+        period: periodLabel,
+        count: matched.length,
       });
     }
 
@@ -1832,8 +2051,8 @@ export function answerFinanceQuery(
   if (wantsCompare) {
     const prevRange = analogRange(period);
     const prev = filterBetween(transactions, prevRange.from, prevRange.to);
-    const nowSpend = sumSpendOut(list);
-    const prevSpend = sumSpendOut(prev);
+    const nowSpend = sumByType(list, 'expense');
+    const prevSpend = sumByType(prev, 'expense');
     const diff = nowSpend - prevSpend;
     const compareLabel =
       period.analog === 'month'
@@ -1893,11 +2112,29 @@ export function answerFinanceQuery(
   }
 
   if (method) {
-    const matched = list.filter(
-      (x) =>
-        (x.type === 'expense' || x.type === 'debt_payment') &&
-        x.paymentMethod === method
-    );
+    if (method === 'credit' || isCardTopicQuery(q)) {
+      const charges = cardChargeTxs(list);
+      const payments = cardObligationTxs(list, options.debts);
+      const chargeAmount = charges.reduce((s, x) => s + x.amount, 0);
+      if (charges.length === 0 && payments.length === 0) {
+        return t('search.answerCardPayEmpty', { period: periodLabel });
+      }
+      if (payments.length > 0) {
+        return t('search.answerCardChargesWithPay', {
+          amount: format(chargeAmount),
+          period: periodLabel,
+          count: charges.length,
+          paid: format(payments.reduce((s, x) => s + x.amount, 0)),
+          paidCount: payments.length,
+        });
+      }
+      return t('search.answerCardCharges', {
+        amount: format(chargeAmount),
+        period: periodLabel,
+        count: charges.length,
+      });
+    }
+    const matched = expenseTxs(list).filter((x) => x.paymentMethod === method);
     const amount = matched.reduce((s, x) => s + x.amount, 0);
     if (wantsCount) {
       return t('search.answerCount', {
@@ -1941,13 +2178,19 @@ export function answerFinanceQuery(
         'total',
       ]))
   ) {
-    const expenses = list.filter(
-      (x) => x.type === 'expense' || x.type === 'debt_payment'
-    );
+    const expenses = expenseTxs(list);
+    const obligations = obligationTxs(list);
     const amount = expenses.reduce((s, x) => s + x.amount, 0);
     const count = expenses.length;
-    if (count === 0) {
+    if (count === 0 && obligations.length === 0) {
       return t('search.answerEmptyPeriod', { period: periodLabel });
+    }
+    if (count === 0 && obligations.length > 0) {
+      return t('search.answerObligations', {
+        amount: format(obligations.reduce((s, x) => s + x.amount, 0)),
+        period: periodLabel,
+        count: obligations.length,
+      });
     }
     if (wantsAverage) {
       return t('search.answerAverage', {
@@ -1965,6 +2208,16 @@ export function answerFinanceQuery(
       });
     }
     const detail = rankingDetail(expenses, spendConcepts, format);
+    if (obligations.length > 0) {
+      return t('search.answerExpensesVsObligations', {
+        expenses: format(amount),
+        expenseCount: count,
+        obligations: format(obligations.reduce((s, x) => s + x.amount, 0)),
+        obligationCount: obligations.length,
+        period: periodLabel,
+        detail: detail || t('insights.emptyPeriod'),
+      });
+    }
     if (detail) {
       return t('search.answerExpensesDetail', {
         amount: format(amount),
