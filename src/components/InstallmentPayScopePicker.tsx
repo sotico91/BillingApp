@@ -17,14 +17,18 @@ export function InstallmentPayScopePicker({ choices, scope, onChange }: Props) {
   const { format } = useMoney();
 
   const options: { id: InstallmentPayScope; label: string; sub: string }[] = [
-    {
-      id: 'cuota',
-      label: t('flow.payScopeCuota'),
-      sub: format(choices.cuota),
-    },
+    ...(choices.hasDistinctMonthPay
+      ? [
+          {
+            id: 'cuota' as const,
+            label: choices.revolving ? t('flow.payScopeMonth') : t('flow.payScopeCuota'),
+            sub: format(choices.cuota),
+          },
+        ]
+      : []),
     {
       id: 'full',
-      label: t('flow.payScopeFull'),
+      label: choices.revolving ? t('flow.payScopeFullRevolving') : t('flow.payScopeFull'),
       sub: format(choices.remaining),
     },
     {
@@ -37,7 +41,9 @@ export function InstallmentPayScopePicker({ choices, scope, onChange }: Props) {
   return (
     <View style={styles.wrap}>
       <Text style={styles.title}>{t('flow.payScopeTitle')}</Text>
-      <Text style={styles.hint}>{t('flow.payScopeHint')}</Text>
+      <Text style={styles.hint}>
+        {choices.revolving ? t('flow.payScopeHintRevolving') : t('flow.payScopeHint')}
+      </Text>
       <View style={styles.grid}>
         {options.map((opt) => {
           const on = scope === opt.id;

@@ -40,6 +40,7 @@ import {
 import { notifyExpenseRegistered } from '@/src/utils/notifications';
 import { habitExpenseNotifyBody } from '@/src/utils/habitPilot';
 import {
+  amountsMatch,
   inferInstallmentPayScope,
   installmentPayChoices,
   openDebts,
@@ -159,7 +160,7 @@ export function ExpenseForm({
     setCategoryId(debt.categoryId ?? 'otros');
     const choices = installmentPayChoices(debt);
     const parsed = parse(amount);
-    if (!choices?.canChooseFull) {
+    if (!choices) {
       setPayScope(null);
       const suggest = suggestedDebtPayAmount(debt);
       if (suggest > 0) setAmount(String(suggest));
@@ -170,7 +171,9 @@ export function ExpenseForm({
     if (scope === 'cuota' && (!parsed || parsed <= 0)) {
       setAmount(String(choices.cuota));
     }
-    if (scope === 'full') setAmount(String(choices.remaining));
+    if (scope === 'full' && (!parsed || parsed <= 0 || amountsMatch(parsed, choices.remaining))) {
+      setAmount(String(choices.remaining));
+    }
   }
 
   useEffect(() => {
@@ -222,7 +225,7 @@ export function ExpenseForm({
       Alert.alert(t('add.invalidTitle'), t('add.invalidMessage'));
       return;
     }
-    if (type === 'debt_payment' && payChoices?.canChooseFull) {
+    if (type === 'debt_payment' && payChoices) {
       const inferred = inferInstallmentPayScope(payChoices, parsed);
       if (!payScope || (payScope === 'cuota' && inferred !== 'cuota')) {
         Alert.alert(t('flow.payScopeTitle'), t('flow.payScopeNeed'));
@@ -444,7 +447,7 @@ export function ExpenseForm({
               </Pressable>
             ))}
           </View>
-          {payChoices?.canChooseFull ? (
+          {payChoices ? (
             <InstallmentPayScopePicker
               choices={payChoices}
               scope={payScope}

@@ -47,21 +47,24 @@ export type InstallmentPayScope = 'cuota' | 'full' | 'other';
 export type InstallmentPayChoices = {
   cuota: number;
   remaining: number;
-  canChooseFull: boolean;
+  /** Month-pay chip only when it is less than what is still owed. */
+  hasDistinctMonthPay: boolean;
+  revolving: boolean;
 };
 
-/** Fixed installments only. Revolving cards never get “pay off vs other”. */
+/** Fixed loans, cards, credicheque and cupos: pay this month, pay all owed, or another amount. */
 export function installmentPayChoices(
   debt: Pick<Debt, 'kind' | 'balance' | 'installment'> | undefined
 ): InstallmentPayChoices | null {
-  if (!debt || isRevolving(debt)) return null;
+  if (!debt) return null;
   const remaining = Math.max(0, debt.balance || 0);
-  const cuota = suggestedDebtPayAmount(debt);
-  if (!(remaining > SETTLED_EPS) || !(cuota > 0)) return null;
+  if (!(remaining > SETTLED_EPS)) return null;
+  const cuota = debt.installment > 0 ? Math.min(debt.installment, remaining) : 0;
   return {
     cuota,
     remaining,
-    canChooseFull: remaining > cuota + SETTLED_EPS,
+    hasDistinctMonthPay: cuota > SETTLED_EPS && remaining > cuota + SETTLED_EPS,
+    revolving: isRevolving(debt),
   };
 }
 
@@ -73,31 +76,29 @@ export function inferInstallmentPayScope(
   choices: InstallmentPayChoices,
   amount: number | null
 ): InstallmentPayScope {
-  if (amount == null || !(amount > 0)) return 'cuota';
+  if (amount == null || !(amount > 0)) {
+    return choices.hasDistinctMonthPay ? 'cuota' : 'full';
+  }
   if (amountsMatch(amount, choices.remaining)) return 'full';
-  if (amountsMatch(amount, choices.cuota)) return 'cuota';
+  if (choices.hasDistinctMonthPay && amountsMatch(amount, choices.cuota)) return 'cuota';
   return 'other';
 }
 
-/** True when this payment brings a fixed loan’s remaining balance to 0. */
+/** True when this payment brings remaining owed / used to 0. */
 export function paymentSettlesInstallment(
   debt: Pick<Debt, 'kind' | 'balance'> | undefined,
   paid: number
 ): boolean {
-  if (!debt || isRevolving(debt) || !(paid > 0)) return false;
+  if (!debt || !(paid > 0)) return false;
   return isSettledBalance(Math.max(0, (debt.balance || 0) - paid));
 }
 
-/**
- * Installment loans close when remaining hits 0.
- * Revolving cards/cupos stay open even at 0 used — the line still exists.
- */
+/** Any debt that reaches 0 after a payment leaves live Wealth (kept via closedAt). */
 export function closedAtAfterBalance(
   debt: Pick<Debt, 'kind' | 'closedAt'>,
   nextBalance: number,
   closedAt: string
 ): string | undefined {
-  if (isRevolving(debt)) return debt.closedAt;
   if (isSettledBalance(nextBalance)) return debt.closedAt ?? closedAt;
   return undefined;
 }
@@ -170,7 +171,12 @@ export function applyRevolvingCharge(
   if (!debtId || !amount) return debts;
   return debts.map((debt) => {
     if (debt.id !== debtId) return debt;
-    return { ...debt, balance: Math.max(0, (debt.balance || 0) + amount * direction) };
+    const nextBalance = Math.max(0, (debt.balance || 0) + amount * direction);
+    return {
+      ...debt,
+      balance: nextBalance,
+      closedAt: nextBalance > SETTLED_EPS ? undefined : debt.closedAt,
+    };
   });
 }
 

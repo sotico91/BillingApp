@@ -47,6 +47,7 @@ import {
   pocketMoveAccounts,
 } from '@/src/utils/accounts';
 import {
+  amountsMatch,
   inferInstallmentPayScope,
   installmentPayChoices,
   openDebts,
@@ -180,7 +181,7 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
     setDebtId(debt.id);
     const choices = installmentPayChoices(debt);
     const parsed = parse(amount);
-    if (!choices?.canChooseFull) {
+    if (!choices) {
       setPayScope(null);
       const suggest = suggestedDebtPayAmount(debt);
       if (suggest > 0) setAmount(String(suggest));
@@ -191,7 +192,9 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
     if (scope === 'cuota' && (!parsed || parsed <= 0)) {
       setAmount(String(choices.cuota));
     }
-    if (scope === 'full') setAmount(String(choices.remaining));
+    if (scope === 'full' && (!parsed || parsed <= 0 || amountsMatch(parsed, choices.remaining))) {
+      setAmount(String(choices.remaining));
+    }
   }
 
   async function applyTemplate(id: string) {
@@ -280,7 +283,7 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
         return;
       }
       const choices = installmentPayChoices(liveDebts.find((d) => d.id === debtId));
-      if (choices?.canChooseFull) {
+      if (choices) {
         const parsed = parse(amount);
         const inferred = inferInstallmentPayScope(choices, parsed);
         if (!payScope) {
@@ -330,7 +333,7 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
       Alert.alert(t('add.invalidTitle'), t('add.invalidMessage'));
       return;
     }
-    if (intent === 'debt' && payChoices?.canChooseFull) {
+    if (intent === 'debt' && payChoices) {
       const inferred = inferInstallmentPayScope(payChoices, parsed);
       if (!payScope || (payScope === 'cuota' && inferred !== 'cuota')) {
         Alert.alert(t('flow.payScopeTitle'), t('flow.payScopeNeed'));
@@ -598,7 +601,7 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
                     })}
                   </View>
                 )}
-                {payChoices?.canChooseFull ? (
+                {payChoices ? (
                   <>
                     <InstallmentPayScopePicker
                       choices={payChoices}
