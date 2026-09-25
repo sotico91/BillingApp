@@ -18,7 +18,7 @@ import { useLanguage } from '@/src/i18n/LanguageContext';
 import { palette, radii } from '@/src/theme/colors';
 import type { Account } from '@/src/types/finance';
 import type { OneTapHabit } from '@/src/utils/oneTapHabits';
-import { defaultSpendAccountId } from '@/src/utils/accounts';
+import { defaultSpendAccountId, isSpendableLiquid } from '@/src/utils/accounts';
 import { tapFeedback } from '@/src/utils/selectFeedback';
 import { AccountChoiceChips } from '@/src/components/AccountChoiceChips';
 
@@ -165,9 +165,10 @@ export function QuickRepeatSheet({
 
               <Text style={styles.fieldLabel}>{t('home.quickConfirmAccount')}</Text>
               <AccountChoiceChips
-                accounts={accounts}
+                accounts={accounts.filter((a) => isSpendableLiquid(a.type))}
                 selectedId={accountId}
                 onSelect={setAccountId}
+                allowAddWallet
               />
 
               {editing ? (

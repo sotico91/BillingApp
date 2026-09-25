@@ -21,6 +21,7 @@ import { categoryLabel } from '@/src/utils/categoryLabel';
 import { notifyExpenseRegistered } from '@/src/utils/notifications';
 import { movementNotifyCopy } from '@/src/utils/movementNotify';
 import { buildOneTapHabits, type OneTapHabit } from '@/src/utils/oneTapHabits';
+import { paymentMethodForAccount } from '@/src/utils/accounts';
 import { tapFeedback } from '@/src/utils/selectFeedback';
 
 /**
@@ -71,7 +72,10 @@ export function QuickAddBar() {
         amount,
         categoryId: habit.categoryId,
         note: resolvedNote,
-        paymentMethod: habit.paymentMethod ?? 'debit',
+        paymentMethod: paymentMethodForAccount(
+          accounts.find((a) => a.id === accountId),
+          habit.paymentMethod ?? 'debit'
+        ),
         accountId,
       });
       await updateQuickTemplate({

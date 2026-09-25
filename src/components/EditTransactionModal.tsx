@@ -27,8 +27,9 @@ import { incomeDestinationAccounts } from '@/src/utils/netWorth';
 import { AccountChoiceChips } from '@/src/components/AccountChoiceChips';
 import { KeyboardSafeOverlay, KeyboardSafeScroll } from '@/src/components/KeyboardSafe';
 import {
-  accountsForPaymentMethod,
+  accountsForExpenseSource,
   firstAccountId,
+  paymentMethodForAccount,
   pocketMoveAccounts,
 } from '@/src/utils/accounts';
 import { payAccountIdForDebt } from '@/src/utils/debts';
@@ -83,7 +84,7 @@ export function EditTransactionModal({ transaction, visible, onClose }: Props) {
         type === 'investment' ? 'investment' : 'transfer'
       );
     }
-    return accountsForPaymentMethod(accounts, method, {
+    return accountsForExpenseSource(accounts, method, {
       debts,
       debtLabel: (debt) =>
         debt.nameKey
@@ -142,7 +143,15 @@ export function EditTransactionModal({ transaction, visible, onClose }: Props) {
         type,
         amount: parsed,
         categoryId: isPocketMove(type) ? undefined : categoryId,
-        paymentMethod: type === 'income' || isPocketMove(type) ? undefined : method,
+        paymentMethod:
+          type === 'income' || isPocketMove(type)
+            ? undefined
+            : method === 'credit'
+              ? method
+              : paymentMethodForAccount(
+                  accounts.find((a) => a.id === accountId),
+                  method
+                ),
         accountId,
         toAccountId: needsDestination ? toAccountId : undefined,
         note,
@@ -250,9 +259,22 @@ export function EditTransactionModal({ transaction, visible, onClose }: Props) {
               <AccountChoiceChips
                 accounts={accountChoices}
                 selectedId={accountId}
-                onSelect={setAccountId}
+                onSelect={(id) => {
+                  setAccountId(id);
+                  if (
+                    (type === 'expense' || type === 'debt_payment') &&
+                    method !== 'credit'
+                  ) {
+                    const acc = accounts.find((a) => a.id === id);
+                    setMethod(paymentMethodForAccount(acc, method));
+                  }
+                }}
                 allowAddWallet={
-                  type === 'income' || isPocketMove(type) || method === 'transfer'
+                  type === 'income' ||
+                  isPocketMove(type) ||
+                  type === 'expense' ||
+                  type === 'debt_payment' ||
+                  method === 'transfer'
                 }
               />
             )}

@@ -39,11 +39,12 @@ import { useKeyboardVisible } from '@/src/hooks/useKeyboardVisible';
 import type { SavedMovement } from '@/src/components/ExpenseForm';
 import {
   accountDisplayName,
-  accountsForPaymentMethod,
+  accountsForExpenseSource,
   defaultIncomeAccountId,
   defaultSpendAccountId,
   defaultTransferDestinationId,
   firstAccountId,
+  paymentMethodForAccount,
   pocketMoveAccounts,
 } from '@/src/utils/accounts';
 import {
@@ -109,7 +110,7 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
 
   const methodAccounts = useMemo(
     () =>
-      accountsForPaymentMethod(accounts, method, {
+      accountsForExpenseSource(accounts, method, {
         debts,
         debtLabel: (debt) =>
           debt.nameKey
@@ -366,7 +367,14 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
         type,
         amount: parsed,
         categoryId: resolvedCategoryId,
-        paymentMethod: asksPaymentMethod ? method : undefined,
+        paymentMethod: asksPaymentMethod
+          ? method === 'credit'
+            ? method
+            : paymentMethodForAccount(
+                accounts.find((a) => a.id === accountId),
+                method
+              )
+          : undefined,
         accountId,
         toAccountId: intent === 'move' ? toAccountId : undefined,
         debtId: intent === 'debt' ? debtId ?? undefined : undefined,
@@ -734,7 +742,7 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
                       onPress={() => {
                         tapFeedback();
                         setMethod(m);
-                        const nextList = accountsForPaymentMethod(accounts, m, {
+                        const nextList = accountsForExpenseSource(accounts, m, {
                           debts,
                           debtLabel: (debt) =>
                             debt.nameKey
@@ -774,9 +782,19 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
                 variant={intent === 'move' ? 'card' : 'chip'}
                 accounts={accountChoices}
                 selectedId={accountId}
-                onSelect={setAccountId}
+                onSelect={(id) => {
+                  setAccountId(id);
+                  if (asksPaymentMethod && method !== 'credit') {
+                    const acc = accounts.find((a) => a.id === id);
+                    setMethod(paymentMethodForAccount(acc, method));
+                  }
+                }}
                 allowAddWallet={
-                  intent === 'earn' || intent === 'move' || method === 'transfer'
+                  intent === 'earn' ||
+                  intent === 'move' ||
+                  intent === 'spend' ||
+                  intent === 'debt' ||
+                  method === 'transfer'
                 }
               />
             )}

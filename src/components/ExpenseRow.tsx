@@ -80,6 +80,9 @@ export function ExpenseRow({
         </View>
         <Text style={styles.meta} numberOfLines={2}>
           {formatExpenseDate(expense.createdAt, language)}
+          {!pocketMove && expense.accountId
+            ? ` · ${t('history.fromPocket', { pocket: fromName })}`
+            : ''}
           {!pocketMove && expense.paymentMethod
             ? ` · ${t(`method.${expense.paymentMethod}` as TranslationKey)}`
             : ''}

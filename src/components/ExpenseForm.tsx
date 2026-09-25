@@ -33,8 +33,9 @@ import {
   defaultIncomeAccountId,
   defaultSpendAccountId,
   defaultTransferDestinationId,
-  accountsForPaymentMethod,
+  accountsForExpenseSource,
   firstAccountId,
+  paymentMethodForAccount,
   pocketMoveAccounts,
 } from '@/src/utils/accounts';
 import { notifyExpenseRegistered } from '@/src/utils/notifications';
@@ -133,7 +134,7 @@ export function ExpenseForm({
         type === 'investment' ? 'investment' : 'transfer'
       );
     }
-    return accountsForPaymentMethod(accounts, method, {
+    return accountsForExpenseSource(accounts, method, {
       debts,
       debtLabel: (debt) =>
         debt.nameKey
@@ -248,7 +249,15 @@ export function ExpenseForm({
           : type === 'debt_payment'
             ? selectedDebt?.categoryId ?? categoryId
             : categoryId,
-        paymentMethod: type === 'income' || isPocketMove(type) ? undefined : method,
+        paymentMethod:
+          type === 'income' || isPocketMove(type)
+            ? undefined
+            : method === 'credit'
+              ? method
+              : paymentMethodForAccount(
+                  accounts.find((a) => a.id === accountId),
+                  method
+                ),
         accountId,
         toAccountId:
           type === 'transfer' || type === 'investment' ? toAccountId : undefined,
@@ -378,9 +387,20 @@ export function ExpenseForm({
         <AccountChoiceChips
           accounts={accountChoices}
           selectedId={accountId}
-          onSelect={setAccountId}
+          onSelect={(id) => {
+            setAccountId(id);
+            if (type === 'expense' || type === 'debt_payment') {
+              if (method === 'credit') return;
+              const acc = accounts.find((a) => a.id === id);
+              setMethod(paymentMethodForAccount(acc, method));
+            }
+          }}
           allowAddWallet={
-            type === 'income' || isPocketMove(type) || method === 'transfer'
+            type === 'income' ||
+            isPocketMove(type) ||
+            type === 'expense' ||
+            type === 'debt_payment' ||
+            method === 'transfer'
           }
         />
       )}

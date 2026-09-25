@@ -519,6 +519,7 @@ export const translations = {
     'flow.intent.moveSub': 'Between cash, banks, wallets or savings. Not a spend.',
     'flow.moveNotSpend': 'This only moves money you already have. It is not a spend.',
     'history.moveRoute': '{from} → {to}',
+    'history.fromPocket': 'from {pocket}',
     'flow.intent.debt': 'I paid a debt',
     'flow.intent.debtSub': 'Reduces a registered debt',
     'flow.chooseDebt': 'Which debt did you pay?',
@@ -562,7 +563,7 @@ export const translations = {
     'method.cash': 'Cash',
     'method.debit': 'Debit',
     'method.credit': 'Credit',
-    'method.transfer': 'Transfer',
+    'method.transfer': 'Wallet / transfer',
 
     'account.cash': 'Cash',
     'account.bankMain': 'Main bank',
@@ -1407,6 +1408,7 @@ export const translations = {
     'flow.intent.moveSub': 'Entre efectivo, bancos, billeteras o ahorros. No es un gasto.',
     'flow.moveNotSpend': 'Solo mueve plata que ya tienes. No es un gasto.',
     'history.moveRoute': '{from} → {to}',
+    'history.fromPocket': 'salió de {pocket}',
     'flow.intent.debt': 'Pagué una deuda',
     'flow.intent.debtSub': 'Baja el saldo de una deuda registrada',
     'flow.chooseDebt': '¿Qué deuda pagaste?',
@@ -1450,7 +1452,7 @@ export const translations = {
     'method.cash': 'Efectivo',
     'method.debit': 'Débito',
     'method.credit': 'Crédito',
-    'method.transfer': 'Transferencia',
+    'method.transfer': 'Billetera o transferencia',
 
     'account.cash': 'Efectivo',
     'account.bankMain': 'Banco principal',

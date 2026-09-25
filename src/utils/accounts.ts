@@ -330,6 +330,7 @@ export function defaultIncomeAccountId(accounts: Account[]): string {
 
 /**
  * Pockets that match how the money left: cash, debit card, credit, or transfer.
+ * For spends, prefer `accountsForExpenseSource` so wallets (Ualá, Nequi…) are always choosable.
  */
 export function accountsForPaymentMethod(
   accounts: Account[],
@@ -343,7 +344,12 @@ export function accountsForPaymentMethod(
     case 'cash':
       return accounts.filter((a) => a.type === 'cash');
     case 'debit':
-      return accounts.filter((a) => a.type === 'bank');
+      // Banks and digital wallets — money already in a spendable pocket.
+      return sortAccountsByKind(
+        accounts.filter(
+          (a) => a.type === 'bank' || a.type === 'wallet' || a.type === 'savings'
+        )
+      );
     case 'credit': {
       const revolving = revolvingAsPayAccounts(
         opts?.debts ?? [],
@@ -359,10 +365,43 @@ export function accountsForPaymentMethod(
       return creditAcc;
     }
     case 'transfer':
-      return accounts.filter(
-        (a) => a.type === 'bank' || a.type === 'wallet' || a.type === 'savings'
+      return sortAccountsByKind(
+        accounts.filter(
+          (a) => a.type === 'bank' || a.type === 'wallet' || a.type === 'savings'
+        )
       );
   }
+}
+
+/**
+ * Where an expense / debt payment actually left.
+ * Credit → card cupos. Otherwise every liquid pocket (cash, bank, wallet, savings)
+ * so spending from Ualá does not require picking “Transferencia”.
+ */
+export function accountsForExpenseSource(
+  accounts: Account[],
+  method: PaymentMethod,
+  opts?: {
+    debts?: Debt[];
+    debtLabel?: (debt: Debt) => string;
+  }
+): Account[] {
+  if (method === 'credit') {
+    return accountsForPaymentMethod(accounts, 'credit', opts);
+  }
+  return sortAccountsByKind(accounts.filter((a) => isSpendableLiquid(a.type)));
+}
+
+/** Keep payment-method metadata aligned with the pocket the user picked. */
+export function paymentMethodForAccount(
+  acc: Pick<Account, 'type'> | undefined,
+  fallback: PaymentMethod = 'debit'
+): PaymentMethod {
+  if (!acc) return fallback;
+  if (acc.type === 'cash') return 'cash';
+  if (acc.type === 'credit') return 'credit';
+  if (acc.type === 'wallet' || acc.type === 'savings') return 'transfer';
+  return 'debit';
 }
 
 export function firstAccountId(list: Account[], preferredId?: string): string | undefined {
