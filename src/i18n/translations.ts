@@ -55,7 +55,7 @@ export const translations = {
     'home.savings': 'This month’s result',
     'home.savingsCaption': 'Income − spend this month (only what you logged)',
     'home.availableInfoBody':
-      'This is money you can spend or move right now — cash, each bank (payroll usually lands in the main one), wallets like Nequi, and savings. A spend or transfer leaves the pocket you pick.',
+      'This is money you can spend or move right now — cash, each bank (payroll usually lands in the main one), wallets like Nequi or Ualá, and savings. Moving between those pockets does not change the total available: the main account goes down and the wallet goes up. A real spend leaves the pocket you pick and counts as an expense.',
     'home.availableInfoCompare':
       'This is today’s stock, not the month in History. Pick the pocket the money actually left so that line goes down. Bonus or salary is the kind of income; it lands in the account you chose.',
     'home.availableByAccount': 'Where it is',
@@ -516,8 +516,13 @@ export const translations = {
     'flow.intent.earn': 'I received money',
     'flow.intent.earnSub': 'Salary, freelance, gift…',
     'flow.intent.move': 'I moved money',
-    'flow.intent.moveSub': 'Between cash, banks, wallets or savings. Not a spend.',
-    'flow.moveNotSpend': 'This only moves money you already have. It is not a spend.',
+    'flow.intent.moveSub':
+      'Bank → Ualá/Nequi/savings. Not a spend — only changes which pocket holds it.',
+    'flow.moveNotSpend':
+      'This is not a spend. The money leaves one of your pockets and arrives in another. Total available stays the same; month expenses do not change.',
+    'flow.movePreview': '{from} −{amount} → {to} +{amount}',
+    'flow.moveAvailableSame': 'Total available stays the same. This is not an expense.',
+    'flow.moveNeedDistinct': 'Pick two different pockets: where it leaves and where it arrives.',
     'history.moveRoute': '{from} → {to}',
     'history.fromPocket': 'from {pocket}',
     'flow.intent.debt': 'I paid a debt',
@@ -555,7 +560,7 @@ export const translations = {
 
     'type.expense': 'Expense',
     'type.income': 'Income',
-    'type.transfer': 'Transfer',
+    'type.transfer': 'Pocket move',
     'type.debt_payment': 'Debt payment',
     'type.investment': 'Investment',
     'type.withdrawal': 'Withdrawal',
@@ -940,7 +945,7 @@ export const translations = {
     'home.savings': 'Resultado del mes',
     'home.savingsCaption': 'Ingresos − gastos de este mes (solo lo que registraste)',
     'home.availableInfoBody':
-      'Esto es lo que puedes gastar o mover ahora: efectivo, cada banco (la nómina suele caer en el principal), billeteras como Nequi, y ahorros. Un gasto o un traslado sale del bolsillo que elijas.',
+      'Esto es lo que puedes gastar o mover ahora: efectivo, cada banco (la nómina suele caer en el principal), billeteras como Nequi o Ualá, y ahorros. Mover entre esos bolsillos no cambia el total disponible: baja la cuenta principal y sube la billetera. Un gasto de verdad sale del bolsillo que elijas y sí cuenta como gasto.',
     'home.availableInfoCompare':
       'Es el saldo de hoy, no el mes en Historial. Elige el bolsillo del que realmente salió para que esa línea baje. Bonos o salario es el tipo de ingreso; queda en la cuenta que elegiste.',
     'home.availableByAccount': 'Dónde está',
@@ -1405,8 +1410,13 @@ export const translations = {
     'flow.intent.earn': 'Recibí dinero',
     'flow.intent.earnSub': 'Salario, freelance, regalo…',
     'flow.intent.move': 'Moví dinero',
-    'flow.intent.moveSub': 'Entre efectivo, bancos, billeteras o ahorros. No es un gasto.',
-    'flow.moveNotSpend': 'Solo mueve plata que ya tienes. No es un gasto.',
+    'flow.intent.moveSub':
+      'Banco → Ualá/Nequi/ahorros. No es un gasto: solo cambia en qué bolsillo está.',
+    'flow.moveNotSpend':
+      'Esto no es un gasto. La plata sale de uno de tus bolsillos y llega a otro. El total disponible se mantiene; el gasto del mes no cambia.',
+    'flow.movePreview': '{from} −{amount} → {to} +{amount}',
+    'flow.moveAvailableSame': 'El total disponible se mantiene. Esto no es un gasto.',
+    'flow.moveNeedDistinct': 'Elige dos bolsillos distintos: de dónde sale y a dónde llega.',
     'history.moveRoute': '{from} → {to}',
     'history.fromPocket': 'salió de {pocket}',
     'flow.intent.debt': 'Pagué una deuda',
@@ -1444,7 +1454,7 @@ export const translations = {
 
     'type.expense': 'Gasto',
     'type.income': 'Ingreso',
-    'type.transfer': 'Transferencia',
+    'type.transfer': 'Entre bolsillos',
     'type.debt_payment': 'Pago de deuda',
     'type.investment': 'Inversión',
     'type.withdrawal': 'Retiro',

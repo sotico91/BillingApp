@@ -4,6 +4,7 @@ import React, {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 
@@ -53,13 +54,18 @@ import {
   sumByType,
   type PredictedSpend,
 } from '@/src/utils/financeMath';
-import { mapLiquidAccounts, mergeDefaultAccounts, ensureWalletAccount, renameWalletAccount, removeWalletAccount, ensureBankAccount, renameBankAccount, removeBankAccount, resolveSpendAccountId, settleLiquidOverdrafts } from '@/src/utils/accounts';
+import { mapLiquidAccounts, mergeDefaultAccounts, ensureWalletAccount, renameWalletAccount, removeWalletAccount, ensureBankAccount, renameBankAccount, removeBankAccount, resolveSpendAccountId } from '@/src/utils/accounts';
 import {
   applyRevolvingCharge,
   closePaidInstallments,
   closedAtAfterBalance,
   debtIdFromPayAccountId,
 } from '@/src/utils/debts';
+import {
+  accountsBalancesDiffer,
+  pocketMoveAccountsReady,
+  rebuildAccountBalances,
+} from '@/src/utils/ledger';
 import { computeNetWorth } from '@/src/utils/netWorth';
 import {
   filterByPersonScope,
@@ -231,38 +237,6 @@ function createId(): string {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-function applyAccountDelta(
-  accounts: Account[],
-  tx: Transaction,
-  direction: 1 | -1 = 1
-): Account[] {
-  const next = accounts.map((a) => ({ ...a }));
-  const find = (id?: string) => next.find((a) => a.id === id);
-  const amount = tx.amount * direction;
-
-  if (tx.type === 'expense' || tx.type === 'withdrawal' || tx.type === 'debt_payment') {
-    const acc = find(tx.accountId);
-    if (acc) acc.balance -= amount;
-  }
-  if (tx.type === 'income') {
-    const acc = find(tx.accountId);
-    if (acc) acc.balance += amount;
-  }
-  if (tx.type === 'transfer') {
-    const from = find(tx.accountId);
-    const to = find(tx.toAccountId);
-    if (from) from.balance -= amount;
-    if (to) to.balance += amount;
-  }
-  if (tx.type === 'investment') {
-    const from = find(tx.accountId);
-    const to = find(tx.toAccountId) ?? find('investments');
-    if (from) from.balance -= amount;
-    if (to) to.balance += amount;
-  }
-  return next;
-}
-
 function applyDebtPayment(
   list: Debt[],
   tx: Transaction,
@@ -299,15 +273,6 @@ function applyTxDebts(list: Debt[], tx: Transaction, direction: 1 | -1): Debt[] 
   return applyDebtPayment(charged, tx, direction);
 }
 
-function applyTxAccounts(
-  list: Account[],
-  tx: Transaction,
-  direction: 1 | -1
-): Account[] {
-  if (tx.creditDebtId) return list;
-  return applyAccountDelta(list, tx, direction);
-}
-
 export function FinanceProvider({ children }: { children: React.ReactNode }) {
   const { settings, ready: settingsReady, pruneQuickTemplatesToExistingExpenses } =
     useSettings();
@@ -319,6 +284,15 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [loading, setLoading] = useState(true);
   const [attributed, setAttributed] = useState(false);
+
+  // Keep latest snapshots for mutations — addWallet then save transfer must not
+  // apply against a stale accounts list (destination missing → phantom wallet).
+  const accountsRef = useRef(accounts);
+  const transactionsRef = useRef(transactions);
+  const debtsRef = useRef(debts);
+  accountsRef.current = accounts;
+  transactionsRef.current = transactions;
+  debtsRef.current = debts;
 
   useEffect(() => {
     if (!settingsReady) return;
@@ -334,13 +308,22 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       ]);
       if (!mounted) return;
       const settled = closePaidInstallments(deb, tx);
+      // Heal drifted pocket balances (e.g. transfer credited a wallet but delete
+      // never reversed it, or add ran before the new wallet was in state).
+      const rebuilt = rebuildAccountBalances(acc, tx);
       setTransactions(tx);
-      setAccounts(acc);
+      setAccounts(rebuilt);
+      accountsRef.current = rebuilt;
+      transactionsRef.current = tx;
       setBudgets(bud);
       setDebts(settled.debts);
+      debtsRef.current = settled.debts;
       setSubscriptions(sub);
       setLoading(false);
-      if (settled.changed) void saveDebts(settled.debts);
+      const persist: Promise<unknown>[] = [];
+      if (settled.changed) persist.push(saveDebts(settled.debts));
+      if (accountsBalancesDiffer(acc, rebuilt)) persist.push(saveAccounts(rebuilt));
+      if (persist.length) void Promise.all(persist);
     })();
     return () => {
       mounted = false;
@@ -391,6 +374,10 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
 
   const addTransaction = useCallback(
     async (input: NewTxInput) => {
+      const baseAccounts = accountsRef.current;
+      const baseTx = transactionsRef.current;
+      const baseDebts = debtsRef.current;
+
       const chargedFromPicker = isPocketMove(input.type)
         ? undefined
         : debtIdFromPayAccountId(input.accountId);
@@ -404,7 +391,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
         categoryId: isPocketMove(input.type) ? undefined : input.categoryId,
         paymentMethod: isPocketMove(input.type) ? undefined : input.paymentMethod,
         accountId: creditDebtId
-          ? accounts.find((a) => a.type === 'credit')?.id ?? 'credit-card'
+          ? baseAccounts.find((a) => a.type === 'credit')?.id ?? 'credit-card'
           : input.accountId ?? 'cash',
         toAccountId: input.toAccountId,
         debtId: isPocketMove(input.type) ? undefined : input.debtId,
@@ -415,7 +402,12 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
         registeredById: settings.personId || undefined,
         registeredByName: settings.userName.trim() || undefined,
       };
-      const chosenExists = accounts.some((a) => a.id === tx.accountId);
+
+      if (isPocketMove(tx.type) && !pocketMoveAccountsReady(baseAccounts, tx)) {
+        throw new Error('pocket_move_accounts');
+      }
+
+      const chosenExists = baseAccounts.some((a) => a.id === tx.accountId);
       if (
         !creditDebtId &&
         !chosenExists &&
@@ -424,19 +416,19 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
           tx.type === 'debt_payment')
       ) {
         tx.accountId = resolveSpendAccountId(
-          accounts,
+          baseAccounts,
           tx.accountId,
           tx.amount
         );
       }
-      const nextTx = [tx, ...transactions].sort((a, b) =>
+      const nextTx = [tx, ...baseTx].sort((a, b) =>
         b.createdAt.localeCompare(a.createdAt)
       );
-      let nextAccounts = applyTxAccounts(accounts, tx, 1);
-      if (!tx.creditDebtId && !tx.paymentMethod && !isPocketMove(tx.type)) {
-        nextAccounts = settleLiquidOverdrafts(nextAccounts).accounts;
-      }
-      const nextDebts = applyTxDebts(debts, tx, 1);
+      const nextAccounts = rebuildAccountBalances(baseAccounts, nextTx);
+      const nextDebts = applyTxDebts(baseDebts, tx, 1);
+      transactionsRef.current = nextTx;
+      accountsRef.current = nextAccounts;
+      debtsRef.current = nextDebts;
       setTransactions(nextTx);
       setAccounts(nextAccounts);
       setDebts(nextDebts);
@@ -447,7 +439,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       ]);
       return tx;
     },
-    [transactions, accounts, debts, settings.personId, settings.userName]
+    [settings.personId, settings.userName]
   );
 
   const addDebt = useCallback(
@@ -554,77 +546,67 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
     [debts]
   );
 
-  const addWallet = useCallback(
-    async (name: string) => {
-      const trimmed = name.trim();
-      if (!trimmed) return null;
-      const { accounts: next, account } = ensureWalletAccount(accounts, trimmed);
-      if (next !== accounts) {
-        setAccounts(next);
-        await saveAccounts(next);
-      }
-      return account;
-    },
-    [accounts]
-  );
+  const addWallet = useCallback(async (name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed) return null;
+    const current = accountsRef.current;
+    const { accounts: next, account } = ensureWalletAccount(current, trimmed);
+    if (next !== current) {
+      accountsRef.current = next;
+      setAccounts(next);
+      await saveAccounts(next);
+    }
+    return account;
+  }, []);
 
-  const addBank = useCallback(
-    async (name: string) => {
-      const trimmed = name.trim();
-      if (!trimmed) return null;
-      const { accounts: next, account } = ensureBankAccount(accounts, trimmed);
-      if (next !== accounts) {
-        setAccounts(next);
-        await saveAccounts(next);
-      }
-      return account;
-    },
-    [accounts]
-  );
+  const addBank = useCallback(async (name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed) return null;
+    const current = accountsRef.current;
+    const { accounts: next, account } = ensureBankAccount(current, trimmed);
+    if (next !== current) {
+      accountsRef.current = next;
+      setAccounts(next);
+      await saveAccounts(next);
+    }
+    return account;
+  }, []);
 
-  const renameWallet = useCallback(
-    async (id: string, name: string) => {
-      const result = renameWalletAccount(accounts, id, name);
-      if ('error' in result) return result;
-      setAccounts(result.accounts);
-      await saveAccounts(result.accounts);
-      return { account: result.account };
-    },
-    [accounts]
-  );
+  const renameWallet = useCallback(async (id: string, name: string) => {
+    const result = renameWalletAccount(accountsRef.current, id, name);
+    if ('error' in result) return result;
+    accountsRef.current = result.accounts;
+    setAccounts(result.accounts);
+    await saveAccounts(result.accounts);
+    return { account: result.account };
+  }, []);
 
-  const renameBank = useCallback(
-    async (id: string, name: string) => {
-      const result = renameBankAccount(accounts, id, name);
-      if ('error' in result) return result;
-      setAccounts(result.accounts);
-      await saveAccounts(result.accounts);
-      return { account: result.account };
-    },
-    [accounts]
-  );
+  const renameBank = useCallback(async (id: string, name: string) => {
+    const result = renameBankAccount(accountsRef.current, id, name);
+    if ('error' in result) return result;
+    accountsRef.current = result.accounts;
+    setAccounts(result.accounts);
+    await saveAccounts(result.accounts);
+    return { account: result.account };
+  }, []);
 
-  const removeWallet = useCallback(
-    async (id: string) => {
-      const result = removeWalletAccount(accounts, id);
-      if ('error' in result) return result;
-      setAccounts(result.accounts);
-      await saveAccounts(result.accounts);
-      return { ok: true as const };
-    },
-    [accounts]
-  );
+  const removeWallet = useCallback(async (id: string) => {
+    const result = removeWalletAccount(accountsRef.current, id);
+    if ('error' in result) return result;
+    accountsRef.current = result.accounts;
+    setAccounts(result.accounts);
+    await saveAccounts(result.accounts);
+    return { ok: true as const };
+  }, []);
 
-  const removeBank = useCallback(
-    async (id: string) => {
-      const result = removeBankAccount(accounts, id);
-      if ('error' in result) return result;
-      setAccounts(result.accounts);
-      await saveAccounts(result.accounts);
-      return { ok: true as const };
-    },
-    [accounts]
-  );
+  const removeBank = useCallback(async (id: string) => {
+    const result = removeBankAccount(accountsRef.current, id);
+    if ('error' in result) return result;
+    accountsRef.current = result.accounts;
+    setAccounts(result.accounts);
+    await saveAccounts(result.accounts);
+    return { ok: true as const };
+  }, []);
 
   const canEditTransaction = useCallback(
     (tx: Transaction) => isRegisteredByMe(tx, settings.personId),
@@ -633,12 +615,17 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
 
   const removeTransaction = useCallback(
     async (id: string) => {
-      const existing = transactions.find((t) => t.id === id);
+      const existing = transactionsRef.current.find((t) => t.id === id);
       if (!existing) return;
       if (!isRegisteredByMe(existing, settings.personId)) return;
-      const nextTx = transactions.filter((t) => t.id !== id);
-      const nextAccounts = applyTxAccounts(accounts, existing, -1);
-      const nextDebts = applyTxDebts(debts, existing, -1);
+      const nextTx = transactionsRef.current.filter((t) => t.id !== id);
+      // Rebuild from the remaining ledger so deletes always reverse both legs
+      // of a pocket move (and clear phantom wallet credits).
+      const nextAccounts = rebuildAccountBalances(accountsRef.current, nextTx);
+      const nextDebts = applyTxDebts(debtsRef.current, existing, -1);
+      transactionsRef.current = nextTx;
+      accountsRef.current = nextAccounts;
+      debtsRef.current = nextDebts;
       setTransactions(nextTx);
       setAccounts(nextAccounts);
       setDebts(nextDebts);
@@ -656,7 +643,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
         );
       }
     },
-    [transactions, accounts, debts, settings.personId, pruneQuickTemplatesToExistingExpenses]
+    [settings.personId, pruneQuickTemplatesToExistingExpenses]
   );
 
   const updateTransaction = useCallback(
@@ -678,7 +665,10 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
         >
       >
     ) => {
-      const existing = transactions.find((t) => t.id === id);
+      const baseAccounts = accountsRef.current;
+      const baseTx = transactionsRef.current;
+      const baseDebts = debtsRef.current;
+      const existing = baseTx.find((t) => t.id === id);
       if (!existing) return null;
       if (!isRegisteredByMe(existing, settings.personId)) return null;
 
@@ -697,20 +687,21 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
         updated.paymentMethod = undefined;
         updated.creditDebtId = undefined;
         updated.debtId = undefined;
+        if (!pocketMoveAccountsReady(baseAccounts, updated)) {
+          return null;
+        }
       } else {
         const chargedFromPicker = debtIdFromPayAccountId(updated.accountId);
         if (chargedFromPicker) {
           updated.creditDebtId = chargedFromPicker;
           updated.accountId =
-            accounts.find((a) => a.type === 'credit')?.id ?? 'credit-card';
+            baseAccounts.find((a) => a.type === 'credit')?.id ?? 'credit-card';
         } else if (patch.accountId !== undefined && patch.creditDebtId === undefined) {
           updated.creditDebtId = undefined;
         }
       }
 
-      let nextAccounts = applyTxAccounts(accounts, existing, -1);
-      let nextDebts = applyTxDebts(debts, existing, -1);
-      const chosenExists = nextAccounts.some((a) => a.id === updated.accountId);
+      const chosenExists = baseAccounts.some((a) => a.id === updated.accountId);
       if (
         !updated.creditDebtId &&
         !chosenExists &&
@@ -719,26 +710,23 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
           updated.type === 'debt_payment')
       ) {
         updated.accountId = resolveSpendAccountId(
-          nextAccounts,
+          baseAccounts,
           updated.accountId,
           updated.amount
         );
       }
 
-      const nextTx = transactions
+      const nextTx = baseTx
         .map((t) => (t.id === id ? updated : t))
         .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
-      nextAccounts = applyTxAccounts(nextAccounts, updated, 1);
+      const nextAccounts = rebuildAccountBalances(baseAccounts, nextTx);
+      let nextDebts = applyTxDebts(baseDebts, existing, -1);
       nextDebts = applyTxDebts(nextDebts, updated, 1);
-      if (
-        !updated.creditDebtId &&
-        !updated.paymentMethod &&
-        !isPocketMove(updated.type)
-      ) {
-        nextAccounts = settleLiquidOverdrafts(nextAccounts).accounts;
-      }
 
+      transactionsRef.current = nextTx;
+      accountsRef.current = nextAccounts;
+      debtsRef.current = nextDebts;
       setTransactions(nextTx);
       setAccounts(nextAccounts);
       setDebts(nextDebts);
@@ -749,7 +737,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       ]);
       return updated;
     },
-    [transactions, accounts, debts, settings.personId]
+    [settings.personId]
   );
 
   const resetFinance = useCallback(async () => {
@@ -762,6 +750,9 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
     const nextSubs = [...DEFAULT_SUBSCRIPTIONS];
     const nextTx: Transaction[] = [];
 
+    transactionsRef.current = nextTx;
+    accountsRef.current = blankAccounts;
+    debtsRef.current = nextDebts;
     setTransactions(nextTx);
     setAccounts(blankAccounts);
     setBudgets(nextBudgets);
@@ -788,10 +779,12 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       const nextTx = [...backup.transactions].sort((a, b) =>
         b.createdAt.localeCompare(a.createdAt)
       );
+      const merged = mergeDefaultAccounts(backup.accounts).accounts;
+      const nextAccounts = rebuildAccountBalances(merged, nextTx);
+      transactionsRef.current = nextTx;
+      accountsRef.current = nextAccounts;
+      debtsRef.current = backup.debts;
       setTransactions(nextTx);
-      const { accounts: nextAccounts } = settleLiquidOverdrafts(
-        mergeDefaultAccounts(backup.accounts).accounts
-      );
       setAccounts(nextAccounts);
       setBudgets(backup.budgets);
       setDebts(backup.debts);

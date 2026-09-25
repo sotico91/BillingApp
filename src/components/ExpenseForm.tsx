@@ -235,6 +235,14 @@ export function ExpenseForm({
       }
     }
 
+    if (
+      (type === 'transfer' || type === 'investment') &&
+      (!accountId || !toAccountId || accountId === toAccountId)
+    ) {
+      Alert.alert(t('add.invalidTitle'), t('flow.moveNeedDistinct'));
+      return;
+    }
+
     savingLock.current = true;
     setSaving(true);
     try {
@@ -314,8 +322,13 @@ export function ExpenseForm({
       } else {
         onSaved?.({ kind: 'other', amount: parsed });
       }
-    } catch {
-      Alert.alert(t('add.invalidTitle'), t('add.saveError'));
+    } catch (err) {
+      const moveFail =
+        err instanceof Error && err.message === 'pocket_move_accounts';
+      Alert.alert(
+        t('add.invalidTitle'),
+        moveFail ? t('flow.moveNeedDistinct') : t('add.saveError')
+      );
     } finally {
       savingLock.current = false;
       setSaving(false);

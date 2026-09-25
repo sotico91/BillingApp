@@ -36,16 +36,16 @@ export const FRIENDLY_INTENTS: {
     subtitleKey: 'flow.intent.spendSub',
   },
   {
-    id: 'earn',
-    emoji: '💰',
-    titleKey: 'flow.intent.earn',
-    subtitleKey: 'flow.intent.earnSub',
-  },
-  {
     id: 'move',
     emoji: '🔁',
     titleKey: 'flow.intent.move',
     subtitleKey: 'flow.intent.moveSub',
+  },
+  {
+    id: 'earn',
+    emoji: '💰',
+    titleKey: 'flow.intent.earn',
+    subtitleKey: 'flow.intent.earnSub',
   },
   {
     id: 'debt',

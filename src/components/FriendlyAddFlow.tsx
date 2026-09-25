@@ -141,11 +141,18 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
     if (intent === 'move') {
       const next = firstAccountId(moveAccounts, accountId);
       if (next && next !== accountId) setAccountId(next);
+      const fromId = next && next !== accountId ? next : accountId;
+      if (!toAccountId || toAccountId === fromId || !moveAccounts.some((a) => a.id === toAccountId)) {
+        const dest =
+          moveAccounts.find((a) => a.id !== fromId)?.id ??
+          defaultTransferDestinationId(accounts, fromId);
+        if (dest && dest !== toAccountId) setToAccountId(dest);
+      }
       return;
     }
     const next = firstAccountId(methodAccounts, accountId);
     if (next && next !== accountId) setAccountId(next);
-  }, [intent, methodAccounts, incomeAccounts, moveAccounts, accountId]);
+  }, [intent, methodAccounts, incomeAccounts, moveAccounts, accountId, toAccountId, accounts]);
 
   const incomeChoices = useMemo(
     () => categoriesForKind('income', settings.enabledCategoryIds),
@@ -344,6 +351,13 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
       }
     }
 
+    if (intent === 'move') {
+      if (!accountId || !toAccountId || accountId === toAccountId) {
+        Alert.alert(t('add.invalidTitle'), t('flow.moveNeedDistinct'));
+        return;
+      }
+    }
+
     savingLock.current = true;
     setSaving(true);
     try {
@@ -418,8 +432,13 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
       } else {
         onSaved?.({ kind: 'other', amount: parsed });
       }
-    } catch {
-      Alert.alert(t('add.invalidTitle'), t('add.saveError'));
+    } catch (err) {
+      const moveFail =
+        err instanceof Error && err.message === 'pocket_move_accounts';
+      Alert.alert(
+        t('add.invalidTitle'),
+        moveFail ? t('flow.moveNeedDistinct') : t('add.saveError')
+      );
     } finally {
       savingLock.current = false;
       setSaving(false);
@@ -866,15 +885,37 @@ export function FriendlyAddFlow({ onSaved, onSwitchAdvanced }: Props) {
                 )}
               />
               {intent === 'move' ? (
-                <SummaryLine
-                  label={t('flow.summaryAccountTo')}
-                  value={accountDisplayName(
-                    accounts.find((a) => a.id === toAccountId) ?? {
-                      nameKey: 'account.savings',
-                    },
-                    t
-                  )}
-                />
+                <>
+                  <SummaryLine
+                    label={t('flow.summaryAccountTo')}
+                    value={accountDisplayName(
+                      accounts.find((a) => a.id === toAccountId) ?? {
+                        nameKey: 'account.savings',
+                      },
+                      t
+                    )}
+                  />
+                  <Text style={[styles.intentSub, { marginTop: 10 }]}>
+                    {t('flow.movePreview', {
+                      from: accountDisplayName(
+                        accounts.find((a) => a.id === accountId) ?? {
+                          nameKey: 'account.cash',
+                        },
+                        t
+                      ),
+                      to: accountDisplayName(
+                        accounts.find((a) => a.id === toAccountId) ?? {
+                          nameKey: 'account.savings',
+                        },
+                        t
+                      ),
+                      amount: formatPlain(parse(amount) ?? 0),
+                    })}
+                  </Text>
+                  <Text style={[styles.intentSub, { marginTop: 6 }]}>
+                    {t('flow.moveAvailableSame')}
+                  </Text>
+                </>
               ) : null}
             </View>
             <Text style={styles.noteLabel}>{t('flow.noteOptional')}</Text>
