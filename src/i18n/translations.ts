@@ -369,6 +369,10 @@ export const translations = {
     'wealth.accountHas': '{amount}',
     'wealth.walletRename': 'Rename',
     'wealth.walletRenameSave': 'Save name',
+    'wealth.balanceEdit': 'Edit balance',
+    'wealth.balanceSave': 'Save balance',
+    'wealth.balanceNeed': 'Enter a balance of 0 or more.',
+    'wealth.balancePlaceholder': 'Real balance in this pocket',
     'wealth.walletDelete': 'Remove wallet',
     'wealth.walletDeleteNeedEmpty':
       'Move the money to another account first. Then you can remove this pocket.',
@@ -1261,6 +1265,10 @@ export const translations = {
     'wealth.accountHas': '{amount}',
     'wealth.walletRename': 'Cambiar nombre',
     'wealth.walletRenameSave': 'Guardar nombre',
+    'wealth.balanceEdit': 'Editar saldo',
+    'wealth.balanceSave': 'Guardar saldo',
+    'wealth.balanceNeed': 'Escribe un saldo de 0 o más.',
+    'wealth.balancePlaceholder': 'Saldo real en este bolsillo',
     'wealth.walletDelete': 'Eliminar billetera',
     'wealth.walletDeleteNeedEmpty':
       'Primero mueve el dinero a otra cuenta. Después sí puedes quitar este bolsillo.',

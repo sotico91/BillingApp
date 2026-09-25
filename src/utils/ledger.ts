@@ -1,16 +1,4 @@
 import type { Account, Transaction } from '@/src/types/finance';
-import { settleLiquidOverdrafts } from '@/src/utils/accounts';
-
-/** Pockets whose balance is derived only from the movement ledger. */
-export function isLedgerBalanceAccount(type: Account['type']): boolean {
-  return (
-    type === 'cash' ||
-    type === 'bank' ||
-    type === 'savings' ||
-    type === 'wallet' ||
-    type === 'investment'
-  );
-}
 
 /**
  * Apply one movement to account balances.
@@ -72,36 +60,13 @@ export function pocketMoveAccountsReady(
   return from && to;
 }
 
-/**
- * Rebuild ledger-driven balances from scratch so deletes always return
- * money to its origin and phantom wallet credits disappear.
- */
-export function rebuildAccountBalances(
-  accounts: Account[],
-  transactions: Transaction[]
-): Account[] {
-  let next = accounts.map((a) =>
-    isLedgerBalanceAccount(a.type) ? { ...a, balance: 0 } : { ...a }
+/** Cash / bank / wallet / savings / investment — editable opening stock. */
+export function isEditablePocketBalance(type: Account['type']): boolean {
+  return (
+    type === 'cash' ||
+    type === 'bank' ||
+    type === 'savings' ||
+    type === 'wallet' ||
+    type === 'investment'
   );
-
-  const chrono = [...transactions].sort((a, b) => {
-    const byDate = a.createdAt.localeCompare(b.createdAt);
-    return byDate !== 0 ? byDate : a.id.localeCompare(b.id);
-  });
-
-  for (const tx of chrono) {
-    next = applyAccountDelta(next, tx, 1);
-  }
-
-  return settleLiquidOverdrafts(next).accounts;
-}
-
-export function accountsBalancesDiffer(a: Account[], b: Account[]): boolean {
-  if (a.length !== b.length) return true;
-  const byId = new Map(b.map((x) => [x.id, x.balance]));
-  return a.some((acc) => {
-    const other = byId.get(acc.id);
-    if (other == null) return true;
-    return Math.abs(acc.balance - other) >= 0.005;
-  });
 }

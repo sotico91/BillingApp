@@ -54,7 +54,7 @@ import {
   sumByType,
   type PredictedSpend,
 } from '@/src/utils/financeMath';
-import { mapLiquidAccounts, mergeDefaultAccounts, ensureWalletAccount, renameWalletAccount, removeWalletAccount, ensureBankAccount, renameBankAccount, removeBankAccount, resolveSpendAccountId } from '@/src/utils/accounts';
+import { mapLiquidAccounts, mergeDefaultAccounts, ensureWalletAccount, renameWalletAccount, removeWalletAccount, ensureBankAccount, renameBankAccount, removeBankAccount, resolveSpendAccountId, settleLiquidOverdrafts } from '@/src/utils/accounts';
 import {
   applyRevolvingCharge,
   closePaidInstallments,
@@ -62,9 +62,9 @@ import {
   debtIdFromPayAccountId,
 } from '@/src/utils/debts';
 import {
-  accountsBalancesDiffer,
+  applyAccountDelta,
+  isEditablePocketBalance,
   pocketMoveAccountsReady,
-  rebuildAccountBalances,
 } from '@/src/utils/ledger';
 import { computeNetWorth } from '@/src/utils/netWorth';
 import {
@@ -177,6 +177,10 @@ type FinanceContextValue = {
   removeBank: (
     id: string
   ) => Promise<{ ok: true } | { error: 'missing' | 'protected' | 'hasBalance' }>;
+  setAccountBalance: (
+    id: string,
+    balance: number
+  ) => Promise<{ account: Account } | { error: 'missing' | 'forbidden' | 'invalid' }>;
   updateBudget: (categoryId: string, limit: number) => Promise<void>;
   removeBudget: (categoryId: string) => Promise<void>;
   transactionsForPeriod: (period: Period, scope?: PersonScope) => Transaction[];
@@ -308,22 +312,18 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       ]);
       if (!mounted) return;
       const settled = closePaidInstallments(deb, tx);
-      // Heal drifted pocket balances (e.g. transfer credited a wallet but delete
-      // never reversed it, or add ran before the new wallet was in state).
-      const rebuilt = rebuildAccountBalances(acc, tx);
+      // Keep stored pocket balances (opening stock + prior deltas). Never wipe
+      // them by replaying the ledger — that invents a fake bank total.
       setTransactions(tx);
-      setAccounts(rebuilt);
-      accountsRef.current = rebuilt;
+      setAccounts(acc);
+      accountsRef.current = acc;
       transactionsRef.current = tx;
       setBudgets(bud);
       setDebts(settled.debts);
       debtsRef.current = settled.debts;
       setSubscriptions(sub);
       setLoading(false);
-      const persist: Promise<unknown>[] = [];
-      if (settled.changed) persist.push(saveDebts(settled.debts));
-      if (accountsBalancesDiffer(acc, rebuilt)) persist.push(saveAccounts(rebuilt));
-      if (persist.length) void Promise.all(persist);
+      if (settled.changed) void saveDebts(settled.debts);
     })();
     return () => {
       mounted = false;
@@ -424,7 +424,10 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       const nextTx = [tx, ...baseTx].sort((a, b) =>
         b.createdAt.localeCompare(a.createdAt)
       );
-      const nextAccounts = rebuildAccountBalances(baseAccounts, nextTx);
+      let nextAccounts = applyAccountDelta(baseAccounts, tx, 1);
+      if (!tx.creditDebtId && !tx.paymentMethod && !isPocketMove(tx.type)) {
+        nextAccounts = settleLiquidOverdrafts(nextAccounts).accounts;
+      }
       const nextDebts = applyTxDebts(baseDebts, tx, 1);
       transactionsRef.current = nextTx;
       accountsRef.current = nextAccounts;
@@ -608,6 +611,20 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
     return { ok: true as const };
   }, []);
 
+  const setAccountBalance = useCallback(async (id: string, balance: number) => {
+    if (!Number.isFinite(balance)) return { error: 'invalid' as const };
+    const current = accountsRef.current.find((a) => a.id === id);
+    if (!current) return { error: 'missing' as const };
+    if (!isEditablePocketBalance(current.type)) return { error: 'forbidden' as const };
+    const next = accountsRef.current.map((a) =>
+      a.id === id ? { ...a, balance } : a
+    );
+    accountsRef.current = next;
+    setAccounts(next);
+    await saveAccounts(next);
+    return { account: next.find((a) => a.id === id)! };
+  }, []);
+
   const canEditTransaction = useCallback(
     (tx: Transaction) => isRegisteredByMe(tx, settings.personId),
     [settings.personId]
@@ -619,9 +636,8 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       if (!existing) return;
       if (!isRegisteredByMe(existing, settings.personId)) return;
       const nextTx = transactionsRef.current.filter((t) => t.id !== id);
-      // Rebuild from the remaining ledger so deletes always reverse both legs
-      // of a pocket move (and clear phantom wallet credits).
-      const nextAccounts = rebuildAccountBalances(accountsRef.current, nextTx);
+      // Reverse both legs of the movement (bank ← wallet on deleted transfers).
+      const nextAccounts = applyAccountDelta(accountsRef.current, existing, -1);
       const nextDebts = applyTxDebts(debtsRef.current, existing, -1);
       transactionsRef.current = nextTx;
       accountsRef.current = nextAccounts;
@@ -720,7 +736,15 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
         .map((t) => (t.id === id ? updated : t))
         .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
-      const nextAccounts = rebuildAccountBalances(baseAccounts, nextTx);
+      let nextAccounts = applyAccountDelta(baseAccounts, existing, -1);
+      nextAccounts = applyAccountDelta(nextAccounts, updated, 1);
+      if (
+        !updated.creditDebtId &&
+        !updated.paymentMethod &&
+        !isPocketMove(updated.type)
+      ) {
+        nextAccounts = settleLiquidOverdrafts(nextAccounts).accounts;
+      }
       let nextDebts = applyTxDebts(baseDebts, existing, -1);
       nextDebts = applyTxDebts(nextDebts, updated, 1);
 
@@ -779,8 +803,9 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       const nextTx = [...backup.transactions].sort((a, b) =>
         b.createdAt.localeCompare(a.createdAt)
       );
-      const merged = mergeDefaultAccounts(backup.accounts).accounts;
-      const nextAccounts = rebuildAccountBalances(merged, nextTx);
+      const { accounts: nextAccounts } = settleLiquidOverdrafts(
+        mergeDefaultAccounts(backup.accounts).accounts
+      );
       transactionsRef.current = nextTx;
       accountsRef.current = nextAccounts;
       debtsRef.current = backup.debts;
@@ -1000,6 +1025,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       renameBank,
       removeWallet,
       removeBank,
+      setAccountBalance,
       updateTransaction,
       removeTransaction,
       canEditTransaction,
@@ -1043,6 +1069,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       renameBank,
       removeWallet,
       removeBank,
+      setAccountBalance,
       updateTransaction,
       removeTransaction,
       canEditTransaction,
