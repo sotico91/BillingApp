@@ -331,6 +331,11 @@ export const NON_NOTE_WORDS = new Set([
   'cuando', 'fecha', 'tome', 'tomamos', 'pedi', 'pedimos', 'hice', 'hicimos', 'fui', 'fuimos',
   'use', 'usamos', 'puse', 'pagamos', 'cargue', 'meti', 'saque', 'algo',
   'when', 'date', 'time', 'took', 'take', 'ordered', 'paid', 'used', 'went', 'got',
+  // How the question is asked: "¿cuánto me costó…?", "muéstrame…", "en promedio".
+  'costo', 'costado', 'costaron', 'salio', 'salieron', 'cuesta', 'gastar', 'pagado', 'muestrame',
+  'mostrar', 'listame', 'lista', 'detalle', 'dime', 'promedio', 'media', 'ya', 'cosas', 'movimiento',
+  'movimientos', 'cost', 'costs', 'show', 'list', 'tell', 'average', 'times', 'have', 'has', 'latest',
+  'pay', 'buy', 'many', 'with',
   ...MONTHS_ES.map(normalize),
   ...MONTHS_EN,
 ]);

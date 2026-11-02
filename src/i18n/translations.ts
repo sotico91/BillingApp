@@ -1156,6 +1156,16 @@ export const translations = {
       '“{label}” ({period}): {count} times, the last on {date} ({amount}). Total {total}.',
     'search.answerWhenNone': 'No movements with “{label}” ({period}).',
     'search.periodAllTime': 'all your history',
+    'search.answerNoteCount': '“{label}” ({period}): {count} {count|time|times}, {amount} in total.',
+    'search.answerNoteAverage':
+      'Average for “{label}” ({period}): {average} per transaction ({count} {count|transaction|transactions}, {amount} in total).',
+    'search.answerBiggest': 'Your biggest expense ({period}): {label}, {amount}, on {date}.',
+    'search.answerLatest': 'Your latest expense: {label}, {amount}, on {date}.',
+    'search.answerList': 'Expenses ({period}): {items}. Total {total}.',
+    'search.answerListMore': 'Expenses ({period}): {items} and {more} more. Total {total}.',
+    'search.answerConfirmYes': 'Yes: “{label}” on {date}, {amount}.',
+    'search.answerConfirmNo': 'I don’t see “{label}” ({period}).',
+    'search.answerConfirmNoLast': 'I don’t see “{label}” ({period}). The last one was on {date}, {amount}.',
     'search.answerCount': 'You have {count} {count|transaction|transactions} in {label} ({period}).',
     'search.answerDebt': 'Current debt balance: {amount}.',
     'search.answerAvailable':
@@ -2415,6 +2425,16 @@ export const translations = {
       '“{label}” ({period}): {count} veces, la última el {date} ({amount}). Total {total}.',
     'search.answerWhenNone': 'No encontré movimientos con “{label}” ({period}).',
     'search.periodAllTime': 'todo tu historial',
+    'search.answerNoteCount': '“{label}” ({period}): {count} {count|vez|veces}, {amount} en total.',
+    'search.answerNoteAverage':
+      'Promedio de “{label}” ({period}): {average} por movimiento ({count} {count|movimiento|movimientos}, {amount} en total).',
+    'search.answerBiggest': 'Tu gasto más grande ({period}): {label}, {amount}, el {date}.',
+    'search.answerLatest': 'Tu último gasto: {label}, {amount}, el {date}.',
+    'search.answerList': 'Gastos ({period}): {items}. Total {total}.',
+    'search.answerListMore': 'Gastos ({period}): {items} y {more} más. Total {total}.',
+    'search.answerConfirmYes': 'Sí: “{label}” el {date}, por {amount}.',
+    'search.answerConfirmNo': 'No veo “{label}” ({period}).',
+    'search.answerConfirmNoLast': 'No veo “{label}” ({period}). La última vez fue el {date}, por {amount}.',
     'search.answerCount': 'Tienes {count} {count|movimiento|movimientos} de {label} ({period}).',
     'search.answerDebt': 'Saldo actual de deudas: {amount}.',
     'search.answerAvailable':

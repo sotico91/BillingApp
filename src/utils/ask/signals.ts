@@ -84,7 +84,10 @@ export function extractNoteNeedle(q: string): string | null {
   const quoted = q.match(/["“']([^"”']+)["”']/);
   if (quoted?.[1]) return normalize(quoted[1]);
 
-  const para = q.match(/\b(?:a|para|por|to)\s+([a-záéíóúñ]{2,})/i);
+  // "por el didi", "a mi mamá": skip the article to reach the word.
+  const para = q.match(
+    /\b(?:a|para|por|to)\s+(?:(?:el|la|los|las|lo|un|una|mi|mis|the|my|a)\s+)?([a-záéíóúñ]{2,})/i
+  );
   if (
     para?.[1] &&
     !includesAny(para[1], [

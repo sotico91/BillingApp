@@ -159,3 +159,54 @@ describe('notes: how much and when', () => {
     expect(r.understood?.period).toBe('todo tu historial');
   });
 });
+
+describe('natural questions about movements', () => {
+  const ledger = [
+    tx('income', 3_000_000, '2026-10-01T09:00', { categoryId: 'salario' }),
+    tx('expense', 30_000, '2026-09-22T10:00', { categoryId: 'celular', note: 'Recarga Movistar' }),
+    tx('expense', 20_000, '2026-10-15T10:00', { categoryId: 'celular', note: 'Recarga Claro' }),
+    tx('expense', 14_500, '2026-10-09T19:00', { categoryId: 'transporte', note: 'Didi a casa' }),
+    tx('expense', 11_000, '2026-10-02T08:00', { categoryId: 'transporte', note: 'Didi oficina' }),
+    tx('expense', 38_000, '2026-10-12T05:00', { categoryId: 'transporte', note: 'Uber aeropuerto' }),
+    tx('expense', 42_000, '2026-10-18T13:00', { categoryId: 'restaurantes', note: 'Almuerzo con Ana' }),
+    tx('expense', 26_900, '2026-10-05T08:00', { categoryId: 'suscripciones', note: 'Netflix' }),
+    tx('expense', 1_200_000, '2026-10-03T08:00', { categoryId: 'arriendo', note: 'Arriendo octubre' }),
+    tx('expense', 45_000, '2026-10-19T20:00', { categoryId: 'delivery', note: 'Rappi pizza' }),
+    tx('expense', 9_000, '2026-10-19T09:00', { categoryId: 'cafe' }),
+    tx('expense', 100_000, '2026-10-10T09:00', { categoryId: 'regalos', note: 'Regalo mamá' }),
+  ];
+  const askLedger = (q: string, language: 'es' | 'en') => askRumi(q, ledger, format, translator(language), { language });
+  const all = 'todo tu historial';
+
+  it.each<[string, AskIntent, string]>([
+    ['¿cuánto pagué por el didi?', 'noteNeedle', `Coincidencias de “didi” (${all}): ${format(25_500)} en 2 movimientos (9 de octubre · 2 de octubre).`],
+    ['¿cuántas veces pedí didi?', 'looseNote', `“didi” (${all}): 2 veces, ${format(25_500)} en total.`],
+    ['¿cuánto me ha costado didi en promedio?', 'looseNote', `Promedio de “didi” (${all}): ${format(12_750)} por movimiento (2 movimientos, ${format(25_500)} en total).`],
+    ['¿cuánto he gastado en recargas?', 'looseNote', `Coincidencias de “recargas” (${all}): ${format(50_000)} en 2 movimientos (15 de octubre · 22 de septiembre).`],
+    ['¿cuánto gasté en didi y uber?', 'noteFirst', `Coincidencias de “didi + uber” (${all}): ${format(63_500)} en 3 movimientos.`],
+    ['¿cuánto me salió el almuerzo con Ana?', 'noteFirst', `Coincidencias de “almuerzo ana” (${all}): ${format(42_000)} en 1 movimiento (18 de octubre).`],
+    ['dime cuánto gasté en netflix', 'noteFirst', `Coincidencias de “netflix” (${all}): ${format(26_900)} en 1 movimiento (5 de octubre).`],
+    ['¿cuánto le regalé a mi mamá?', 'noteNeedle', `Coincidencias de “mama” (${all}): ${format(100_000)} en 1 movimiento (10 de octubre).`],
+    ['¿cuánto gasté en transporte?', 'concept', `Transporte (Este mes): ${format(63_500)} en 3 movimientos.`],
+    ['¿ya pagué netflix?', 'confirm', `Sí: “netflix” el 5 de octubre, por ${format(26_900)}.`],
+    ['¿pagué el arriendo este mes?', 'confirm', `Sí: “arriendo” el 3 de octubre, por ${format(1_200_000)}.`],
+    ['¿ya pagué la recarga movistar este mes?', 'confirm', `No veo “recarga movistar” (Este mes). La última vez fue el 22 de septiembre, por ${format(30_000)}.`],
+    ['¿en qué gasté el 19 de octubre?', 'listed', `Gastos (19 de octubre 2026): Rappi pizza ${format(45_000)} · Café ${format(9_000)}. Total ${format(54_000)}.`],
+    ['¿qué compré ayer?', 'listed', `Gastos (19 de octubre 2026): Rappi pizza ${format(45_000)} · Café ${format(9_000)}. Total ${format(54_000)}.`],
+    ['¿cuál fue mi gasto más grande?', 'single', `Tu gasto más grande (Este mes): Arriendo octubre, ${format(1_200_000)}, el 3 de octubre.`],
+    ['¿cuál fue mi último gasto?', 'single', `Tu último gasto: Rappi pizza, ${format(45_000)}, el 19 de octubre.`],
+    ['¿cuándo fue la última vez que pedí rappi?', 'when', `“rappi”: el 19 de octubre, por ${format(45_000)}.`],
+    ['how much did I pay for the movistar top-up?', 'looseNote', `Matches for “movistar recarga” (all your history): ${format(30_000)} in 1 transaction (September 22).`],
+    ['how many times did I take didi?', 'looseNote', `“didi” (all your history): 2 times, ${format(25_500)} in total.`],
+    ['did I pay netflix?', 'confirm', `Yes: “netflix” on October 5, ${format(26_900)}.`],
+    ['what was my last expense?', 'single', `Your latest expense: Rappi pizza, ${format(45_000)}, on October 19.`],
+  ])('%s', (q, intent, text) => {
+    const r = askLedger(q, /[¿áéíóú]|^dime/.test(q) ? 'es' : 'en');
+    expect(r.intent).toBe(intent);
+    expect(r.text).toBe(text);
+  });
+
+  it('keeps "en qué gasté más" on the top category', () => {
+    expect(askLedger('¿en qué gasté más?', 'es').intent).toBe('top');
+  });
+});

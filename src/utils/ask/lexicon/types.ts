@@ -28,6 +28,14 @@ export type IntentLexicon = {
   monthEnd: string[];
   /** "¿cuándo…?", "¿qué día…?": the date of a movement, not its amount. */
   when: string[];
+  /** "¿ya pagué netflix?": did it happen at all. */
+  confirm: string[];
+  /** "¿en qué gasté ayer?": the movements themselves. */
+  list: string[];
+  /** One movement: the largest… */
+  biggest: string[];
+  /** …or the most recent. */
+  latest: string[];
   /** Generic "how much / total" that still asks for spend. */
   totals: string[];
 };

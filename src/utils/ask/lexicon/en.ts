@@ -38,5 +38,9 @@ export const EN: IntentLexicon = {
   leftNow: ['have left', 'money left'],
   monthEnd: ['end of', 'at this pace'],
   when: ['when', 'what day', 'what date', 'last time'],
+  confirm: ['did i pay', 'have i paid', 'did i buy', 'have i bought'],
+  list: ['what did i buy', 'what did i spend', 'what did i pay', 'show me', 'list my', 'what i bought'],
+  biggest: ['biggest purchase', 'largest purchase', 'most expensive', 'biggest single'],
+  latest: ['last expense', 'latest expense', 'last purchase', 'latest purchase'],
   totals: ['spend', 'spent', 'expense', 'expenses'],
 };

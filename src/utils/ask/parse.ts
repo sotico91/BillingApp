@@ -43,6 +43,10 @@ export type QueryWants = {
   budget: boolean;
   percent: boolean;
   when: boolean;
+  confirm: boolean;
+  list: boolean;
+  biggest: boolean;
+  latest: boolean;
   totals: boolean;
 };
 
@@ -71,7 +75,8 @@ export function parseQuery(
     now?: Date;
   }
 ): ParsedQuery {
-  const q = normalize(query);
+  // "top-up" is a phone top-up, not the "top" spending category.
+  const q = normalize(query).replace(/\btop[- ]?ups?\b/g, 'recarga');
   const now = options.now ?? new Date();
   const L = LEXICON;
   const period = resolvePeriod(q, options.defaultPeriod, options.language, options.t, now);
@@ -106,6 +111,13 @@ export function parseQuery(
     budget: includesAny(q, L.budget),
     percent: includesAny(q, L.percent),
     when: includesAny(q, L.when),
+    // "¿pagué el arriendo?" only as the opening words: "¿cuánto pagué…?" is an amount.
+    confirm:
+      !includesAny(q, ['cuanto', 'cuanta', 'cuantas', 'cuantos', 'how much', 'how many']) &&
+      (includesAny(q, L.confirm) || /^[¿\s]*(?:ya\s+)?(?:pague|compre|pagamos)\b/.test(q)),
+    list: includesAny(q, L.list),
+    biggest: includesAny(q, L.biggest),
+    latest: includesAny(q, L.latest),
     totals: includesAny(q, L.totals),
   };
 

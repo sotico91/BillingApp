@@ -119,5 +119,9 @@ export const ES: IntentLexicon = {
   leftNow: ['me queda', 'nos queda', 'tengo disponible'],
   monthEnd: ['fin de mes', 'final del mes', 'cierre', 'a este ritmo', 'quedara'],
   when: ['cuando', 'que dia', 'que fecha', 'ultima vez', 'en que fecha'],
+  confirm: ['ya pague', 'ya compre', 'ya he pagado', 'he pagado', 'ya pagamos'],
+  list: ['en que gaste', 'que compre', 'que gaste', 'que pague', 'que gastos', 'muestrame', 'listame', 'detalle de'],
+  biggest: ['gasto mas grande', 'gasto mas caro', 'gasto mas alto', 'compra mas grande', 'compra mas cara'],
+  latest: ['ultimo gasto', 'ultima compra', 'ultimo movimiento'],
   totals: ['gaste', 'gasté', 'gasto', 'gastos', 'cuanto', 'cuánto', 'total'],
 };
