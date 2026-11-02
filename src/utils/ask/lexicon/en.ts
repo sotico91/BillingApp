@@ -37,5 +37,6 @@ export const EN: IntentLexicon = {
   percent: ['percent', 'share of'],
   leftNow: ['have left', 'money left'],
   monthEnd: ['end of', 'at this pace'],
+  when: ['when', 'what day', 'what date', 'last time'],
   totals: ['spend', 'spent', 'expense', 'expenses'],
 };

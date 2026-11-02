@@ -134,6 +134,15 @@ export function monthLabel(monthIndex: number, language: 'en' | 'es'): string {
   return name.charAt(0).toUpperCase() + name.slice(1);
 }
 
+/** A movement's day as said in an answer: "9 de octubre" / "October 9", with the year when it is not this one. */
+export function dayLabel(date: Date, language: 'en' | 'es', now = new Date()): string {
+  const day = date.getDate();
+  const month = language === 'es' ? MONTHS_ES[date.getMonth()] : monthLabel(date.getMonth(), 'en');
+  const base = language === 'es' ? `${day} de ${month}` : `${month} ${day}`;
+  if (date.getFullYear() === now.getFullYear()) return base;
+  return language === 'es' ? `${base} de ${date.getFullYear()}` : `${base}, ${date.getFullYear()}`;
+}
+
 export function parseYearToken(raw: string | undefined, fallback: number): number {
   if (!raw) return fallback;
   const n = Number(raw);

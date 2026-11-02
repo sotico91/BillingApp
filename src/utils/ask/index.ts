@@ -81,7 +81,7 @@ export function askRumi(
     return {
       text: answer.text,
       intent,
-      understood: { period: parsed.period.label, concept: concept ?? undefined },
+      understood: { period: answer.period ?? parsed.period.label, concept: concept ?? undefined },
       txs: [...(answer.txs ?? [])].sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
       followUps: followUpsFor(ctx, concept, query),
     };

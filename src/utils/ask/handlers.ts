@@ -22,7 +22,7 @@ import {
 } from './ledger';
 import type { ParsedQuery } from './parse';
 import { tryAnswerPercentQuery } from './percent';
-import { analogRange, previousLabel } from './period';
+import { analogRange, dayLabel, previousLabel } from './period';
 import { answerAfford, answerCut, answerProjection } from './planning';
 import { isCardTopicQuery } from './signals';
 import { includesAny, normalize } from './text';
@@ -45,6 +45,8 @@ export type AskAnswer = {
   text: string;
   /** The movements behind the answer, when it is about specific ones. */
   txs?: Transaction[];
+  /** The time the answer covers, when it is not the asked period (notes search the whole history). */
+  period?: string;
 };
 
 export type Handler = (ctx: AskContext) => AskAnswer | null;
@@ -427,35 +429,91 @@ const paymentMethod: Handler = ({ parsed, list, options, format, t }) => {
   return { text: t('search.answerMethod', { method: methodLabel, amount: format(sum(txs)), period }), txs };
 };
 
-/** Nothing else matched: maybe the words live in a note ("pizza", "cine con Ana"). */
-const looseNote: Handler = ({ parsed, list, format, t }) => {
-  if (parsed.noteNeedle) return null;
-  const tokens = noteSearchTokens(parsed.q);
-  if (tokens.length === 0) return null;
-  const txs = list.filter((x) => {
+/** Notes are looked up in the asked period, or in the whole history when the question named none. */
+function noteScope({ parsed, list, transactions, t }: AskContext) {
+  return parsed.period.explicit
+    ? { pool: list, period: parsed.period.label }
+    : { pool: transactions, period: t('search.periodAllTime') };
+}
+
+/**
+ * Movements whose note has every word. Failing that, the ones with the most of
+ * them ("recarga movistar" still finds "Movistar"), labelled with the words found.
+ */
+function matchNotes(pool: Transaction[], tokens: string[]): { txs: Transaction[]; label: string; full: boolean } {
+  const scored = pool.map((x) => {
     const note = normalize(x.note ?? '');
-    return note && tokens.every((tok) => note.includes(tok));
+    return { x, hits: note ? tokens.filter((tok) => note.includes(tok)) : [] };
   });
-  if (txs.length === 0) return null;
+  const best = scored.reduce((m, s) => Math.max(m, s.hits.length), 0);
+  if (best === 0) return { txs: [], label: tokens.join(' '), full: false };
+  const top = scored.filter((s) => s.hits.length === best);
+  const found = tokens.filter((tok) => top.some((s) => s.hits.includes(tok)));
+  return { txs: top.map((s) => s.x), label: found.join(' '), full: best === tokens.length };
+}
+
+const newestFirst = (txs: Transaction[]) => [...txs].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+
+const dateOf = (ctx: AskContext, x: Transaction) => dayLabel(new Date(x.createdAt), ctx.parsed.language);
+
+/** "How much" on a note, with the days when there are only one or two movements. */
+function noteAnswer(ctx: AskContext, label: string, period: string, txs: Transaction[]): AskAnswer {
+  const params = { label, amount: ctx.format(sum(txs)), period, count: txs.length };
+  if (txs.length === 0 || txs.length > 2) return { text: ctx.t('search.answerNote', params), txs, period };
+  const dates = newestFirst(txs)
+    .map((x) => dateOf(ctx, x))
+    .join(' · ');
+  return { text: ctx.t('search.answerNoteDated', { ...params, dates }), txs, period };
+}
+
+/** "¿qué día tomé didi?", "¿cuándo compré café?": the day it happened, not just the amount. */
+const when: Handler = (ctx) => {
+  const { parsed, format, t, spendConcepts } = ctx;
+  if (!parsed.wants.when) return null;
+  const { pool, period } = noteScope(ctx);
+  const tokens = parsed.noteNeedle ? [parsed.noteNeedle] : noteSearchTokens(parsed.q);
+  const notes = matchNotes(pool, tokens);
+  let { txs, label } = notes;
+  // A note with every word wins; otherwise a named concept ("café"), then a partial note match.
+  if (!notes.full && parsed.cats) {
+    const ids = parsed.cats.ids;
+    label = conceptLabel(ctx) ?? label;
+    txs = isIncomeHit(ctx)
+      ? pool.filter((x) => x.type === 'income' && !!x.categoryId && ids.includes(x.categoryId))
+      : matchTransactionsToCategories(pool, parsed.cats, spendConcepts);
+  }
+  if (txs.length === 0) {
+    // "¿qué día gasté más?" has no note to find: leave it to the other handlers.
+    const known = !!parsed.cats || matchNotes(ctx.transactions, tokens).txs.length > 0;
+    return known ? { text: t('search.answerWhenNone', { label, period }), period } : null;
+  }
+  const [last] = newestFirst(txs);
+  const params = { label, period, date: dateOf(ctx, last), amount: format(last.amount) };
+  if (txs.length === 1) return { text: t('search.answerWhenOne', params), txs, period };
   return {
-    text: t('search.answerNote', {
-      label: tokens.join(' '),
-      amount: format(sum(txs)),
-      period: parsed.period.label,
-      count: txs.length,
-    }),
+    text: t('search.answerWhenMany', { ...params, count: txs.length, total: format(sum(txs)) }),
     txs,
+    period,
   };
 };
 
-const noteNeedle: Handler = ({ parsed, list, format, t }) => {
-  const needle = parsed.noteNeedle;
+/** Nothing else matched: maybe the words live in a note ("pizza", "cine con Ana"). */
+const looseNote: Handler = (ctx) => {
+  const { parsed } = ctx;
+  if (parsed.noteNeedle) return null;
+  const tokens = noteSearchTokens(parsed.q);
+  if (tokens.length === 0) return null;
+  const { pool, period } = noteScope(ctx);
+  const { txs, label } = matchNotes(pool, tokens);
+  if (txs.length === 0) return null;
+  return noteAnswer(ctx, label, period, txs);
+};
+
+const noteNeedle: Handler = (ctx) => {
+  const needle = ctx.parsed.noteNeedle;
   if (!needle) return null;
-  const txs = list.filter((x) => normalize(x.note ?? '').includes(needle));
-  return {
-    text: t('search.answerNote', { label: needle, amount: format(sum(txs)), period: parsed.period.label, count: txs.length }),
-    txs,
-  };
+  const { pool, period } = noteScope(ctx);
+  return noteAnswer(ctx, needle, period, pool.filter((x) => normalize(x.note ?? '').includes(needle)));
 };
 
 const totals: Handler = ({ parsed, list, spendConcepts, format, t, categoryLabel }) => {
@@ -519,6 +577,7 @@ export const HANDLERS = {
   debtBalance,
   top,
   budget,
+  when,
   concept,
   ant,
   comparePeriods,

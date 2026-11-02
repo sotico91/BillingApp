@@ -42,6 +42,7 @@ export type QueryWants = {
   average: boolean;
   budget: boolean;
   percent: boolean;
+  when: boolean;
   totals: boolean;
 };
 
@@ -104,6 +105,7 @@ export function parseQuery(
     average: includesAny(q, L.average),
     budget: includesAny(q, L.budget),
     percent: includesAny(q, L.percent),
+    when: includesAny(q, L.when),
     totals: includesAny(q, L.totals),
   };
 

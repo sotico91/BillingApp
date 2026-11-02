@@ -51,7 +51,8 @@ describe('askRumi intents', () => {
     ['café vs el mes pasado', 'concept', 'Este mes'],
     ['¿gasté más que el mes pasado?', 'comparePeriods', 'Este mes'],
     ['¿cuánto gasté en café y delivery?', 'concept', 'Este mes'],
-    ['¿cuánto gasté en pizza?', 'looseNote', 'Este mes'],
+    ['¿cuánto gasté en pizza?', 'looseNote', 'todo tu historial'],
+    ['¿cuánto gasté en pizza en octubre?', 'looseNote', 'Octubre 2026'],
     ['¿cuánto me queda?', 'leftNow', 'Este mes'],
     ['¿cuánto me queda hasta fin de mes?', 'projection', 'Este mes'],
     ['¿cuánto ahorré el mes pasado?', 'savings', 'Mes pasado'],
@@ -123,5 +124,38 @@ describe('spend totals match Home', () => {
     // 12.000 + 45.000 + 9.000 + 15.000 + 300.000 installment = 381.000 this month.
     expect(answer.text).toContain(format(381_000));
     expect(answer.text).toContain(format(100_000));
+  });
+});
+
+describe('notes: how much and when', () => {
+  const notes = [
+    tx('expense', 30_000, '2026-09-22T10:00', { categoryId: 'celular', note: 'Recarga Movistar' }),
+    tx('expense', 14_500, '2026-10-09T19:00', { categoryId: 'transporte', note: 'Didi a casa' }),
+    tx('expense', 11_000, '2026-10-02T08:00', { categoryId: 'transporte', note: 'Didi oficina' }),
+    tx('expense', 9_000, '2026-10-14T09:00', { categoryId: 'cafe' }),
+    tx('expense', 25_000, '2025-12-24T09:00', { categoryId: 'regalos', note: 'Recarga Claro mamá' }),
+  ];
+  const askNotes = (q: string, language: 'es' | 'en' = 'es') =>
+    askRumi(q, notes, format, translator(language), { language });
+
+  it.each<[string, AskIntent, string]>([
+    ['¿cuánto gasté en una recarga a movistar?', 'noteNeedle', `Coincidencias de “movistar” (todo tu historial): ${format(30_000)} en 1 movimiento (22 de septiembre).`],
+    ['¿cuánto gasté en movistar?', 'looseNote', `Coincidencias de “movistar” (todo tu historial): ${format(30_000)} en 1 movimiento (22 de septiembre).`],
+    ['recarga movistar', 'looseNote', `Coincidencias de “recarga movistar” (todo tu historial): ${format(30_000)} en 1 movimiento (22 de septiembre).`],
+    ['¿qué día tomé didi?', 'when', `“didi” (todo tu historial): 2 veces, la última el 9 de octubre (${format(14_500)}). Total ${format(25_500)}.`],
+    ['¿cuándo fue la recarga de movistar?', 'when', `“recarga movistar”: el 22 de septiembre, por ${format(30_000)}.`],
+    ['¿cuándo recargué a Claro?', 'when', `“claro”: el 24 de diciembre de 2025, por ${format(25_000)}.`],
+    ['¿qué día tomé didi en septiembre?', 'when', 'No encontré movimientos con “didi” (Septiembre 2026).'],
+    ['when did I take didi?', 'when', `“didi” (all your history): 2 times, the last on October 9 (${format(14_500)}). Total ${format(25_500)}.`],
+  ])('%s', (q, intent, text) => {
+    const r = askNotes(q, /[¿áéíóú]|^recarga/.test(q) ? 'es' : 'en');
+    expect(r.intent).toBe(intent);
+    expect(r.text).toBe(text);
+  });
+
+  it('answers when with the movements behind it, newest first', () => {
+    const r = askNotes('¿qué día tomé didi?');
+    expect(r.txs.map((x) => x.note)).toEqual(['Didi a casa', 'Didi oficina']);
+    expect(r.understood?.period).toBe('todo tu historial');
   });
 });

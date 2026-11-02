@@ -327,6 +327,10 @@ export const NON_NOTE_WORDS = new Set([
   'total', 'plata', 'dinero', 'gastado', 'gastamos', 'compre', 'compras', 'llevo', 'van', 'vez', 'veces',
   'month', 'months', 'week', 'weeks', 'day', 'days', 'today', 'yesterday', 'year', 'last', 'past',
   'ago', 'weekend', 'money', 'bought', 'buy', 'so', 'far', 'in', 'at',
+  // "¿qué día tomé didi?": the verb and the "when" words are the question, not the note.
+  'cuando', 'fecha', 'tome', 'tomamos', 'pedi', 'pedimos', 'hice', 'hicimos', 'fui', 'fuimos',
+  'use', 'usamos', 'puse', 'pagamos', 'cargue', 'meti', 'saque', 'algo',
+  'when', 'date', 'time', 'took', 'take', 'ordered', 'paid', 'used', 'went', 'got',
   ...MONTHS_ES.map(normalize),
   ...MONTHS_EN,
 ]);

@@ -10,6 +10,10 @@ El detalle de cada cambio está en `git log`.
 - **Comentarios de código en inglés:** todos los comentarios del código van en inglés.
   Los textos que ve el usuario van en `src/i18n/translations.ts` (es/en).
 
+## 2026-11-02
+
+- **Pregúntale a Rumi busca en las descripciones de todo el historial (1.1.0):** "¿cuánto gasté en una recarga a movistar?" o "recarga movistar" encuentran el gasto aunque sea de otro mes. Sin período en la pregunta, la búsqueda por descripción mira todo el historial ("todo tu historial"); con período ("en septiembre") se queda en ese período. Si son uno o dos movimientos, la respuesta dice el día. Nueva pregunta "cuándo": "¿qué día tomé didi?", "¿cuándo compré café?", "when did I take didi?" responden la fecha (con varias, cuántas veces, la última y el total). Primero busca una nota con todas las palabras, después la categoría nombrada y por último la nota con más palabras. Verbos y palabras de relleno ("tomé", "pedí", "fecha", "cuándo") ya no se buscan en la nota.
+
 ## 2026-10-29
 
 - **Exportaciones sin copias sueltas:** el JSON y el CSV que se comparten se escriben en `cache/rumi-exports`, que se vacía antes de cada exportación y al abrir la app (no justo al compartir, porque en Android la app que recibe puede seguir leyendo el archivo). También borra las exportaciones viejas que quedaron en la caché.

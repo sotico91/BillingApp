@@ -201,7 +201,7 @@ describe('answerFinanceQuery — periods, comparisons and notes', () => {
 
   it('falls back to notes for words that are not concepts', () => {
     expect(ask('¿cuánto gasté en pizza?')).toBe(
-      `Coincidencias de “pizza” (Este mes): ${format(45_000)} en 1 movimiento.`
+      `Coincidencias de “pizza” (todo tu historial): ${format(45_000)} en 1 movimiento (5 de octubre).`
     );
   });
 

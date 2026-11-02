@@ -1149,6 +1149,13 @@ export const translations = {
     'search.answerMethod': 'Expenses with {method} ({period}): {amount}.',
     'search.answerNote':
       'Matches for “{label}” ({period}): {amount} in {count} {count|transaction|transactions}.',
+    'search.answerNoteDated':
+      'Matches for “{label}” ({period}): {amount} in {count} {count|transaction|transactions} ({dates}).',
+    'search.answerWhenOne': '“{label}”: {date}, {amount}.',
+    'search.answerWhenMany':
+      '“{label}” ({period}): {count} times, the last on {date} ({amount}). Total {total}.',
+    'search.answerWhenNone': 'No movements with “{label}” ({period}).',
+    'search.periodAllTime': 'all your history',
     'search.answerCount': 'You have {count} {count|transaction|transactions} in {label} ({period}).',
     'search.answerDebt': 'Current debt balance: {amount}.',
     'search.answerAvailable':
@@ -2401,6 +2408,13 @@ export const translations = {
     'search.answerMethod': 'Gasto con {method} ({period}): {amount}.',
     'search.answerNote':
       'Coincidencias de “{label}” ({period}): {amount} en {count} {count|movimiento|movimientos}.',
+    'search.answerNoteDated':
+      'Coincidencias de “{label}” ({period}): {amount} en {count} {count|movimiento|movimientos} ({dates}).',
+    'search.answerWhenOne': '“{label}”: el {date}, por {amount}.',
+    'search.answerWhenMany':
+      '“{label}” ({period}): {count} veces, la última el {date} ({amount}). Total {total}.',
+    'search.answerWhenNone': 'No encontré movimientos con “{label}” ({period}).',
+    'search.periodAllTime': 'todo tu historial',
     'search.answerCount': 'Tienes {count} {count|movimiento|movimientos} de {label} ({period}).',
     'search.answerDebt': 'Saldo actual de deudas: {amount}.',
     'search.answerAvailable':

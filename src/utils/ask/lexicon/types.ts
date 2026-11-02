@@ -26,6 +26,8 @@ export type IntentLexicon = {
   leftNow: string[];
   /** …unless the question is about the month's end. */
   monthEnd: string[];
+  /** "¿cuándo…?", "¿qué día…?": the date of a movement, not its amount. */
+  when: string[];
   /** Generic "how much / total" that still asks for spend. */
   totals: string[];
 };
