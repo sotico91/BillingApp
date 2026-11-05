@@ -9,6 +9,8 @@
   <meta property="og:title" content="Prueba Rumi en Android" />
   <meta property="og:description" content="Ayúdanos a llegar a Google Play: únete a la prueba de Rumi." />
   <meta property="og:image" content="https://sotico91.github.io/RumiApp/assets/icon.png" />
+  <link rel="alternate" hreflang="es" href="https://sotico91.github.io/RumiApp/probar.html" />
+  <link rel="alternate" hreflang="en" href="https://sotico91.github.io/RumiApp/en/test.html" />
   <link rel="icon" href="assets/icon.png" />
   <link rel="stylesheet" href="assets/site.css" />
 </head>
@@ -18,8 +20,9 @@
       <nav class="nav">
         <a class="brand" href="./"><img src="assets/icon.png" alt="" /><span>Rumi</span></a>
         <div class="nav-links">
-          <a href="#pasos">Cómo unirte</a>
-          <a href="privacy-policy.html">Privacidad</a>
+          <a class="hide-sm" href="#pasos">Cómo unirte</a>
+          <a class="hide-sm" href="privacy-policy.html">Privacidad</a>
+          <span class="lang"><a href="probar.html" data-lang="es" aria-current="true">ES</a><a href="en/test.html" data-lang="en" hreflang="en" lang="en">EN</a></span>
         </div>
       </nav>
       <div class="hero-grid">
@@ -137,11 +140,13 @@
       <nav>
         <a href="./">Inicio</a>
         <a href="privacy-policy.html">Política de privacidad</a>
+        <a href="terms.html">Términos de uso</a>
         <a href="mailto:edavidvelascop@gmail.com">Soporte</a>
       </nav>
       <span>© 2026 Sotico91</span>
     </div>
   </footer>
+  <script src="assets/lang.js"></script>
   <script>
     // Inside WhatsApp, Instagram or Telegram the web Play page opens in their
     // browser, often signed out or on another account, and shows "item not

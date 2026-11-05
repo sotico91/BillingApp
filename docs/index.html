@@ -4,13 +4,28 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Rumi — Cuentas claras, mente tranquila</title>
-  <meta name="description" content="Rumi es una app de finanzas personales: anota gastos en segundos, pon topes, recibe recordatorios de pagos y pregúntale cuánto gastaste. Tus datos se quedan en tu teléfono." />
+  <meta name="description" content="Rumi es una app de finanzas personales: anota gastos en segundos, pon topes, recibe recordatorios de pagos y pregúntale cuánto gastaste. Tus datos se quedan cifrados en tu teléfono." />
   <meta name="theme-color" content="#1B3A4B" />
   <meta property="og:title" content="Rumi — Cuentas claras, mente tranquila" />
-  <meta property="og:description" content="Anota gastos en segundos, pon topes y mira tu mes. Tus datos se quedan en tu teléfono." />
+  <meta property="og:description" content="Anota gastos en segundos, pon topes y pregúntale a Rumi en qué se te va la plata. Tus datos se quedan en tu teléfono." />
   <meta property="og:image" content="https://sotico91.github.io/RumiApp/assets/icon.png" />
+  <meta property="og:locale" content="es_CO" />
+  <link rel="alternate" hreflang="es" href="https://sotico91.github.io/RumiApp/" />
+  <link rel="alternate" hreflang="en" href="https://sotico91.github.io/RumiApp/en/" />
+  <link rel="alternate" hreflang="x-default" href="https://sotico91.github.io/RumiApp/" />
   <link rel="icon" href="assets/icon.png" />
   <link rel="stylesheet" href="assets/site.css" />
+  <script>
+    // First visit from a browser in English: show the English page. A language
+    // picked in the ES | EN switch is remembered and always wins.
+    (function () {
+      try {
+        var saved = localStorage.getItem('rumi-lang');
+        var langs = navigator.languages || [navigator.language || ''];
+        if (!saved && /^en\b/i.test(langs[0] || '')) location.replace('en/');
+      } catch (e) {}
+    })();
+  </script>
 </head>
 <body>
   <header class="hero">
@@ -18,8 +33,10 @@
       <nav class="nav">
         <a class="brand" href="./"><img src="assets/icon.png" alt="" /><span>Rumi</span></a>
         <div class="nav-links">
-          <a href="probar.html">Pruébala</a>
-          <a href="privacy-policy.html">Privacidad</a>
+          <a class="hide-sm" href="#funciones">Funciones</a>
+          <a class="hide-sm" href="#preguntas">Preguntas</a>
+          <a class="hide-sm" href="probar.html">Pruébala</a>
+          <span class="lang"><a href="./" data-lang="es" aria-current="true">ES</a><a href="en/" data-lang="en" hreflang="en" lang="en">EN</a></span>
         </div>
       </nav>
       <div class="hero-grid">
@@ -27,14 +44,14 @@
           <span class="eyebrow">Finanzas personales · Android y iPhone</span>
           <h1>Cuentas claras, <em>mente tranquila.</em></h1>
           <p class="lead">
-            Anota un gasto en segundos, ponle tope a lo que quieres cuidar y pregúntale a Rumi cuánto llevas.
-            Sin hojas de cálculo y sin conectar tu banco.
+            Anota un gasto en segundos, ponle tope a lo que quieres cuidar y pregúntale a Rumi, con tus
+            palabras, en qué se te va la plata. Sin hojas de cálculo, sin crear cuenta y sin conectar tu banco.
           </p>
           <div class="actions">
             <a class="btn btn-primary" href="probar.html">Pruébala en Android</a>
-            <a class="btn btn-ghost" href="#que-hace">Qué hace</a>
+            <a class="btn btn-ghost" href="#funciones">Ver qué hace</a>
           </div>
-          <p class="fine">iPhone: muy pronto en la App Store.</p>
+          <p class="store-note">Gratis · Sin anuncios · iPhone: muy pronto en la App Store.</p>
         </div>
         <div class="phone"><img src="assets/1-inicio.jpg" alt="Pantalla de Inicio de Rumi con el saldo disponible y el resumen del mes" /></div>
       </div>
@@ -42,83 +59,168 @@
   </header>
 
   <main class="wrap">
-    <section id="que-hace">
+    <section>
       <h2 class="section-title">Todo tu dinero, sin complicarte</h2>
-      <p class="section-lead">Funciona en pesos colombianos y en dólares.</p>
+      <p class="section-lead">Funciona en pesos colombianos y en dólares, en español y en inglés.</p>
       <div class="cards">
         <div class="card">
           <div class="icon">✍️</div>
           <h3>Anota en segundos</h3>
-          <p>Escribe cuánto y en qué —“almuerzo”, “uber”— y Rumi lo pone en su categoría. También se lo puedes dictar.</p>
-        </div>
-        <div class="card">
-          <div class="icon teal">🎯</div>
-          <h3>Topes que te cuidan</h3>
-          <p>Ponle un tope al mes a cada gasto y mira cuánto te queda antes de pasarte.</p>
+          <p>Escribe o dicta “almuerzo 18 mil” y Rumi lo pone en su categoría.</p>
         </div>
         <div class="card">
           <div class="icon coral">🐜</div>
           <h3>Gastos hormiga</h3>
-          <p>El café, el domicilio, la suscripción: ve cuánto suman los gastos pequeños que se repiten.</p>
+          <p>El café, el domicilio, la suscripción: mira cuánto suman los gastos pequeños.</p>
         </div>
         <div class="card">
-          <div class="icon">💬</div>
-          <h3>Pregúntale a Rumi</h3>
-          <p>“¿Cuánto gasté en café este mes?” Te responde con tus números y los movimientos detrás.</p>
-        </div>
-        <div class="card">
-          <div class="icon teal">🔔</div>
-          <h3>Recordatorios de pagos</h3>
-          <p>Te avisa el día de pagar la luz o el arriendo, y un día antes de cada cuota de tus créditos.</p>
-        </div>
-        <div class="card">
-          <div class="icon coral">📈</div>
-          <h3>Cómo cierras el mes</h3>
-          <p>Tu patrimonio, tus cuentas y deudas en un lugar, con el pronóstico de fin de mes.</p>
+          <div class="icon teal">🔒</div>
+          <h3>Tus datos, tuyos</h3>
+          <p>Todo queda cifrado en tu teléfono. Sin servidor, sin anuncios y sin rastreo.</p>
         </div>
       </div>
     </section>
 
-    <section>
-      <div class="shots">
-        <figure><img src="assets/1-inicio.jpg" alt="Inicio: saldo y resumen del mes" loading="lazy" /><figcaption>Tu mes, de un vistazo</figcaption></figure>
-        <figure><img src="assets/2-agregar.jpg" alt="Agregar un gasto con su categoría" loading="lazy" /><figcaption>Anota en segundos</figcaption></figure>
-        <figure><img src="assets/3-plan.jpg" alt="Topes del mes por categoría" loading="lazy" /><figcaption>Topes que te cuidan</figcaption></figure>
-        <figure><img src="assets/4-pregunta.jpg" alt="Pregúntale a Rumi cuánto gastaste en café" loading="lazy" /><figcaption>Pregúntale a Rumi</figcaption></figure>
+    <div id="funciones">
+      <section class="feature">
+        <div class="phone"><img src="assets/2-agregar.jpg" alt="Agregar un gasto: Rumi sugiere la categoría a partir de la descripción" loading="lazy" /></div>
+        <div>
+          <span class="kicker">Registrar</span>
+          <h3>Anota un gasto antes de guardar el celular</h3>
+          <p>Escribe cuánto y en qué —“uber”, “mercado”, “fútbol”— y Rumi lo archiva en tu categoría. Si la categoría no existe, la crea. Si corriges una, aprende para la próxima.</p>
+          <ul class="check">
+            <li>Dicta el gasto con el micrófono.</li>
+            <li>Plantillas para café, domicilio, transporte, salario y ahorro.</li>
+            <li>Gastos, ingresos, pagos de deudas y movimientos entre cuentas.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="feature flip">
+        <div class="phone"><img src="assets/3-plan.jpg" alt="Plan: topes del mes por categoría y cuánto queda" loading="lazy" /></div>
+        <div>
+          <span class="kicker">Plan</span>
+          <h3>Topes que te cuidan, recordatorios que llegan a tiempo</h3>
+          <p>Ponle un tope al mes a cada gasto que quieras cuidar y mira cuánto te queda antes de pasarte.</p>
+          <ul class="check">
+            <li>Aviso un día antes de cada cuota de tus créditos.</li>
+            <li>Rumi detecta pagos que se repiten, como Netflix o el arriendo, y te sugiere el recordatorio.</li>
+            <li>Si ya pagaste, no te vuelve a avisar.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="feature">
+        <div class="phone"><img src="assets/6-actividad.jpg" alt="Actividad: movimientos del mes con su categoría y cuenta" loading="lazy" /></div>
+        <div>
+          <span class="kicker">Actividad</span>
+          <h3>Cada peso, con su día y su cuenta</h3>
+          <p>Mira tus movimientos de hoy, de la semana o del mes, y cuánto te costó cada categoría mes a mes. Toca para editar, mantén pulsado para borrar.</p>
+        </div>
+      </section>
+
+      <section class="feature flip">
+        <div class="phone"><img src="assets/5-patrimonio.jpg" alt="Patrimonio: cuentas, billeteras, ahorros e inversiones con el patrimonio neto" loading="lazy" /></div>
+        <div>
+          <span class="kicker">Patrimonio</span>
+          <h3>Lo que tienes menos lo que debes</h3>
+          <p>Bancos, billeteras como Nequi, ahorros, inversiones, tarjetas y créditos en un solo lugar, con tu patrimonio neto arriba.</p>
+          <ul class="check">
+            <li>Los gastos solo salen de cuentas con saldo.</li>
+            <li>Créditos con sus cuotas y lo que falta por pagar.</li>
+          </ul>
+        </div>
+      </section>
+    </div>
+
+    <section id="pregunta">
+      <span class="kicker">Pregúntale a Rumi</span>
+      <h2 class="section-title">Pregunta como le preguntarías a un amigo</h2>
+      <p class="section-lead">Rumi te responde con tus números y te muestra los movimientos detrás de cada respuesta. Todo se calcula en tu teléfono.</p>
+      <div class="ask-grid">
+        <div class="chat" aria-label="Ejemplo de conversación con Rumi">
+          <div class="bubble q">¿Cuánto gasté en café este mes?</div>
+          <div class="bubble a"><strong>Café (este mes): $42.000</strong> en 6 movimientos.</div>
+          <div class="bubble q">¿Ya pagué Netflix?</div>
+          <div class="bubble a">Sí, el <strong>3 de noviembre</strong>: $26.900.</div>
+          <div class="bubble q">¿Qué día tomé Didi?</div>
+          <div class="bubble a"><strong>4 veces</strong> este mes. La última, el 2 de noviembre. Total: $58.400.</div>
+          <div class="bubble q">¿Cómo voy a cerrar el mes?</div>
+          <div class="bubble a">Al ritmo de hoy, cierras con unos <strong>$310.000</strong> de sobra.</div>
+        </div>
+        <div>
+          <div class="phone flat"><img src="assets/4-pregunta.jpg" alt="Pregúntale a Rumi: respuesta con el total de café del mes" loading="lazy" /></div>
+          <div class="chips" aria-label="Más preguntas que entiende Rumi">
+            <span>¿Qué compré ayer?</span>
+            <span>Domicilios vs. el mes pasado</span>
+            <span>¿Cuál fue mi gasto más grande?</span>
+            <span>¿Cuántas veces pedí Uber?</span>
+            <span>Recarga Movistar</span>
+            <span>¿Puedo comprar algo de 200 mil?</span>
+          </div>
+        </div>
       </div>
+      <p class="section-lead" style="margin-top: 14px; font-size: 14px">Montos de ejemplo.</p>
     </section>
 
     <section>
-      <div class="card">
-        <div class="icon teal">🔒</div>
-        <h3>Tus datos son tuyos</h3>
-        <ul class="check">
-          <li>Sin cuenta ni correo, y sin conectar tu banco.</li>
-          <li>Todo se guarda cifrado en tu teléfono; no hay servidor.</li>
-          <li>Sin anuncios ni rastreo. Bloqueo con huella o rostro.</li>
-        </ul>
-        <p style="margin-top: 14px"><a href="privacy-policy.html">Leer la política de privacidad</a></p>
+      <h2 class="section-title">Por qué Rumi</h2>
+      <div class="cards">
+        <div class="card">
+          <div class="icon teal">🙈</div>
+          <h3>Sin cuenta ni banco</h3>
+          <p>No pide correo ni contraseña, y no se conecta a tu banco. Abres y anotas.</p>
+        </div>
+        <div class="card">
+          <div class="icon">🔐</div>
+          <h3>Cifrado en tu teléfono</h3>
+          <p>Tus datos se guardan cifrados (AES-256) y no van a ningún servidor. Bloqueo con huella o rostro, y un ojo para ocultar los montos.</p>
+        </div>
+        <div class="card">
+          <div class="icon coral">📱</div>
+          <h3>Android y iPhone</h3>
+          <p>La misma app en los dos. Exporta tus datos en CSV o JSON cuando quieras.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="preguntas">
+      <h2 class="section-title">Preguntas frecuentes</h2>
+      <div class="faq">
+        <details>
+          <summary>¿Rumi es gratis?</summary>
+          <p>Sí. Hoy Rumi es gratis y no tiene anuncios.</p>
+        </details>
+        <details>
+          <summary>¿Dónde quedan mis datos?</summary>
+          <p>En tu teléfono, cifrados. Rumi no tiene servidor y no envía tus movimientos por internet. Más detalle en la <a href="privacy-policy.html">política de privacidad</a>.</p>
+        </details>
+        <details>
+          <summary>¿Tengo que conectar mi banco?</summary>
+          <p>No. Tú anotas tus movimientos, y Rumi nunca te pide claves del banco.</p>
+        </details>
+        <details>
+          <summary>¿Funciona en dólares?</summary>
+          <p>Sí. Al empezar eliges pesos colombianos o dólares, y la app funciona en español o en inglés según tu teléfono.</p>
+        </details>
+        <details>
+          <summary>¿Qué pasa si cambio de celular?</summary>
+          <p>En Ajustes, “Exportar respaldo” guarda un archivo con tus datos que puedes restaurar en el teléfono nuevo. En iPhone, una copia cifrada de iCloud también los trae.</p>
+        </details>
+        <details>
+          <summary>¿Cuándo llega a la App Store y a Google Play?</summary>
+          <p>Android está en prueba cerrada en Google Play y puedes <a href="probar.html">unirte hoy</a>. iPhone llega muy pronto.</p>
+        </details>
       </div>
     </section>
 
     <div class="band">
-      <h2>Ayúdanos a llegar a Google Play</h2>
-      <p>Rumi está en prueba cerrada. Únete con tu celular Android y tu cuenta de Google.</p>
+      <h2>Empieza a ver en qué se te va la plata</h2>
+      <p>Rumi está en prueba cerrada en Google Play. Únete con tu celular Android y tu cuenta de Google.</p>
       <div class="actions">
         <a class="btn btn-primary" href="probar.html">Quiero probarla</a>
       </div>
     </div>
-
-    <section lang="en">
-      <h2 class="section-title">In English</h2>
-      <p class="section-lead">
-        Rumi is a personal finance app: log a spend in seconds, set monthly limits, get reminders for bills
-        and loan payments, and ask in your own words how much you spent. Works in US dollars and Colombian
-        pesos. No account, no bank connection, no server: your data stays encrypted on your phone. Android is
-        in closed testing on Google Play (<a href="probar.html">join the test</a>, page in Spanish); iPhone is
-        coming soon.
-      </p>
-    </section>
   </main>
 
   <footer>
@@ -127,10 +229,13 @@
       <nav>
         <a href="probar.html">Pruébala</a>
         <a href="privacy-policy.html">Política de privacidad</a>
+        <a href="terms.html">Términos de uso</a>
         <a href="mailto:edavidvelascop@gmail.com">Soporte</a>
+        <a href="en/" data-lang="en" hreflang="en" lang="en">English</a>
       </nav>
       <span>© 2026 Sotico91</span>
     </div>
   </footer>
+  <script src="assets/lang.js"></script>
 </body>
 </html>
