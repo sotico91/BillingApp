@@ -15,6 +15,7 @@ import { PocketBreakdown } from '@/src/components/PocketBreakdown';
 import { SavingsDecor } from '@/src/components/SavingsDecor';
 import { useFinance } from '@/src/hooks/useFinance';
 import { useMoney } from '@/src/hooks/useMoney';
+import { usePro } from '@/src/hooks/usePro';
 import { useSettings } from '@/src/hooks/useSettings';
 import { useLanguage } from '@/src/i18n/LanguageContext';
 import { currencyCopyKey, type TranslationKey } from '@/src/i18n/translations';
@@ -39,6 +40,7 @@ export default function InsightsScreen() {
   const { t, language } = useLanguage();
   const { format } = useMoney();
   const { settings } = useSettings();
+  const pro = usePro();
   const spendConcepts = settings.spendConcepts ?? [];
   const { insightsForPeriod, totalForPeriod, transactions, transactionsForPeriod, budgetStatus, debts, availableCash, accounts } =
     useFinance();
@@ -95,6 +97,9 @@ export default function InsightsScreen() {
 
   function ask(nextQuery?: string) {
     const q = (nextQuery ?? query).trim();
+    // An empty box asks nothing, so it does not use a free question.
+    if (q && !pro.allow('ask')) return;
+    if (q) pro.noteAsk();
     if (nextQuery != null) {
       setQuery(nextQuery);
       setActiveSuggestion(nextQuery);
@@ -179,6 +184,9 @@ export default function InsightsScreen() {
             </Pressable>
           ) : null}
         </View>
+        {!pro.isPro ? (
+          <Text style={styles.asksLeft}>{t('pro.asksLeft', { count: pro.asksLeft })}</Text>
+        ) : null}
 
         {answer ? (
           <View style={styles.answerCard}>
@@ -432,6 +440,12 @@ const styles = StyleSheet.create({
   searchBtnText: {
     fontFamily: 'DMSans_600SemiBold',
     color: palette.white,
+  },
+  asksLeft: {
+    marginTop: 8,
+    fontFamily: 'DMSans_500Medium',
+    fontSize: 13,
+    color: colors.text.secondary,
   },
   searchActions: {
     marginTop: 8,

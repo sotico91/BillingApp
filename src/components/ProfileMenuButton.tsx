@@ -18,6 +18,7 @@ import { listAutoBackups, readAutoBackup } from '@/src/data/autoBackup';
 import { AppModal } from '@/src/components/AppModal';
 import { KeyboardSafeOverlay } from '@/src/components/KeyboardSafe';
 import { useFinance } from '@/src/hooks/useFinance';
+import { usePro } from '@/src/hooks/usePro';
 import { useSettings } from '@/src/hooks/useSettings';
 import { useLanguage } from '@/src/i18n/LanguageContext';
 import { AppText } from '@/src/components/ui';
@@ -49,6 +50,7 @@ export function ProfileMenuButton() {
     updateAppLock,
     updateNotifyOnExpense,
   } = useSettings();
+  const pro = usePro();
   const {
     transactions,
     accounts,
@@ -306,6 +308,26 @@ export function ProfileMenuButton() {
                   onPress={openEditName}
                 />
               </SettingsGroup>
+
+              {pro.available ? (
+                <SettingsGroup title={t('pro.eyebrow')}>
+                  <SettingsRow
+                    icon="star-four-points-outline"
+                    label={t('pro.settingsRow')}
+                    value={
+                      pro.founder
+                        ? t('pro.settingsFounder')
+                        : pro.subscribed
+                          ? t('pro.settingsActive')
+                          : t('pro.settingsFree')
+                    }
+                    onPress={() => {
+                      setMenuOpen(false);
+                      router.push('/pro');
+                    }}
+                  />
+                </SettingsGroup>
+              ) : null}
 
               <SettingsGroup title={t('settings.preferences')}>
                 <SettingsRow

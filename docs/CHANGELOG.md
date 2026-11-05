@@ -12,6 +12,7 @@ El detalle de cada cambio está en `git log`.
 
 ## 2026-11-05
 
+- **Rumi Pro listo en el código, apagado hasta tener la llave de RevenueCat:** suscripción mensual o anual por Google Play y App Store, validada con RevenueCat (`react-native-purchases` ~10.16; la 11 pide un pod que aún no está en CocoaPods). El plan gratis tiene 5 preguntas a Rumi al mes, 3 topes (el de la cuota de una deuda no cuenta) y 3 recordatorios (los avisos de deudas siguen gratis); al pasar el límite se abre la pantalla Pro, y nada de lo que ya existe se quita. Quien ya usaba Rumi antes de prender Pro lo tiene gratis para siempre ("fundador"). Ajustes muestra "Rumi Pro". Sin `EXPO_PUBLIC_REVENUECAT_*_KEY` la app funciona igual que antes: 496 pruebas y los 8 recorridos de Maestro pasan. Pasos para prenderlo en `docs/PRO.md`.
 - **Sitio web completo en español e inglés:** la página de inicio muestra cada función con su captura (registrar, Plan, Actividad, Patrimonio), una conversación de ejemplo con Pregúntale a Rumi, por qué Rumi y preguntas frecuentes. Todo existe también en inglés bajo `/en/` (inicio, prueba, privacidad y términos), con capturas en USD. Cada página tiene el selector ES | EN y etiquetas `hreflang`; un navegador en inglés que entra por primera vez a la raíz va a `/en/`, y la elección hecha en el selector se recuerda. Nuevos términos de uso (`terms.html`), que las tiendas piden para vender suscripciones.
 
 ## 2026-11-02

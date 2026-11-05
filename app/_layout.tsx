@@ -30,6 +30,7 @@ import { StorageNotice } from '@/src/components/StorageNotice';
 import { HowToGuideProvider } from '@/src/hooks/useHowToGuide';
 import { AmountPrivacyProvider } from '@/src/hooks/useAmountPrivacy';
 import { ExpensesProvider } from '@/src/hooks/useExpenses';
+import { ProProvider } from '@/src/hooks/usePro';
 import { SettingsProvider } from '@/src/hooks/useSettings';
 import { LanguageProvider, useLanguage } from '@/src/i18n/LanguageContext';
 import { palette } from '@/src/theme/colors';
@@ -84,6 +85,7 @@ export default function RootLayout() {
     <View style={styles.appRoot}>
       <LanguageProvider>
         <SettingsProvider>
+          <ProProvider>
           <AmountPrivacyProvider>
             <ExpensesProvider>
               <SaveToastProvider>
@@ -107,6 +109,7 @@ export default function RootLayout() {
               </SaveToastProvider>
             </ExpensesProvider>
           </AmountPrivacyProvider>
+          </ProProvider>
         </SettingsProvider>
       </LanguageProvider>
     </View>
@@ -133,6 +136,14 @@ function RootNavigator() {
         options={{
           presentation: 'modal',
           title: t('add.title'),
+          headerLargeTitle: false,
+        }}
+      />
+      <Stack.Screen
+        name="pro"
+        options={{
+          presentation: 'modal',
+          title: t('pro.settingsRow'),
           headerLargeTitle: false,
         }}
       />

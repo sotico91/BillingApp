@@ -8,6 +8,8 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 
+import { usePro } from '@/src/hooks/usePro';
+import { userBudgetCount } from '@/src/utils/pro';
 import { useFinance } from '@/src/hooks/useFinance';
 import { useMoney } from '@/src/hooks/useMoney';
 import { useSettings } from '@/src/hooks/useSettings';
@@ -47,7 +49,8 @@ export function ConceptsPlanCard() {
     settings,
   } = useSettings();
   const tree = useSpendTreeEdit();
-  const { budgetStatus, updateBudget, removeBudget, debts } = useFinance();
+  const { budgets, budgetStatus, updateBudget, removeBudget, debts } = useFinance();
+  const pro = usePro();
 
   const [conceptDraft, setConceptDraft] = useState('');
   // Until the user picks one, the icon follows the name being typed ("Gasolina" → ⛽).
@@ -281,6 +284,11 @@ export function ConceptsPlanCard() {
       return;
     }
     const current = budgetStatus.find((b) => b.categoryId === subId)?.limit;
+    // A new limit past the free allowance opens Pro; editing one that exists never does.
+    if (!current) {
+      const debtCategories = new Set(debts.map((d) => d.categoryId).filter((id): id is string => !!id));
+      if (!pro.allow('budgets', userBudgetCount(budgets, debtCategories))) return;
+    }
     setEditingId(subId);
     tapFeedback();
     setSubEditingId(null);

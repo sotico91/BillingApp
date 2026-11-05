@@ -12,6 +12,7 @@ import {
 import { flattenSpendSubs } from '@/src/data/spendConcepts';
 import { AppModal } from '@/src/components/AppModal';
 import { KeyboardSafeOverlay } from '@/src/components/KeyboardSafe';
+import { usePro } from '@/src/hooks/usePro';
 import { useFinance } from '@/src/hooks/useFinance';
 import { useMoney } from '@/src/hooks/useMoney';
 import { useSettings } from '@/src/hooks/useSettings';
@@ -57,6 +58,7 @@ export function ReminderSettingsCard() {
   const { t, language } = useLanguage();
   const { settings, updateReminders, setDebtReminder, dismissReminderSuggestion } = useSettings();
   const { transactions, debts } = useFinance();
+  const pro = usePro();
   const { format } = useMoney();
   const spendConcepts = settings.spendConcepts ?? [];
   const [rules, setRules] = useState<ReminderRule[]>(settings.reminderRules ?? []);
@@ -100,6 +102,7 @@ export function ReminderSettingsCard() {
 
   async function acceptSuggestion(suggestion: ReminderSuggestion) {
     tapFeedback();
+    if (!pro.allow('reminders', rules.length)) return;
     // Saves any pending edits too: the card shows them as one list.
     const next = [...rules, suggestion.rule];
     setRules(next);
@@ -273,6 +276,7 @@ export function ReminderSettingsCard() {
         <Pressable
           onPress={() => {
             tapFeedback();
+            if (!pro.allow('reminders', rules.length)) return;
             setPickerOpen(true);
           }}
           accessibilityRole="button"
