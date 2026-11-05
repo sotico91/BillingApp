@@ -26,8 +26,8 @@ export default function PrivacyPolicyScreen() {
         <Text style={styles.title}>{t('about.privacyPolicy')}</Text>
         <Text style={styles.meta}>
           {es
-            ? 'Última actualización: 27 de octubre de 2026 · Sotico91'
-            : 'Last updated: October 27, 2026 · Sotico91'}
+            ? 'Última actualización: 5 de noviembre de 2026 · Sotico91'
+            : 'Last updated: November 5, 2026 · Sotico91'}
         </Text>
 
         {es ? (
@@ -38,10 +38,11 @@ export default function PrivacyPolicyScreen() {
             </Text>
             <Text style={styles.h}>1. Resumen</Text>
             <Text style={styles.p}>
-              Tus movimientos, cuentas, presupuestos y ajustes se guardan en tu dispositivo.
-              Rumi no tiene servidor, no pide crear una cuenta, no envía tus datos por
-              internet y no los vende ni los comparte con terceros. Las preguntas que haces en
-              “Pregúntale a Rumi” se responden en el propio teléfono.
+              Tus movimientos, cuentas, presupuestos y ajustes se guardan en tu dispositivo y
+              nunca salen de él. Rumi no tiene servidor, no pide crear una cuenta y no vende ni
+              comparte tus datos. Las preguntas que haces en “Pregúntale a Rumi” se responden en
+              el propio teléfono. Lo único que sale por internet es lo necesario para Rumi Pro
+              (punto 6), con un identificador anónimo.
             </Text>
             <Text style={styles.h}>2. Datos que procesa la App</Text>
             <Text style={styles.p}>
@@ -56,8 +57,12 @@ export default function PrivacyPolicyScreen() {
               • Face ID / huella o código — solo si activas el bloqueo; la verificación la
               hace el sistema y Rumi no recibe tu huella ni tu rostro.{'\n'}
               • Archivos / compartir — solo al exportar o restaurar un respaldo.{'\n'}
+              • Micrófono y reconocimiento de voz — solo si tocas el micrófono para dictar.
+              Rumi no graba ni guarda el audio. Si el teléfono tiene el idioma instalado, el
+              reconocimiento se hace en el dispositivo; si no, el sistema (Apple o Google) pasa
+              la voz a texto con su propio servicio y Rumi solo recibe el texto.{'\n'}
               {'\n'}
-              La App no solicita micrófono, cámara, contactos ni ubicación.
+              La App no solicita cámara, contactos ni ubicación.
             </Text>
             <Text style={styles.h}>4. Notificaciones en la pantalla bloqueada</Text>
             <Text style={styles.p}>
@@ -76,6 +81,13 @@ export default function PrivacyPolicyScreen() {
             </Text>
             <Text style={styles.h}>6. Servicios de terceros</Text>
             <Text style={styles.p}>
+              Rumi Pro: la compra la cobra Google Play o la App Store, y Rumi usa RevenueCat
+              (RevenueCat, Inc., EE. UU.) para comprobarla. Al abrir la App, RevenueCat recibe un
+              identificador anónimo creado por la App, la dirección IP, el modelo del teléfono,
+              la versión del sistema y, si compras, los datos de la compra (plan, precio, fecha y
+              país de la tienda), para mostrar los planes y saber si tienes Pro. No recibe tu
+              nombre, tu correo ni tus movimientos.{'\n'}
+              {'\n'}
               No incluye publicidad, analítica ni SDKs de seguimiento. Las notificaciones son
               locales y se programan en el dispositivo. “Reportar un error” abre tu app de
               correo y solo se envía lo que tú escribas. Apple y Google pueden procesar datos
@@ -112,10 +124,11 @@ export default function PrivacyPolicyScreen() {
             </Text>
             <Text style={styles.h}>1. Summary</Text>
             <Text style={styles.p}>
-              Your transactions, accounts, budgets and settings are stored on your device.
-              Rumi has no server, asks you to create no account, does not send your data over
-              the internet, and does not sell or share it with third parties. Questions you
-              ask in “Ask Rumi” are answered on the phone itself.
+              Your transactions, accounts, budgets and settings are stored on your device and
+              never leave it. Rumi has no server, asks you to create no account, and does not
+              sell or share your data. Questions you ask in “Ask Rumi” are answered on the phone
+              itself. The only thing that goes over the internet is what Rumi Pro needs
+              (section 6), with an anonymous identifier.
             </Text>
             <Text style={styles.h}>2. Data the App processes</Text>
             <Text style={styles.p}>
@@ -130,8 +143,12 @@ export default function PrivacyPolicyScreen() {
               • Face ID / fingerprint or passcode — only if you enable App Lock; the system
               does the check and Rumi never receives your face or fingerprint.{'\n'}
               • Files / sharing — only when you export or restore a backup.{'\n'}
+              • Microphone and speech recognition — only if you tap the microphone to dictate.
+              Rumi does not record or store the audio. If the phone has the language installed,
+              recognition runs on the device; otherwise the system (Apple or Google) turns the
+              speech into text with its own service and Rumi only receives the text.{'\n'}
               {'\n'}
-              The App does not request microphone, camera, contacts or location access.
+              The App does not request camera, contacts or location access.
             </Text>
             <Text style={styles.h}>4. Notifications on the lock screen</Text>
             <Text style={styles.p}>
@@ -149,6 +166,13 @@ export default function PrivacyPolicyScreen() {
             </Text>
             <Text style={styles.h}>6. Third parties</Text>
             <Text style={styles.p}>
+              Rumi Pro: Google Play or the App Store charges the purchase, and Rumi uses
+              RevenueCat (RevenueCat, Inc., USA) to check it. When the App opens, RevenueCat
+              receives an anonymous identifier created by the App, the IP address, the phone
+              model, the system version and, if you buy, the purchase details (plan, price, date
+              and store country), to show the plans and know whether you have Pro. It does not
+              receive your name, your email or your transactions.{'\n'}
+              {'\n'}
               No ads, analytics or tracking SDKs. Notifications are local and scheduled on the
               device. “Report a problem” opens your email app and only sends what you write.
               Apple and Google may process install data under their own policies.

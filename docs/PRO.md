@@ -44,9 +44,6 @@ SDK: `react-native-purchases` ~10.16 (11.x needs `PurchasesHybridCommon` 20.x, n
    npx eas-cli env:create --environment production --name EXPO_PUBLIC_REVENUECAT_IOS_KEY --value appl_xxx --visibility plaintext
    ```
    Public SDK keys are meant to ship inside the app; they are not secrets.
-5. **Before the first build with keys**
-   - Bump the version to 1.2.0 (feature) in `app.json` and `package.json`.
-   - Update the privacy policy (web es/en and `app/privacidad.tsx`): buying Pro sends an anonymous id and the purchase to RevenueCat.
-   - Play Console → Seguridad de los datos: declare "Historial de compras" (collected, not shared, for app functionality).
-   - Website: add the Free / Pro prices section.
+5. **Before the first build with keys** (done for 1.2.0 on 2026-11-05: Android key in EAS `production`, privacy, terms and website prices)
+   - Play Console → Seguridad de los datos: declare "Historial de compras" and "IDs de dispositivo u otros" (collected, not shared, for app functionality) before the build leaves the internal test.
 6. **Test**: add your account under Play Console → Configuración → Prueba de licencias, install from the internal test and buy; test purchases are free and renew every few minutes.
