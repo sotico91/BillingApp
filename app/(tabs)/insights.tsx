@@ -157,6 +157,7 @@ export default function InsightsScreen() {
             }
           }}
           placeholder={searchPlaceholder}
+          testID="ask-input"
           placeholderTextColor={palette.inkSoft}
           style={styles.searchInput}
           returnKeyType="search"

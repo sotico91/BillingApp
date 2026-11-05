@@ -1,0 +1,63 @@
+# Free plan: 5 questions to Rumi a month, then the Pro screen; a Test Store
+# purchase unlocks Pro. Needs a build with a RevenueCat Test Store key
+# (EXPO_PUBLIC_REVENUECAT_IOS_KEY=test_… in .env.local), so `npm run e2e` skips it.
+# Run: E2E_FLOW=pro/limits npm run e2e
+appId: com.sotico91.rumi
+---
+- runFlow: ../subflows/fresh-start.yaml
+- waitForAnimationToEnd
+# Debug builds (needed for a Test Store key) show a warnings banner over the tab bar.
+- runFlow:
+    when:
+      visible: "Open debugger to view warnings."
+    commands:
+      - tapOn:
+          point: "92%,93%"
+# Right after onboarding the first tab tap can be lost, so tap until Insights opens.
+- repeat:
+    while:
+      notVisible: "Pregúntale a Rumi"
+    times: 4
+    commands:
+      - tapOn: "Análisis"
+      - waitForAnimationToEnd:
+          timeout: 5000
+- assertVisible: "Pregúntale a Rumi"
+- assertVisible: "Te quedan 5 preguntas gratis este mes"
+- tapOn:
+    id: "ask-input"
+- inputText: "café"
+- repeat:
+    times: 5
+    commands:
+      - tapOn: "Preguntar"
+- assertVisible: "Te quedan 0 preguntas gratis este mes"
+- tapOn: "Preguntar"
+- extendedWaitUntil:
+    visible: "Usaste tus 5 preguntas gratis de este mes.*"
+    timeout: 10000
+# iOS reads each plan as one label: title, price and badge together.
+- assertVisible: ".*Anual.*19,99.*Ahorra 44%.*"
+- assertVisible: ".*Mensual.*2,99 al mes.*"
+- scrollUntilVisible:
+    element: "Empezar prueba gratis"
+- tapOn: "Empezar prueba gratis"
+- tapOn: "Test valid purchase"
+- extendedWaitUntil:
+    visible: "Bienvenido a Pro"
+    timeout: 15000
+- tapOn: "OK"
+# Pro: the counter is gone and questions keep working.
+- extendedWaitUntil:
+    visible: "Pregúntale a Rumi"
+    timeout: 10000
+- assertNotVisible: ".*preguntas gratis este mes"
+- tapOn: "Preguntar"
+- assertNotVisible: "Usaste tus 5 preguntas gratis de este mes.*"
+# Settings (the initial on Home) shows the subscription as active. A tap on the
+# title closes the keyboard that covers the tab bar.
+- tapOn: "Pregúntale a Rumi"
+- tapOn: "Inicio"
+- tapOn: "Ajustes"
+- scrollUntilVisible:
+    element: ".*Rumi Pro.*Activo.*"

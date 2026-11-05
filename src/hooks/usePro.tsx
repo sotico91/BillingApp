@@ -39,7 +39,11 @@ function storeKey(): string | null {
     Platform.OS === 'ios'
       ? process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY
       : process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY;
-  return key && key.trim() ? key.trim() : null;
+  const trimmed = key?.trim();
+  if (!trimmed) return null;
+  // The SDK closes a release build that uses a Test Store key; keep Pro off instead.
+  if (trimmed.startsWith('test_') && !__DEV__) return null;
+  return trimmed;
 }
 
 type PurchasesModule = typeof import('react-native-purchases').default;

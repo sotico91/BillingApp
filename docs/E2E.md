@@ -39,3 +39,14 @@ El simulador debe estar en **español**: los recorridos buscan los textos en esp
 - iOS junta los textos de un botón en una sola etiqueta ("B, Banco principal, $1.000.000"): usar expresiones regulares y escapar `$`, `.` y paréntesis.
 - El teclado numérico no tiene "Listo": tocar un título ("¿En qué?") lo cierra.
 - `maestro hierarchy` muestra las etiquetas que hay en pantalla.
+
+## Rumi Pro (aparte)
+
+`e2e/pro/limits.yaml` no corre con `npm run e2e`: necesita un build **Debug** con la llave del Test Store de RevenueCat (el SDK cierra un build Release que usa una llave `test_`).
+
+1. `.env.local` (no se sube a git ni a EAS): `EXPO_PUBLIC_REVENUECAT_IOS_KEY=test_…`
+2. `npx expo start` y compilar con `-configuration Debug` (mismo comando de arriba); instalar `Debug-iphonesimulator/Rumi.app`.
+3. `E2E_FLOW=pro/limits npm run e2e`.
+
+Comprueba: 5 preguntas gratis y la sexta abre Pro con los dos planes y sus precios ("Ahorra 44%"); la compra de prueba del anual da "Bienvenido a Pro", quita el contador y Ajustes dice "Rumi Pro · Activo".
+
