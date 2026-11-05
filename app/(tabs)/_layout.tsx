@@ -22,8 +22,8 @@ export default function TabLayout() {
         // Cream behind every tab while it mounts, instead of the petrol
         // navigation background flashing through on first open.
         sceneStyle: { backgroundColor: colors.bg.screen },
-        // Tabs out of view stop re-rendering on every ledger change (slow phones stutter otherwise).
-        freezeOnBlur: true,
+        // No freezeOnBlur: on Android a frozen tab sometimes stayed on screen after
+        // switching (the bar moved, the content didn't) until the app was reopened.
       }}>
       <Tabs.Screen
         name="index"
