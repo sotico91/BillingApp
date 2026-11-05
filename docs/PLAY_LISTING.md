@@ -120,3 +120,48 @@ Textos y respuestas para crear Rumi en Play Console y abrir la prueba cerrada. P
 - **Release notes (en-US):**
   > First test release of Rumi. Log spending, set limits, get payment reminders and ask Rumi. If something breaks, tell us in Settings → Report a problem. Thanks for testing!
 - **Enlace para los testers:** https://play.google.com/apps/testing/com.sotico91.rumiapp (también en https://sotico91.github.io/RumiApp/probar.html).
+
+## Solicitud de acceso a producción
+
+Se pide desde **Panel → Solicitar acceso a producción** cuando la prueba cerrada cumple 12 testers durante 14 días seguidos (día 7 el 2026-11-05, así que desde el ~2026-11-12). Google lee las respuestas con cuidado: si suenan genéricas o la prueba se ve poco usada, rechaza y pide otros 14 días. Las partes entre **[COMPLETAR: …]** son lo que solo tú sabes; sin datos reales, mejor decir poco que inventar.
+
+### Antes de enviarla
+
+- Que la prueba cerrada siga con **12 o más** testers inscritos ese día.
+- Que haya comentarios reales. Unos días antes, manda a los testers este mensaje:
+  > ¡Hola! Gracias por probar Rumi estos días. Me ayudas con 3 respuestas cortas para Google Play? 1) ¿Qué usaste más? 2) ¿Algo falló, se te hizo confuso o te faltó? 3) Del 1 al 5, ¿qué tan probable es que la sigas usando? Puedes responder aquí o en la app: Ajustes → Reportar un error.
+- Anota las respuestas aquí abajo (sin nombres) para que las de la solicitud sean ciertas.
+
+### Parte 1 — Acerca de la prueba cerrada
+
+**¿Qué tan fácil fue reclutar verificadores?**
+> Elegir según cómo fue. Si costó llegar a 12, "Algo difícil" o "Difícil" es una respuesta válida y honesta.
+
+**Describe la participación que recibiste de los verificadores durante la prueba cerrada.**
+> Rumi se probó con [COMPLETAR: número] personas en Colombia, en su mayoría familiares, amigos y compañeros que llevan sus gastos a mano o no los llevan. Las invitamos a través de un grupo de Google y una página con los pasos (sotico91.github.io/RumiApp/probar.html). Durante los 14 días la usaron para anotar sus gastos del día a día, poner topes del mes y hacer preguntas a "Pregúntale a Rumi". [COMPLETAR: ej. "unas X personas la abrieron casi todos los días", según lo que veas en Play Console → Estadísticas o te cuenten]. Empezamos con la versión 1.0 y durante la prueba publicamos la 1.1.0, que los verificadores recibieron por Google Play.
+
+**Resume los comentarios que recibiste de los verificadores. Incluye cómo los recopilaste.**
+> Recibimos comentarios por tres vías: el botón "Reportar un error" dentro de la app (abre un correo al desarrollador), mensajes directos por WhatsApp y una encuesta corta de 3 preguntas al final de la prueba. Lo más mencionado fue: [COMPLETAR: 2–4 puntos reales, ej. "querían preguntarle a Rumi por un gasto puntual, como una recarga o un Didi, y no solo por categorías"; "no encontraban dónde poner un tope"; "pidieron ver el saldo de cada cuenta"]. También probamos la app nosotros mismos en un Android de gama media (Moto g) y en iPhone, en español e inglés, y en pesos y dólares.
+
+### Parte 2 — Acerca de tu app
+
+**¿Quién es el público objetivo de tu app?**
+> Adultos en Colombia y Latinoamérica (también en EE. UU., en inglés y dólares) que quieren saber en qué se les va la plata sin hojas de cálculo y sin conectar su banco. En especial personas que se pierden en los gastos pequeños del día a día (café, domicilios, transporte, suscripciones) y quieren recordar a tiempo sus pagos y cuotas.
+
+**Describe cómo tu app aporta valor a los usuarios.**
+> Rumi permite anotar un gasto en segundos, escribiéndolo o dictándolo ("almuerzo 18 mil con Nequi"), y lo clasifica solo. Con eso muestra el mes de un vistazo, deja poner topes por categoría, recuerda pagos y cuotas de créditos el día antes, y responde preguntas en lenguaje natural como "¿cuánto gasté en domicilios este mes?" o "¿ya pagué Netflix?", mostrando los movimientos detrás de cada respuesta. No pide cuenta ni conexión al banco: los datos se guardan cifrados en el teléfono y no salen de él.
+
+**¿Cuántas instalaciones esperas durante el primer año?**
+> Elegir el rango más bajo creíble: **0 – 10 mil**. Es una app nueva sin presupuesto de anuncios.
+
+### Parte 3 — Preparación para producción
+
+**¿Qué cambios hiciste en tu app a partir de lo que aprendiste durante la prueba cerrada?**
+> - "Pregúntale a Rumi" ahora busca en las descripciones de todo el historial y responde preguntas más naturales: "¿qué día tomé Didi?", "¿ya pagué Netflix?", "¿qué compré ayer?", "¿cuál fue mi gasto más grande?", cuántas veces y el promedio de un gasto (versión 1.1.0).
+> - Las exportaciones de respaldo (JSON y CSV) ya no dejan copias sueltas en el teléfono: se guardan en una carpeta temporal que se vacía sola.
+> - La fecha de la política de privacidad dentro de la app quedó igual que la de la web.
+> - Publicamos el sitio web en español e inglés con la política de privacidad y los términos de uso.
+> - [COMPLETAR: cualquier arreglo hecho por un comentario de un tester; si alguno de los puntos de arriba nació de un comentario, decirlo así: "Un verificador pidió…, así que…"].
+
+**¿Cómo decidiste que tu app está lista para producción?**
+> Después de 14 días con [COMPLETAR: número] verificadores no quedaron errores abiertos que impidan usarla, y los comentarios de la prueba ya están resueltos en la versión 1.1.0. Antes de cada versión corremos pruebas automáticas (casi 500 pruebas unitarias y recorridos completos en el simulador: registro inicial, agregar un gasto, buscar categorías, aprender de una corrección, restaurar un respaldo y mover dinero) y la probamos en un Android real. La app no usa servidor ni recoge datos personales, así que no hay riesgos de privacidad abiertos, y la ficha, la clasificación de contenido y la sección de seguridad de los datos están completas.
