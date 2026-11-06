@@ -42,6 +42,7 @@ export type NewSubId =
   | 'otherSport'
   | 'outings'
   | 'games'
+  | 'bets'
   | 'subscriptions'
   | 'health'
   | 'power'
@@ -247,6 +248,17 @@ export const SPEND_KINDS: SpendKind[] = [
     words: ['videojuego', 'videojuegos', 'juegos', 'steam', 'playstation', 'xbox', 'nintendo', 'games', 'game'],
     concept: LEISURE,
     create: { concept: 'leisure', sub: 'games' },
+  },
+  {
+    // Games of chance. "boleto" alone stays out: it is also a bus or movie ticket.
+    words: [
+      'rifa', 'rifas', 'chance', 'chances', 'loteria', 'loterias', 'baloto', 'revancha', 'miloto', 'superastro',
+      'apuesta', 'apuestas', 'apostar', 'aposte', 'betplay', 'wplay', 'rushbet', 'codere', 'sorteo', 'raspa y gana',
+      'raspadito', 'casino', 'tragamonedas', 'bingo', 'juegos de azar', 'raffle', 'raffles', 'lottery', 'lotto',
+      'bets', 'betting', 'gambling', 'scratch card', 'scratch off',
+    ],
+    concept: LEISURE,
+    create: { concept: 'leisure', sub: 'bets' },
   },
   {
     words: [
