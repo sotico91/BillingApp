@@ -145,6 +145,7 @@ export const translations = {
     'about.privacyErrorBody': 'Could not open the privacy policy. Check your connection.',
 
     'pro.eyebrow': 'Rumi Pro',
+    'pro.badge': 'PRO',
     'pro.title': 'Everything Rumi does, no limits',
     'pro.subtitle': 'Ask as much as you want, and set every limit and reminder you need.',
     'pro.reasonAsk': 'You used your {asks} free questions this month. With Pro, ask as much as you want.',
@@ -1453,6 +1454,7 @@ export const translations = {
       'No se pudo abrir la política de privacidad. Revisa tu conexión.',
 
     'pro.eyebrow': 'Rumi Pro',
+    'pro.badge': 'PRO',
     'pro.title': 'Todo lo que hace Rumi, sin límites',
     'pro.subtitle': 'Pregunta todo lo que quieras y pon todos los topes y recordatorios que necesites.',
     'pro.reasonAsk': 'Usaste tus {asks} preguntas gratis de este mes. Con Pro, pregunta todo lo que quieras.',

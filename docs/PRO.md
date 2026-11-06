@@ -13,6 +13,8 @@ Pro is a monthly or annual subscription sold through Google Play and the App Sto
 
 Nothing that already exists is taken away: the limits only stop adding a new limit, reminder or question. Logging, Home, Activity, accounts, export and app lock stay free.
 
+**Rumi Pro look:** while Pro is on (bought or founder), Home shows a gold "PRO" tag next to "Rumi" and the launch screen shows "Rumi Pro" under the mark. When a subscription expires, RevenueCat drops the `pro` entitlement and the app goes back to plain Rumi. The last state is saved as `showsPro` in `rumi.pro.v1`, because the launch screen runs before the store answers. The store icon and listing are the same for everyone.
+
 **Founders:** whoever had finished onboarding the first time they open a build with Pro turned on keeps Pro for free, for good (`founder` in `rumi.pro.v1`, decided once). A fresh install, or a restore from backup on a new phone, is not a founder.
 
 ## Code

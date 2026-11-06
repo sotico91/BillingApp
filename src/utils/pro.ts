@@ -30,6 +30,11 @@ export type ProState = {
   askMonth?: string;
   /** Questions asked in `askMonth`. */
   askCount?: number;
+  /**
+   * Pro was on (bought or founder) the last time the store answered, so the
+   * launch screen can show "Rumi Pro" before the store answers again.
+   */
+  showsPro?: boolean;
 };
 
 export function monthKey(date: Date): string {
@@ -57,6 +62,26 @@ export function recordAsk(state: ProState, now: Date): ProState {
 export function decideFounder(state: ProState, onboardingDone: boolean): ProState {
   if (state.founder !== undefined) return state;
   return { ...state, founder: onboardingDone };
+}
+
+/**
+ * Saves whether the app shows itself as Rumi Pro. Kept as it was until the
+ * store has answered (a founder needs no answer), so a slow start does not
+ * flip a subscriber back to plain Rumi; an expired subscription turns it off.
+ */
+export function rememberShowsPro(state: ProState, showsPro: boolean, known: boolean): ProState {
+  if (!known || state.showsPro === showsPro) return state;
+  return { ...state, showsPro };
+}
+
+/** Reads the saved flag for the launch screen; anything unreadable is plain Rumi. */
+export function storedShowsPro(raw: string | null): boolean {
+  if (!raw) return false;
+  try {
+    return (JSON.parse(raw) as ProState).showsPro === true;
+  } catch {
+    return false;
+  }
 }
 
 /**

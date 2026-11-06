@@ -7,6 +7,8 @@ import {
   freeAllows,
   monthKey,
   recordAsk,
+  rememberShowsPro,
+  storedShowsPro,
   userBudgetCount,
 } from '@/src/utils/pro';
 
@@ -75,5 +77,30 @@ describe('annual saving', () => {
   it('shows nothing without a saving or a price', () => {
     expect(annualSavingPercent(9900, 9900 * 12)).toBeNull();
     expect(annualSavingPercent(0, 69900)).toBeNull();
+  });
+});
+
+describe('showing Rumi Pro', () => {
+  it('waits for the store before changing anything', () => {
+    const state = { showsPro: true };
+    expect(rememberShowsPro(state, false, false)).toBe(state);
+  });
+
+  it('turns on when Pro is active and off when it expires', () => {
+    const on = rememberShowsPro({ founder: false }, true, true);
+    expect(on).toEqual({ founder: false, showsPro: true });
+    expect(rememberShowsPro(on, false, true).showsPro).toBe(false);
+  });
+
+  it('keeps the same object when nothing changes', () => {
+    const state = { showsPro: true };
+    expect(rememberShowsPro(state, true, true)).toBe(state);
+  });
+
+  it('reads the saved flag for the launch screen', () => {
+    expect(storedShowsPro(JSON.stringify({ showsPro: true }))).toBe(true);
+    expect(storedShowsPro(JSON.stringify({ founder: true }))).toBe(false);
+    expect(storedShowsPro(null)).toBe(false);
+    expect(storedShowsPro('{broken')).toBe(false);
   });
 });

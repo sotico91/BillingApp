@@ -58,6 +58,14 @@ appId: com.sotico91.rumi
 # title closes the keyboard that covers the tab bar.
 - tapOn: "Pregúntale a Rumi"
 - tapOn: "Inicio"
+# Home shows "Rumi PRO" (the badge reads as "Rumi Pro").
+- assertVisible: "Rumi Pro"
+- takeScreenshot: pro-home
 - tapOn: "Ajustes"
 - scrollUntilVisible:
     element: ".*Rumi Pro.*Activo.*"
+# The next launch shows "Rumi Pro" under the mark before the store answers.
+- launchApp:
+    stopApp: true
+- assertVisible: "Rumi Pro"
+- takeScreenshot: pro-splash

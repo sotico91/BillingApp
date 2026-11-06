@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useRef } from 'react';
-import { Image, StyleSheet, View } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Image, StyleSheet, Text, View } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import Animated, {
@@ -12,6 +12,10 @@ import Animated, {
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
+
+import { readShowsPro } from '@/src/hooks/usePro';
+import { translations } from '@/src/i18n/translations';
+import { colors, type } from '@/src/theme';
 
 /** Same cream as the native Expo splash (app.json) — iOS + Android. */
 const SPLASH_BG = '#F3E6D8';
@@ -55,6 +59,24 @@ export function BootSplash({ onDone }: Props) {
   const eyes = useSharedValue(0);
   const wink = useSharedValue(1);
   const smile = useSharedValue(0);
+  const proTag = useSharedValue(0);
+  // Subscribers and founders see "Rumi Pro" under the mark; read from the
+  // phone because the store has not answered yet at launch.
+  const [showsPro, setShowsPro] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    void readShowsPro().then((on) => {
+      if (alive && on) setShowsPro(true);
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (showsPro) proTag.value = withDelay(500, withTiming(1, { duration: 280 }));
+  }, [showsPro, proTag]);
 
   const finish = useCallback(() => {
     if (finished.current) return;
@@ -147,6 +169,11 @@ export function BootSplash({ onDone }: Props) {
     ],
   }));
 
+  const proTagStyle = useAnimatedStyle(() => ({
+    opacity: proTag.value,
+    transform: [{ translateY: (1 - proTag.value) * 6 }],
+  }));
+
   return (
     <Animated.View style={[styles.screen, screenStyle]} pointerEvents="box-only">
       <StatusBar style="dark" />
@@ -169,6 +196,11 @@ export function BootSplash({ onDone }: Props) {
           <View style={styles.smile} />
         </Animated.View>
       </Animated.View>
+      {showsPro ? (
+        <Animated.View style={[styles.proTag, proTagStyle]}>
+          <Text style={styles.proTagText}>{translations.en['pro.eyebrow']}</Text>
+        </Animated.View>
+      ) : null}
     </Animated.View>
   );
 }
@@ -184,6 +216,21 @@ const styles = StyleSheet.create({
     width: LOGO,
     height: LOGO,
     alignItems: 'center',
+  },
+  proTag: {
+    marginTop: 12,
+    backgroundColor: colors.accent.gold,
+    borderRadius: 999,
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+  },
+  // "Rumi Pro" is a name, the same in both languages.
+  proTagText: {
+    fontFamily: type.h1.fontFamily,
+    fontSize: 18,
+    lineHeight: 24,
+    letterSpacing: 0.5,
+    color: colors.bg.brand,
   },
   logo: {
     width: LOGO,

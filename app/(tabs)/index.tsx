@@ -23,6 +23,7 @@ import { SelectPressable } from '@/src/components/SelectPressable';
 import { AppText, BrandScreen, Button, Card } from '@/src/components/ui';
 import { useFinance } from '@/src/hooks/useFinance';
 import { useMoney } from '@/src/hooks/useMoney';
+import { usePro } from '@/src/hooks/usePro';
 import { useSettings } from '@/src/hooks/useSettings';
 import { useLanguage } from '@/src/i18n/LanguageContext';
 import type { TranslationKey } from '@/src/i18n/translations';
@@ -44,6 +45,7 @@ type MoneyInfoKind = 'available' | 'savings';
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { t } = useLanguage();
+  const { showsPro } = usePro();
   const { format } = useMoney();
   const { settings, dismissAntSpendTipWeek } = useSettings();
   const {
@@ -130,7 +132,14 @@ export default function HomeScreen() {
         <>
           <View style={styles.heroRow}>
             <View style={styles.heroCopy}>
-              <RaisedText style={styles.brand}>{t('brand.name')}</RaisedText>
+              <View style={styles.brandRow}>
+                <RaisedText style={styles.brand}>{t('brand.name')}</RaisedText>
+                {showsPro ? (
+                  <View style={styles.proBadge} accessible accessibilityLabel={t('pro.eyebrow')}>
+                    <AppText style={styles.proBadgeText}>{t('pro.badge')}</AppText>
+                  </View>
+                ) : null}
+              </View>
               <RaisedText tone="gold" style={styles.greeting}>
                 {greeting}
               </RaisedText>
@@ -458,6 +467,21 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   heroCopy: { flex: 1, paddingRight: space.xxs },
+  brandRow: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
+  proBadge: {
+    backgroundColor: colors.accent.gold,
+    borderRadius: radius.full,
+    paddingHorizontal: space.xs,
+    paddingVertical: 2,
+  },
+  proBadgeText: {
+    ...type.caption,
+    fontFamily: type.h1.fontFamily,
+    fontSize: 12,
+    lineHeight: 16,
+    letterSpacing: 1,
+    color: colors.bg.brand,
+  },
   brand: {
     ...type.h1,
     fontSize: 32,

@@ -21,6 +21,8 @@ import {
   decideFounder,
   freeAllows,
   recordAsk,
+  rememberShowsPro,
+  storedShowsPro,
   type ProFeature,
   type ProState,
 } from '@/src/utils/pro';
@@ -64,6 +66,8 @@ type ProContextValue = {
   founder: boolean;
   /** Pro bought in the store and active now. */
   subscribed: boolean;
+  /** The app shows itself as Rumi Pro (subscribed or founder; never when Pro is off). */
+  showsPro: boolean;
   /** Free questions left this month (meaningful only when not Pro). */
   asksLeft: number;
   monthly: PurchasesPackage | null;
@@ -158,6 +162,14 @@ export function ProProvider({ children }: { children: ReactNode }) {
   const subscribed = hasPro(info);
   const founder = state.founder === true;
   const isPro = !available || subscribed || founder;
+  const showsPro = available && (subscribed || founder);
+
+  // Remember it for the launch screen, which runs before the store answers.
+  useEffect(() => {
+    if (!available || !loaded) return;
+    const next = rememberShowsPro(state, showsPro, founder || info !== null);
+    if (next !== state) persist(next);
+  }, [available, loaded, state, showsPro, founder, info, persist]);
   const asksLeft = asksLeftOf(state, new Date());
 
   const allow = useCallback(
@@ -205,6 +217,7 @@ export function ProProvider({ children }: { children: ReactNode }) {
       isPro,
       founder,
       subscribed,
+      showsPro,
       asksLeft,
       monthly,
       annual,
@@ -215,10 +228,23 @@ export function ProProvider({ children }: { children: ReactNode }) {
       restore,
       refreshPlans,
     }),
-    [available, isPro, founder, subscribed, asksLeft, monthly, annual, info, allow, noteAsk, purchase, restore, refreshPlans]
+    [available, isPro, founder, subscribed, showsPro, asksLeft, monthly, annual, info, allow, noteAsk, purchase, restore, refreshPlans]
   );
 
   return <ProContext.Provider value={value}>{children}</ProContext.Provider>;
+}
+
+/**
+ * For the launch screen, which mounts before ProProvider: whether the last
+ * launch showed Rumi Pro. False when this build has no store key.
+ */
+export async function readShowsPro(): Promise<boolean> {
+  if (storeKey() === null) return false;
+  try {
+    return storedShowsPro(await AsyncStorage.getItem(STORAGE_KEY));
+  } catch {
+    return false;
+  }
 }
 
 export function usePro(): ProContextValue {
