@@ -103,9 +103,11 @@ Textos y respuestas para crear Rumi en Play Console y abrir la prueba cerrada. P
 - **App de noticias / salud / gobierno / COVID:** No.
 - **ID de publicidad:** No. El AAB no declara `com.google.android.gms.permission.AD_ID` (sin anuncios ni analítica).
 - **Seguridad de los datos:**
-  - ¿Recopila o comparte datos de usuario? **No.** Todo se guarda y procesa en el teléfono; no se envía nada a servidores.
-  - Si pregunta por cifrado: los datos se cifran en el dispositivo.
-  - Eliminación: "Borrar todos los datos" en Ajustes, o desinstalar.
+  - Desde la 1.2.0 (Rumi Pro), **Sí** recopila: RevenueCat recibe la compra y un id anónimo. Los movimientos siguen solo en el teléfono. Guía de RevenueCat: revenuecat.com/docs → "Google Play's Data Safety".
+  - **Información financiera → Historial de compras:** recopilado, no compartido, no efímero, obligatorio; fines: Funcionalidad de la app y Estadísticas.
+  - **IDs de dispositivo u otros:** recopilado (el id anónimo de RevenueCat), no compartido, no efímero, obligatorio; fin: Funcionalidad de la app. RevenueCat dice que solo hace falta con ids de publicidad (Rumi los tiene apagados); se declara igual porque la política de privacidad lo menciona.
+  - Cifrado en tránsito: Sí. Cuentas: la app no crea cuentas.
+  - Eliminación: Sí; se pide por correo (Ajustes → Reportar un error) y se borra el cliente en RevenueCat. Los datos del teléfono: "Borrar todos los datos" en Ajustes, o desinstalar.
   - Micrófono: el audio no se graba ni se guarda; cuando el teléfono no tiene el idioma instalado, el reconocedor de voz del sistema (Google) lo pasa a texto. No se declara recopilación de audio.
 - **Alarmas exactas (`SCHEDULE_EXACT_ALARM`):** si lo pide, "Recordatorios que el usuario programa para pagar recibos y cuotas a una hora exacta".
 
