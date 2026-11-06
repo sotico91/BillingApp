@@ -48,4 +48,4 @@ SDK: `react-native-purchases` ~10.16 (11.x needs `PurchasesHybridCommon` 20.x, n
    Public SDK keys are meant to ship inside the app; they are not secrets.
 5. **Before the first build with keys** (done for 1.2.0 on 2026-11-05: Android key in EAS `production`, privacy, terms and website prices)
    - Play Console → Seguridad de los datos: declare "Historial de compras" and "IDs de dispositivo u otros" (collected, not shared, for app functionality) before the build leaves the internal test.
-6. **Test**: add your account under Play Console → Configuración → Prueba de licencias, install from the internal test and buy; test purchases are free and renew every few minutes.
+6. **Test**: add the tester under Play Console → Administra la cuenta → Configuración de apps de Play → Configuración de la monetización → Prueba de licencias (the Spanish labels may differ a little), install from the internal test and buy; test purchases are free and renew every few minutes.
