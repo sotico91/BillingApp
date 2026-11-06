@@ -1,0 +1,42 @@
+# A description Rumi does not know shows up in Análisis; picking its category
+# moves the spend and teaches it, so the next one goes there on its own.
+appId: com.sotico91.rumi
+---
+- runFlow: subflows/fresh-start.yaml
+- runFlow:
+    file: subflows/quick-spend.yaml
+    env: { AMOUNT: "8000", NOTE: "almuerzo" }
+- tapOn: "Guardar \\$8\\.000"
+- extendedWaitUntil:
+    visible: "Inicio"
+    timeout: 10000
+# Renaming it without changing the category is not a lesson: now Rumi has no idea.
+- tapOn: "Actividad"
+- tapOn: ".*almuerzo.*8\\.000.*"
+- scrollUntilVisible:
+    element:
+      id: "edit-note"
+    direction: DOWN
+- tapOn:
+    id: "edit-note"
+- eraseText: 20
+- inputText: "plumbus"
+- pressKey: Enter
+- tapOn: "Guardar cambios"
+- tapOn: "Análisis"
+- scrollUntilVisible:
+    element: ".*Rumi no reconoce estas descripciones.*"
+    direction: DOWN
+- tapOn: ".*Rumi no reconoce estas descripciones.*"
+- assertVisible: ".*plumbus.*"
+- tapOn: "Elegir categoría"
+- tapOn: ".*Alimentación.*5.*"
+- scrollUntilVisible:
+    element: ".*Café.*"
+    direction: DOWN
+- tapOn: ".*Café.*"
+- assertNotVisible: ".*Rumi no reconoce estas descripciones.*"
+- runFlow:
+    file: subflows/quick-spend.yaml
+    env: { AMOUNT: "9000", NOTE: "plumbus" }
+- assertVisible: "Rumi lo ubicó en Alimentación · Café.*"

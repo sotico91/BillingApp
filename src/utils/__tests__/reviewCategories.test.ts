@@ -1,7 +1,7 @@
 import { translations } from '@/src/i18n/translations';
 import type { Transaction } from '@/src/types/finance';
 import type { SpendConcept } from '@/src/types/settings';
-import { findMisfiledSpends, planReviewMoves } from '@/src/utils/reviewCategories';
+import { findMisfiledSpends, findUnknownNotes, planReviewMoves } from '@/src/utils/reviewCategories';
 
 const tree: SpendConcept[] = [
   {
@@ -114,5 +114,36 @@ describe('planReviewMoves', () => {
   it('leaves the tree untouched when nothing has to be created', () => {
     const list = findMisfiledSpends([tx('almuerzo', 'sub-extra')], tree);
     expect(planReviewMoves(list, tree, names).concepts).toBe(tree);
+  });
+});
+
+describe('findUnknownNotes', () => {
+  it('groups descriptions nothing recognizes, most frequent first', () => {
+    // Filed three different ways: no habit to follow.
+    const a = tx('xyzzy frob', 'sub-extra');
+    const m = tx('xyzzy frob', 'sub-mercado');
+    const b = tx('Xyzzy del frob', 'sub-almuerzo');
+    const c = tx('plumbus', 'sub-extra');
+    const lunch = tx('almuerzo', 'sub-almuerzo');
+    const found = findUnknownNotes([a, m, b, c, lunch], tree);
+    expect(found.map((g) => [g.key, g.txs.map((x) => x.id), g.total, g.note, g.categoryId])).toEqual([
+      ['xyzzy frob', [b.id, m.id, a.id], 45000, 'Xyzzy del frob', 'sub-almuerzo'],
+      ['plumbus', [c.id], 15000, 'plumbus', 'sub-extra'],
+    ]);
+  });
+
+  it('skips what Rumi learned, habits, Credits and other movement types', () => {
+    const taught = tx('plumbus', 'sub-extra');
+    const habitA = tx('donde rosa', 'sub-almuerzo');
+    const habitB = tx('donde rosa', 'sub-almuerzo');
+    const credit = tx('cuota rara', 'sub-card');
+    const income = tx('xyzzy', 'sub-extra', { type: 'income' });
+    const found = findUnknownNotes([taught, habitA, habitB, credit, income], tree, [['plumbus', 'sub-extra']]);
+    expect(found).toEqual([]);
+  });
+
+  it('keeps spends with no category, without one to leave', () => {
+    const a = tx('plumbus', '', { categoryId: undefined });
+    expect(findUnknownNotes([a], tree).map((g) => [g.key, g.categoryId])).toEqual([['plumbus', undefined]]);
   });
 });

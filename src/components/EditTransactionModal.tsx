@@ -417,6 +417,7 @@ export function EditTransactionModal({ transaction, visible, onClose, onDelete }
 
             <Text style={styles.label}>{t('flow.noteOptional')}</Text>
             <TextInput
+              testID="edit-note"
               value={note}
               onChangeText={setNote}
               placeholder={t('add.notePlaceholder')}

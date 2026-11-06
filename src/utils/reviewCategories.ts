@@ -9,6 +9,7 @@ import {
   type NewSubId,
   type TaughtCategories,
   noteFitsSub,
+  noteWords,
 } from '@/src/utils/suggestCategory';
 
 export type MisfiledSpend = {
@@ -84,4 +85,53 @@ export function planReviewMoves(
     changes[tx.id] = result.subId;
   }
   return { concepts: tree, changes };
+}
+
+/** Spends with the same description that Rumi cannot place on its own. */
+export type UnknownNote = {
+  /** The description's words, folded ("rifa colegio"). */
+  key: string;
+  /** As the user wrote it, newest spend. */
+  note: string;
+  txs: Transaction[];
+  total: number;
+  /** Category of the newest spend, if it has one. */
+  categoryId?: string;
+};
+
+/**
+ * Descriptions nothing recognizes: no lesson, no subcategory named in them,
+ * no past habit, no known word. Grouped by description, most frequent first,
+ * so one answer teaches Rumi and files every spend that says the same.
+ */
+export function findUnknownNotes(
+  transactions: Transaction[],
+  spendConcepts: SpendConcept[],
+  taught: TaughtCategories = []
+): UnknownNote[] {
+  const history = buildNoteHistory(transactions);
+  const groups = new Map<string, UnknownNote>();
+  for (const tx of transactions) {
+    if (tx.type !== 'expense' || !tx.note?.trim()) continue;
+    if (tx.categoryId && findSpendSub(spendConcepts, tx.categoryId)?.concept.id === CREDITS_CONCEPT_ID) continue;
+    const key = noteWords(tx.note).join(' ');
+    if (!key) continue;
+    if (suggestCategory(tx.note, spendConcepts, history, tx.id, taught)) continue;
+    const group = groups.get(key);
+    if (group) {
+      group.txs.push(tx);
+      group.total += tx.amount;
+    } else {
+      groups.set(key, { key, note: '', txs: [tx], total: tx.amount });
+    }
+  }
+  for (const g of groups.values()) {
+    g.txs.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    const newest = g.txs[0];
+    g.note = newest.note!.trim();
+    g.categoryId = newest.categoryId ? findSpendSub(spendConcepts, newest.categoryId)?.sub.id : undefined;
+  }
+  return [...groups.values()].sort(
+    (a, b) => b.txs.length - a.txs.length || b.txs[0].createdAt.localeCompare(a.txs[0].createdAt)
+  );
 }

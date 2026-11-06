@@ -12,6 +12,7 @@ El detalle de cada cambio está en `git log`.
 
 ## 2026-11-06
 
+- **Versión 1.4.0. "Rumi no reconoce estas descripciones" en Análisis:** junta los gastos cuya descripción Rumi no sabe ubicar por sí solo (sin lección, sin subcategoría nombrada, sin costumbre, sin palabra conocida), agrupados por descripción con cuántas veces y el total. "Elegir categoría" mueve todos esos gastos y le enseña la descripción. "Dejar así" solo le enseña la categoría que ya tienen. Si no hay nada, no se muestra. Recoge sobre todo gastos viejos o editados, porque al elegir a mano en el registro Rumi ya aprende. Lo prueba el recorrido `e2e/teach-unknown.yaml`.
 - **Rifas, chance, lotería y apuestas:** Rumi ya reconoce estos gastos por la descripción (rifa, chance, lotería, baloto, apuesta, BetPlay, Wplay, raspa y gana, casino, bingo; raffle, lottery, betting en inglés) y los lleva a Ocio · Rifas y apuestas. Si esa subcategoría no existe, la crea al guardar. "Boleto" solo no cuenta, porque también puede ser de bus o de cine.
 - **Rumi se ve como "Rumi Pro" mientras Pro está activo:** en Inicio aparece una etiqueta dorada "PRO" junto a "Rumi", y al abrir la app sale "Rumi Pro" debajo del logo. Lo ven quienes pagan y los fundadores. Si la suscripción vence, vuelve a ser Rumi normal. El teléfono guarda el último estado (`showsPro` en `rumi.pro.v1`) para que el splash lo muestre antes de que responda la tienda. El recorrido `e2e/pro/limits.yaml` lo comprueba.
 

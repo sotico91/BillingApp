@@ -13,6 +13,7 @@ import { HowToGuideButton } from '@/src/components/HowToGuideButton';
 import { MoneyText } from '@/src/components/MoneyText';
 import { PocketBreakdown } from '@/src/components/PocketBreakdown';
 import { SavingsDecor } from '@/src/components/SavingsDecor';
+import { UnknownNotesSection } from '@/src/components/UnknownNotesSection';
 import { useFinance } from '@/src/hooks/useFinance';
 import { useMoney } from '@/src/hooks/useMoney';
 import { usePro } from '@/src/hooks/usePro';
@@ -324,6 +325,8 @@ export default function InsightsScreen() {
           ))}
         </CollapsibleSection>
       </View>
+
+      <UnknownNotesSection />
 
       <View>
         <Text style={styles.headline}>
