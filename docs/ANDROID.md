@@ -106,7 +106,7 @@ Since the app is on Play (2026-10-28), phones get new versions from the **intern
 
 The release build shrinks with R8 both locally and on EAS: `plugins/withReleaseBuildProps.js` writes the gradle properties during prebuild. `npm run android:apk` + `android:apk:lan` stay for phones that never installed the Play version.
 
-Automating step 3: the `production` submit profile reads the Play service account key from `./credentials/play-service-account.json` (gitignored, never committed; account `eas-submit@rumi-play.iam.gserviceaccount.com`, invited in Play Console → Usuarios y permisos with test-track release rights). Then `eas build -p android --profile production --auto-submit`, or `npm run eas:submit:android` for an existing build, lands it on the internal track. `mapping.txt` still goes up by hand.
+Automating step 3: the `production` submit profile reads the Play service account key from `./credentials/play-service-account.json` (gitignored, never committed; account `eas-submit@rumi-play.iam.gserviceaccount.com`, invited in Play Console → Usuarios y permisos with test-track release rights). Then `eas build -p android --profile production --auto-submit`, or `npm run eas:submit:android` for an existing build, lands it on the internal track. No manual `mapping.txt`: Play extracts it from the AAB.
 
 ## 4. Play Store checklist
 
