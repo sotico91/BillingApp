@@ -10,6 +10,11 @@ El detalle de cada cambio está en `git log`.
 - **Comentarios de código en inglés:** todos los comentarios del código van en inglés.
   Los textos que ve el usuario van en `src/i18n/translations.ts` (es/en).
 
+## 2026-11-09
+
+- **Versión 1.6.0. Actualizar sin entrar a Play Store:** en Android, al abrir Rumi (y al volver a ella, como mucho cada 30 minutos) la app le pregunta a Google Play si hay una versión nueva, también en la prueba interna. Si la hay, sale "Hay una versión nueva de Rumi" con "Actualizar" y "Ahora no". Con "Actualizar", Play la instala en pantalla completa y Rumi se vuelve a abrir, sin tocar los datos. "Ahora no" vale hasta que se vuelva a abrir la app. Lo hace un módulo nativo propio (`modules/rumi-store-update`, Play In-App Updates `app-update` 2.1.0), solo en Android. En iPhone no hace nada. Funciona desde la primera versión que lo trae: la 1.6.0 hay que instalarla una vez desde Play.
+- **Builds a la prueba interna sin subir el AAB a mano:** `eas submit` usa la llave de la cuenta de servicio `eas-submit@rumi-play.iam.gserviceaccount.com`, guardada en `credentials/` (fuera de git). La 1.5.1 (15) fue la primera que subió así.
+
 ## 2026-11-08
 
 - **Versión 1.5.1. Crédito rotativo en Créditos y cuotas y destinos según el producto:** al agregar o editar un crédito se puede marcar "¿Puedes pasar plata de este crédito a tu cuenta? Sí, es rotativo" con su cupo total; aparece como origen en "Mover", muestra "Cupo disponible" en Patrimonio y no se cierra al pagarlo hasta $0 (sigue teniendo cupo). Destinos: el avance de una tarjeta de crédito va a Efectivo o al Banco principal; un rotativo, credicheque o cupo solo al Banco principal. El recorrido `e2e/credit-draw.yaml` ahora prueba el rotativo en Créditos y cuotas.

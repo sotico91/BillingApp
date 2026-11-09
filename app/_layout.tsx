@@ -27,6 +27,7 @@ import { ReminderDeepLink } from '@/src/components/ReminderDeepLink';
 import { AutoBackupRunner } from '@/src/components/AutoBackupRunner';
 import { ReminderScheduler } from '@/src/components/ReminderScheduler';
 import { StorageNotice } from '@/src/components/StorageNotice';
+import { StoreUpdatePrompt } from '@/src/components/StoreUpdatePrompt';
 import { HowToGuideProvider } from '@/src/hooks/useHowToGuide';
 import { AmountPrivacyProvider } from '@/src/hooks/useAmountPrivacy';
 import { ExpensesProvider } from '@/src/hooks/useExpenses';
@@ -96,6 +97,7 @@ export default function RootLayout() {
                     <ReminderScheduler />
                     <AutoBackupRunner />
                     <StorageNotice />
+                    <StoreUpdatePrompt />
                     <HabitPilotHygiene />
                     <AntSpendTipHygiene />
                     <ReminderDeepLink />

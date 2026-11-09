@@ -102,7 +102,7 @@ Since the app is on Play (2026-10-28), phones get new versions from the **intern
 2. From the build page, download the `.aab`. The bundle already carries `mapping.txt` and the native debug symbols, and Play extracts them on upload. EAS also keeps `mapping.txt` as a build artifact (`buildArtifactPaths` in `eas.json`) as a backup.
 3. Play Console → Probar y lanzar → Prueba interna → Crear versión nueva: drop the `.aab`, name it `<version> (<versionCode>)`, e.g. `1.0.1 (7)`, paste the es-419/en-US notes, Siguiente → Guardar y publicar.
 4. Check, no upload needed: the release → App bundle 5 (1.0) → Descargas → Recursos lists "Archivo de mapeo de ReTrace" and "Símbolos de depuración nativos" (seen on 1.0 (5), 2026-10-29). If a previous bundle shows up under "Actualización anterior", leave it out (No incluidos) or Play rejects the release because the higher versionCode shadows it.
-5. On the phone, Play shows the update (or open the internal test link from the Verificadores tab).
+5. On the phone, Rumi itself offers the update on the next launch (from 1.6.0: `src/components/StoreUpdatePrompt.tsx` + `modules/rumi-store-update`, Play In-App Updates, immediate flow). Play only answers once the new build is live on the track the phone is on, which can take a few minutes after upload.
 
 The release build shrinks with R8 both locally and on EAS: `plugins/withReleaseBuildProps.js` writes the gradle properties during prebuild. `npm run android:apk` + `android:apk:lan` stay for phones that never installed the Play version.
 

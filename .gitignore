@@ -60,3 +60,6 @@ android/build/
 
 # Play service account key (eas submit)
 credentials/
+
+# Local Expo module build output
+modules/*/android/build/
