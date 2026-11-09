@@ -57,3 +57,6 @@ android/.gradle/
 android/build/
 *.apk
 *.aab
+
+# Play service account key (eas submit)
+credentials/

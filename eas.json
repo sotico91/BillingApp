@@ -42,7 +42,8 @@
     "production": {
       "android": {
         "track": "internal",
-        "releaseStatus": "completed"
+        "releaseStatus": "completed",
+        "serviceAccountKeyPath": "./credentials/play-service-account.json"
       }
     }
   }
