@@ -5,8 +5,10 @@ import { appAlert } from '@/src/components/AppAlert';
 import { useFinance } from '@/src/hooks/useFinance';
 import { useMoney } from '@/src/hooks/useMoney';
 import { useLanguage } from '@/src/i18n/LanguageContext';
+import type { TranslationKey } from '@/src/i18n/translations';
 import { isPocketMove, type Transaction, type TransactionType } from '@/src/types/finance';
-import { applyAccountDelta } from '@/src/utils/ledger';
+import { applyAccountDelta, applyTxDebts } from '@/src/utils/ledger';
+import { creditAvailable, creditShortfall, debtIdFromPayAccountId } from '@/src/utils/debts';
 import { accountDisplayName, fundsShortfall, spendableTotal } from '@/src/utils/accounts';
 
 /**
@@ -18,7 +20,7 @@ import { accountDisplayName, fundsShortfall, spendableTotal } from '@/src/utils/
 export function useFundsCheck() {
   const { t } = useLanguage();
   const { format } = useMoney();
-  const { accounts: liveAccounts } = useFinance();
+  const { accounts: liveAccounts, debts: liveDebts } = useFinance();
 
   return useCallback(
     (input: {
@@ -28,6 +30,23 @@ export function useFundsCheck() {
       /** Editing: this movement's own effect is undone first (its money is back in the pocket). */
       replacing?: Transaction;
     }): boolean => {
+      // A cash advance or cupo draw: only the card's free credit limits it.
+      const drawnId = input.type === 'transfer' ? debtIdFromPayAccountId(input.accountId) : undefined;
+      if (drawnId) {
+        const debts = input.replacing ? applyTxDebts(liveDebts, input.replacing, -1) : liveDebts;
+        const debt = debts.find((d) => d.id === drawnId);
+        if (creditShortfall(debt, input.amount) <= 0) return true;
+        appAlert(
+          t('funds.cupoTitle'),
+          t('funds.cupoShort', {
+            account: debt?.nameKey ? t(debt.nameKey as TranslationKey) : debt?.name ?? t('debt.mainCard'),
+            available: format(debt ? creditAvailable(debt) : 0),
+            amount: format(input.amount),
+          }),
+          [{ text: t('funds.later'), style: 'cancel' }]
+        );
+        return false;
+      }
       const accounts = input.replacing ? applyAccountDelta(liveAccounts, input.replacing, -1) : liveAccounts;
       if (fundsShortfall(accounts, input) <= 0) return true;
       const account = accounts.find((a) => a.id === input.accountId);
@@ -57,6 +76,6 @@ export function useFundsCheck() {
       );
       return false;
     },
-    [liveAccounts, format, t]
+    [liveAccounts, liveDebts, format, t]
   );
 }

@@ -38,7 +38,7 @@ import { usePickableSpendConcepts } from '@/src/hooks/useSpendConcepts';
 import { useLanguage } from '@/src/i18n/LanguageContext';
 import type { TranslationKey } from '@/src/i18n/translations';
 import { palette, radii } from '@/src/theme/colors';
-import type { PaymentMethod, TransactionType } from '@/src/types/finance';
+import type { Debt, PaymentMethod, TransactionType } from '@/src/types/finance';
 import { isPocketMove } from '@/src/types/finance';
 import { categoryLabel } from '@/src/utils/categoryLabel';
 import { incomeDestinationAccounts } from '@/src/utils/netWorth';
@@ -50,7 +50,8 @@ import {
   firstAccountId,
   liquidPocketsForPay,
   paymentMethodForAccount,
-  pocketMoveAccounts,
+  moveDestinations,
+  moveSourcesWithCredit,
   pocketMoveSources,
 } from '@/src/utils/accounts';
 import { notifyExpenseRegistered } from '@/src/utils/notifications';
@@ -59,6 +60,7 @@ import {
   amountsMatch,
   inferInstallmentPayScope,
   installmentPayChoices,
+  isDebtPayAccountId,
   openDebts,
   paymentSettlesInstallment,
   suggestedDebtPayAmount,
@@ -172,16 +174,23 @@ export function ExpenseForm({
 
   const accountChoices = useMemo(() => {
     if (type === 'income') return incomeDestinationAccounts(accounts);
+    const debtLabel = (debt: Debt) =>
+      debt.nameKey ? t(debt.nameKey as TranslationKey) : debt.name ?? t('debt.mainCard');
+    // A transfer can also leave from a card or cupo (cash advance).
+    if (type === 'transfer') return moveSourcesWithCredit(accounts, debts, debtLabel);
     if (isPocketMove(type)) return pocketMoveSources(accounts);
     if (type === 'debt_payment') return liquidPocketsForPay(accounts);
-    return accountsForExpenseSource(accounts, method, {
-      debts,
-      debtLabel: (debt) =>
-        debt.nameKey
-          ? t(debt.nameKey as TranslationKey)
-          : debt.name ?? t('debt.mainCard'),
-    });
+    return accountsForExpenseSource(accounts, method, { debts, debtLabel });
   }, [type, accounts, method, debts, t]);
+
+  const destinations = useMemo(() => moveDestinations(accounts, accountId), [accounts, accountId]);
+  const creditDraw = type === 'transfer' && isDebtPayAccountId(accountId);
+  useEffect(() => {
+    if (!isPocketMove(type)) return;
+    if (!destinations.some((a) => a.id === toAccountId) && destinations[0]) {
+      setToAccountId(destinations[0].id);
+    }
+  }, [type, destinations, toAccountId]);
 
   const selectedPayDebt = useMemo(
     () => liveDebts.find((d) => d.id === debtId),
@@ -349,7 +358,8 @@ export function ExpenseForm({
           amount: formatPlain(parsed),
           transactions,
           spendConcepts,
-          accounts,
+          // A cash advance names the card it came from.
+          accounts: creditDraw ? [...accounts, ...accountChoices] : accounts,
           categoryId: isPocketMove(type) ? undefined : resolvedCategoryId,
           accountId,
           toAccountId:
@@ -517,10 +527,11 @@ export function ExpenseForm({
         <>
           <Text style={styles.label}>{t('flow.whichAccountTo')}</Text>
           <AccountChoiceChips
-            accounts={pocketMoveAccounts(accounts).filter((a) => a.id !== accountId)}
+            accounts={destinations}
             selectedId={toAccountId}
             onSelect={setToAccountId}
           />
+          {creditDraw ? <Text style={styles.preview}>{t('move.fromCreditHint')}</Text> : null}
         </>
       )}
 

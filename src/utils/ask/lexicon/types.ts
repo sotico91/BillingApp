@@ -18,6 +18,8 @@ export type IntentLexicon = {
   compare: string[];
   origin: string[];
   transfer: string[];
+  /** Cash advances / money drawn from a card or cupo into a pocket. */
+  creditDraw: string[];
   top: string[];
   average: string[];
   budget: string[];

@@ -31,6 +31,7 @@ export const EN: IntentLexicon = {
   compare: ['more than', 'less than'],
   origin: ['which account', 'which pocket', 'from which'],
   transfer: ['transfer'],
+  creditDraw: ['cash advance', 'cash advances', 'advance', 'advances', 'drew from my card', 'drew on my credit'],
   top: ['biggest', 'most spent', 'where did i spend'],
   average: ['average'],
   budget: ['budget'],

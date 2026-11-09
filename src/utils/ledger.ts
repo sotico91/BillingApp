@@ -1,23 +1,36 @@
 import type { Account, Debt, Transaction } from '@/src/types/finance';
 import { roundMoney } from '@/src/utils/money';
-import { applyRevolvingCharge, closedAtAfterBalance, isOpenDebt } from '@/src/utils/debts';
+import {
+  applyRevolvingCharge,
+  closedAtAfterBalance,
+  debtIdFromPayAccountId,
+  isOpenDebt,
+  isRevolving,
+} from '@/src/utils/debts';
 import { dueBeforePayment, nextDueAfterPayment } from '@/src/utils/payDay';
 
 /**
  * Apply one movement to account balances.
  * direction 1 = register, -1 = undo.
- * Credit-card charges (creditDebtId) never touch cash pockets.
+ * Credit-card charges (creditDebtId) never touch cash pockets. A move drawn on a
+ * card or cupo (cash advance, credicheque, rotativo) only fills the destination.
  */
 export function applyAccountDelta(
   accounts: Account[],
   tx: Transaction,
   direction: 1 | -1 = 1
 ): Account[] {
-  if (tx.creditDebtId) return accounts;
+  if (tx.creditDebtId && !isCreditDraw(tx)) return accounts;
 
   const next = accounts.map((a) => ({ ...a }));
   const find = (id?: string) => next.find((a) => a.id === id);
   const amount = tx.amount * direction;
+
+  if (isCreditDraw(tx)) {
+    const to = find(tx.toAccountId);
+    if (to) to.balance = roundMoney(to.balance + amount);
+    return next;
+  }
 
   if (tx.type === 'expense' || tx.type === 'withdrawal' || tx.type === 'debt_payment') {
     const acc = find(tx.accountId);
@@ -43,16 +56,52 @@ export function applyAccountDelta(
 }
 
 /**
+ * Money taken from a card, credicheque or rotativo into one of your pockets
+ * (cash advance, cupo disbursement). Not a spend, not income: the debt and the
+ * pocket grow together.
+ */
+export function isCreditDraw(
+  tx: Pick<Transaction, 'type' | 'creditDebtId'>
+): boolean {
+  return tx.type === 'transfer' && !!tx.creditDebtId;
+}
+
+/**
+ * Shape a pocket move before saving: a transfer whose source is a card or cupo
+ * (picker id `debt:<id>`) charges that debt; any other move carries no debt link.
+ */
+export function normalizePocketMove(tx: Transaction): Transaction {
+  if (tx.type !== 'transfer' && tx.type !== 'investment') return tx;
+  const drawn = tx.type === 'transfer' ? debtIdFromPayAccountId(tx.accountId) : undefined;
+  return {
+    ...tx,
+    categoryId: undefined,
+    paymentMethod: undefined,
+    debtId: undefined,
+    creditDebtId: drawn,
+  };
+}
+
+/**
  * True when a pocket move can debit source and credit destination.
  * Partial applies (missing id / unknown pocket) are how wallets drift.
+ * A draw on credit needs an open card or cupo and a money pocket to land in.
  */
 export function pocketMoveAccountsReady(
   accounts: Account[],
-  tx: Pick<Transaction, 'type' | 'accountId' | 'toAccountId'>
+  tx: Pick<Transaction, 'type' | 'accountId' | 'toAccountId' | 'creditDebtId'>,
+  debts?: Debt[]
 ): boolean {
   if (tx.type !== 'transfer' && tx.type !== 'investment') return true;
   if (!tx.accountId || !tx.toAccountId || tx.accountId === tx.toAccountId) {
     return false;
+  }
+  const drawn = tx.type === 'transfer' ? debtIdFromPayAccountId(tx.accountId) : undefined;
+  if (drawn) {
+    const debt = debts?.find((d) => d.id === drawn);
+    if (debts && (!debt || !isRevolving(debt) || !isOpenDebt(debt))) return false;
+    const to = accounts.find((a) => a.id === tx.toAccountId);
+    return !!to && to.type !== 'credit';
   }
   const from = accounts.some((a) => a.id === tx.accountId);
   const to =

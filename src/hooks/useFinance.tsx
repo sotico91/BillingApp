@@ -62,6 +62,7 @@ import {
   closePaidInstallments,
   closedAtAfterBalance,
   debtIdFromPayAccountId,
+  payAccountIdForDebt,
 } from '@/src/utils/debts';
 import {
   applyAccountDelta,
@@ -69,6 +70,7 @@ import {
   asDebtPayment,
   isEditablePocketBalance,
   linkDebtSubSpends,
+  normalizePocketMove,
   pocketMoveAccountsReady,
 } from '@/src/utils/ledger';
 import { computeNetWorth } from '@/src/utils/netWorth';
@@ -392,9 +394,10 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
         registeredByName: settings.userName.trim() || undefined,
       };
 
+      if (isPocketMove(tx.type)) tx = normalizePocketMove(tx);
       tx = asDebtPayment(tx, baseDebts);
 
-      if (isPocketMove(tx.type) && !pocketMoveAccountsReady(baseAccounts, tx)) {
+      if (isPocketMove(tx.type) && !pocketMoveAccountsReady(baseAccounts, tx, baseDebts)) {
         throw new Error('pocket_move_accounts');
       }
 
@@ -775,11 +778,12 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
             : existing.note,
       };
       if (isPocketMove(updated.type)) {
-        updated.categoryId = undefined;
-        updated.paymentMethod = undefined;
-        updated.creditDebtId = undefined;
-        updated.debtId = undefined;
-        if (!pocketMoveAccountsReady(baseAccounts, updated)) {
+        // Editing a draw without touching the source keeps it drawn on that card.
+        if (updated.creditDebtId && patch.accountId === undefined) {
+          updated.accountId = payAccountIdForDebt(updated.creditDebtId);
+        }
+        updated = normalizePocketMove(updated);
+        if (!pocketMoveAccountsReady(baseAccounts, updated, baseDebts)) {
           return null;
         }
       } else {

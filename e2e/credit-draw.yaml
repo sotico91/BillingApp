@@ -1,0 +1,60 @@
+# Cash advance / cupo drawn into savings: the move can leave from a credicheque,
+# the savings pocket gets the money and the debt goes up by the same amount.
+appId: com.sotico91.rumi
+---
+- runFlow: subflows/fresh-start.yaml
+# A credicheque with $2.000.000 of cupo, nothing used yet.
+- tapOn: "Patrimonio"
+- scrollUntilVisible:
+    element: "Agregar tarjeta"
+- tapOn: "Agregar tarjeta"
+- tapOn: "Credicheque"
+- tapOn:
+    id: "debt-name"
+- inputText: "Credicheque"
+# Close the keyboard (tap a label) so the limit field is the one tapped.
+- tapOn: "Qué estás pagando"
+- tapOn:
+    id: "debt-limit"
+- inputText: "2000000"
+- tapOn: "Cupo total"
+- scrollUntilVisible:
+    element: "Guardar"
+- tapOn: "Guardar"
+- tapOn: "Inicio"
+# Move $500.000 from the credicheque to savings.
+- tapOn:
+    id: "add-fab"
+- tapOn: "Mover"
+- tapOn:
+    id: "flow-amount"
+- inputText: "500000"
+- tapOn: "¿De cuánto fue?"
+- tapOn: "Continuar"
+- assertVisible: "¿Desde qué cuenta?"
+- tapOn: "Cambiar la cuenta"
+- tapOn: ".*Credicheque.*"
+- tapOn: ".*Ahorros.*"
+- tapOn: "Continuar"
+- assertVisible: "Avance"
+- assertVisible: "Avance o uso del cupo hacia tu cuenta\\. No es ingreso: la deuda sube lo mismo\\."
+- tapOn: "Sí, guardar"
+# First movement: iOS asks for notifications (Maestro can't pre-grant them).
+- tapOn:
+    text: "Permitir"
+    optional: true
+- extendedWaitUntil:
+    visible: "Inicio"
+    timeout: 10000
+- assertVisible: ".*1\\.500\\.000.*"
+- tapOn: "Patrimonio"
+- assertVisible: ".*Ahorros, \\$500\\.000"
+# The credicheque card: it owes $500.000 and has $1.500.000 of cupo left.
+- scrollUntilVisible:
+    element: "Debes"
+- assertVisible: "\\$500\\.000"
+- assertVisible: "\\$1\\.500\\.000"
+- takeScreenshot: credit-draw-wealth
+# Activity names it as an advance from the credicheque.
+- tapOn: "Actividad"
+- assertVisible: ".*Avance · Credicheque → Ahorros.*"

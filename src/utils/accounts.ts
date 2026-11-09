@@ -537,6 +537,28 @@ export function pocketMoveSources(accounts: Account[], keepId?: string): Account
   );
 }
 
+/**
+ * Move sources plus open cards, credicheques and rotativos: a cash advance or a
+ * cupo drawn into your account leaves from there (picker id `debt:<id>`).
+ */
+export function moveSourcesWithCredit(
+  accounts: Account[],
+  debts: Debt[],
+  debtLabel: (debt: Debt) => string,
+  keepId?: string
+): Account[] {
+  return [...pocketMoveSources(accounts, keepId), ...revolvingAsPayAccounts(debts, debtLabel)];
+}
+
+/**
+ * Where a move can land. Credit drawn from a card or cupo goes to cash, a bank,
+ * a wallet or savings — not straight into an investment.
+ */
+export function moveDestinations(accounts: Account[], fromId: string | undefined): Account[] {
+  const all = pocketMoveAccounts(accounts).filter((a) => a.id !== fromId);
+  return isDebtPayAccountId(fromId) ? all.filter((a) => isSpendableLiquid(a.type)) : all;
+}
+
 function liquidWithFunds(accounts: Account[], minBalance: number): Account[] {
   return accounts
     .filter((a) => isSpendableLiquid(a.type) && a.balance >= minBalance)

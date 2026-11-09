@@ -10,6 +10,10 @@ El detalle de cada cambio está en `git log`.
 - **Comentarios de código en inglés:** todos los comentarios del código van en inglés.
   Los textos que ve el usuario van en `src/i18n/translations.ts` (es/en).
 
+## 2026-11-08
+
+- **Versión 1.5.0. Avances y uso de cupo:** en "Mover", el origen puede ser una tarjeta de crédito, un credicheque o un cupo rotativo abierto (aparecen con su cupo disponible), y el destino es efectivo, un banco, una billetera o ahorros (no inversiones). La plata entra al bolsillo y la deuda sube lo mismo: no cuenta como ingreso ni como gasto, y el patrimonio no cambia. Si la tarjeta tiene el cupo total registrado, no deja sacar más del cupo libre. En Actividad se ve como "Avance · Credicheque → Ahorros". Editar o borrar el movimiento devuelve la deuda y el bolsillo a como estaban. "Pregúntale a Rumi" responde "¿cuánto saqué en avances?" aparte de las transferencias entre bolsillos. La comisión del avance se anota aparte como gasto. Lo prueba el recorrido `e2e/credit-draw.yaml`.
+
 ## 2026-11-06
 
 - **Versión 1.4.0. "Rumi no reconoce estas descripciones" en Análisis:** junta los gastos cuya descripción Rumi no sabe ubicar por sí solo (sin lección, sin subcategoría nombrada, sin costumbre, sin palabra conocida), agrupados por descripción con cuántas veces y el total. "Elegir categoría" mueve todos esos gastos y le enseña la descripción. "Dejar así" solo le enseña la categoría que ya tienen. Si no hay nada, no se muestra. Recoge sobre todo gastos viejos o editados, porque al elegir a mano en el registro Rumi ya aprende. Lo prueba el recorrido `e2e/teach-unknown.yaml`.

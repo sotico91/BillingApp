@@ -46,6 +46,7 @@ export function DebtForm({ form }: { form: DebtFormState }) {
       ) : null}
       <Text style={styles.label}>{t('wealth.debtName')}</Text>
       <TextInput
+        testID="debt-name"
         value={name}
         onChangeText={setName}
         placeholder={
@@ -60,6 +61,7 @@ export function DebtForm({ form }: { form: DebtFormState }) {
         <>
           <Text style={styles.label}>{t('wealth.debtLimit')}</Text>
           <TextInput
+            testID="debt-limit"
             value={creditLimit}
             onChangeText={setCreditLimit}
             keyboardType="decimal-pad"
@@ -73,6 +75,7 @@ export function DebtForm({ form }: { form: DebtFormState }) {
         {revolving ? t('wealth.debtUsed') : t('wealth.debtBalance')}
       </Text>
       <TextInput
+        testID="debt-balance"
         value={balance}
         onChangeText={setBalance}
         keyboardType="decimal-pad"

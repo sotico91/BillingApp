@@ -91,6 +91,18 @@ export const ES: IntentLexicon = {
     'de donde sale',
   ],
   transfer: ['transferencia', 'transferencias', 'envie', 'envié'],
+  creditDraw: [
+    'avance',
+    'avances',
+    'saque del cupo',
+    'saqué del cupo',
+    'use el cupo',
+    'usé el cupo',
+    'saque del rotativo',
+    'saqué del rotativo',
+    'saque del credicheque',
+    'saqué del credicheque',
+  ],
   top: [
     'mas gaste',
     'más gasté',

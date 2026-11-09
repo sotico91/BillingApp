@@ -25,6 +25,8 @@ const data = [
   tx('expense', 15_000, '2026-10-18T09:00', { categoryId: 'snacks' }),
   tx('expense', 20_000, '2026-09-12T09:00', { categoryId: 'cafe' }),
   tx('expense', 80_000, '2026-09-10T09:00', { categoryId: 'transporte' }),
+  tx('transfer', 300_000, '2026-10-08T09:00', { accountId: 'debt:rot', toAccountId: 'savings', creditDebtId: 'rot' }),
+  tx('transfer', 50_000, '2026-10-09T09:00', { accountId: 'bank', toAccountId: 'cash' }),
 ];
 
 beforeEach(() => {
@@ -69,6 +71,16 @@ describe('askRumi intents', () => {
     const r = ask(q);
     expect(r.intent).toBe(intent);
     expect(r.understood?.period ?? null).toBe(period);
+  });
+
+  it('answers cash advances apart from own-money transfers', () => {
+    const draws = ask('¿cuánto saqué en avances este mes?');
+    expect(draws.intent).toBe('creditDraws');
+    expect(draws.text).toBe(`Avances y uso de cupo (Este mes): ${format(300_000)} en 1. No es ingreso: tu deuda subió lo mismo.`);
+    const moves = ask('¿cuántas transferencias hice este mes?');
+    expect(moves.intent).toBe('transfers');
+    expect(moves.text).toContain(format(50_000));
+    expect(ask('how much did I take in cash advances?', 'en').intent).toBe('creditDraws');
   });
 
   it('reads English questions too', () => {

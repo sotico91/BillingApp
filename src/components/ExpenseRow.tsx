@@ -15,6 +15,7 @@ import { isPocketMove } from '@/src/types/finance';
 import { accountDisplayName } from '@/src/utils/accounts';
 import { categoryLabel } from '@/src/utils/categoryLabel';
 import { formatExpenseDate } from '@/src/utils/dates';
+import { isCreditDraw } from '@/src/utils/ledger';
 
 type Props = {
   expense: Transaction;
@@ -34,15 +35,23 @@ export function ExpenseRow({
   const { t, language } = useLanguage();
   const { format } = useMoney();
   const { settings } = useSettings();
-  const { accounts } = useFinance();
+  const { accounts, debts } = useFinance();
   const spendConcepts = settings.spendConcepts ?? [];
   const pocketMove = isPocketMove(expense.type);
-  const fromName = accountDisplayName(
-    accounts.find((a) => a.id === expense.accountId) ?? {
-      nameKey: 'account.cash',
-    },
-    t
-  );
+  // Cash advance / cupo draw: it leaves from the card or credit line.
+  const drawnDebt = isCreditDraw(expense)
+    ? debts.find((d) => d.id === expense.creditDebtId)
+    : undefined;
+  const fromName = isCreditDraw(expense)
+    ? drawnDebt?.nameKey
+      ? t(drawnDebt.nameKey as TranslationKey)
+      : drawnDebt?.name ?? t('debt.mainCard')
+    : accountDisplayName(
+        accounts.find((a) => a.id === expense.accountId) ?? {
+          nameKey: 'account.cash',
+        },
+        t
+      );
   const toName = accountDisplayName(
     accounts.find((a) => a.id === expense.toAccountId) ?? {
       nameKey: 'account.savings',
@@ -66,7 +75,9 @@ export function ExpenseRow({
       : null;
   const subIsConcept =
     !!hit && (isGeneralSubName(hit.sub.name) || hit.sub.name === hit.concept.name);
-  const typeLabel = t(`type.${expense.type}` as TranslationKey);
+  const typeLabel = isCreditDraw(expense)
+    ? t('history.creditDraw')
+    : t(`type.${expense.type}` as TranslationKey);
   let title: string;
   if (hit) title = subIsConcept ? hit.concept.name : hit.sub.name;
   else if (pocketMove)

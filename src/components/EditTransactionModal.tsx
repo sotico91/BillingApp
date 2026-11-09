@@ -28,7 +28,7 @@ import type { TranslationKey } from '@/src/i18n/translations';
 import { sheetStyles } from '@/src/components/ui';
 import { radius } from '@/src/theme';
 import { palette } from '@/src/theme/colors';
-import type { PaymentMethod, Transaction, TransactionType } from '@/src/types/finance';
+import type { Debt, PaymentMethod, Transaction, TransactionType } from '@/src/types/finance';
 import { isPocketMove } from '@/src/types/finance';
 import { categoryLabel } from '@/src/utils/categoryLabel';
 import { incomeDestinationAccounts } from '@/src/utils/netWorth';
@@ -44,10 +44,11 @@ import {
   firstAccountId,
   liquidPocketsForPay,
   paymentMethodForAccount,
-  pocketMoveAccounts,
+  moveDestinations,
+  moveSourcesWithCredit,
   pocketMoveSources,
 } from '@/src/utils/accounts';
-import { payAccountIdForDebt } from '@/src/utils/debts';
+import { isDebtPayAccountId, payAccountIdForDebt } from '@/src/utils/debts';
 import { appAlert } from '@/src/components/AppAlert';
 
 type Props = {
@@ -112,17 +113,23 @@ export function EditTransactionModal({ transaction, visible, onClose, onDelete }
     if (type === 'income') return incomeDestinationAccounts(accounts);
     // The pocket this movement already uses stays listed even if it is empty now.
     const keepId = transaction?.accountId;
+    const debtLabel = (debt: Debt) =>
+      debt.nameKey ? t(debt.nameKey as TranslationKey) : debt.name ?? t('debt.mainCard');
+    // A transfer can also leave from a card or cupo (cash advance).
+    if (type === 'transfer') return moveSourcesWithCredit(accounts, debts, debtLabel, keepId);
     if (isPocketMove(type)) return pocketMoveSources(accounts, keepId);
     if (type === 'debt_payment') return liquidPocketsForPay(accounts, keepId);
-    return accountsForExpenseSource(accounts, method, {
-      keepId,
-      debts,
-      debtLabel: (debt) =>
-        debt.nameKey
-          ? t(debt.nameKey as TranslationKey)
-          : debt.name ?? t('debt.mainCard'),
-    });
+    return accountsForExpenseSource(accounts, method, { keepId, debts, debtLabel });
   }, [type, accounts, method, debts, t]);
+
+  const destinations = useMemo(() => moveDestinations(accounts, accountId), [accounts, accountId]);
+  const creditDraw = type === 'transfer' && isDebtPayAccountId(accountId);
+  useEffect(() => {
+    if (!isPocketMove(type)) return;
+    if (!destinations.some((a) => a.id === toAccountId) && destinations[0]) {
+      setToAccountId(destinations[0].id);
+    }
+  }, [type, destinations, toAccountId]);
 
   useEffect(() => {
     if (!transaction) return;
@@ -161,6 +168,11 @@ export function EditTransactionModal({ transaction, visible, onClose, onDelete }
       setCategoryId(first?.subs[0]?.id ?? 'otros');
     } else if (isPocketMove(next)) {
       setCategoryId('');
+      // A card spend turned into a move starts from a pocket, not as a cash advance.
+      if (isDebtPayAccountId(accountId) && (next === 'investment' || !isPocketMove(type))) {
+        const pocket = pocketMoveSources(accounts, transaction?.accountId)[0];
+        if (pocket) setAccountId(pocket.id);
+      }
     }
   }
 
@@ -406,12 +418,13 @@ export function EditTransactionModal({ transaction, visible, onClose, onDelete }
               <>
                 <Text style={styles.label}>{t('flow.whichAccountTo')}</Text>
                 <AccountChoiceChips
-                  accounts={pocketMoveAccounts(accounts).filter((a) => a.id !== accountId)}
+                  accounts={destinations}
                   selectedId={toAccountId}
                   onSelect={setToAccountId}
                   allowAddWallet
                   quiet
                 />
+                {creditDraw ? <Text style={styles.copy}>{t('move.fromCreditHint')}</Text> : null}
               </>
             ) : null}
 

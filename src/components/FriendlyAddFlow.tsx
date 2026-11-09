@@ -54,13 +54,14 @@ import {
   firstAccountId,
   liquidPocketsForPay,
   paymentMethodForAccount,
-  pocketMoveAccounts,
-  pocketMoveSources,
+  moveDestinations,
+  moveSourcesWithCredit,
 } from '@/src/utils/accounts';
 import {
   amountsMatch,
   inferInstallmentPayScope,
   installmentPayChoices,
+  isDebtPayAccountId,
   openDebts,
   payAccountIdForDebt,
   paymentSettlesInstallment,
@@ -180,11 +181,25 @@ export function FriendlyAddFlow({
     [accounts, method, debts, t]
   );
 
-  const moveAccounts = useMemo(
-    () => pocketMoveAccounts(accounts),
-    [accounts]
+  // Pockets with money, plus cards / cupos for a cash advance.
+  const moveSources = useMemo(
+    () =>
+      moveSourcesWithCredit(accounts, debts, (debt) =>
+        debt.nameKey ? t(debt.nameKey as TranslationKey) : debt.name ?? t('debt.mainCard')
+      ),
+    [accounts, debts, t]
   );
-  const moveSources = useMemo(() => pocketMoveSources(accounts), [accounts]);
+  const moveAccounts = useMemo(() => moveDestinations(accounts, accountId), [accounts, accountId]);
+  const creditDraw = intent === 'move' && isDebtPayAccountId(accountId);
+  // Switching to "Move" after a card spend: start from a pocket, never a card by surprise.
+  const lastIntent = useRef(intent);
+  useEffect(() => {
+    if (lastIntent.current === intent) return;
+    lastIntent.current = intent;
+    if (intent !== 'move' || !isDebtPayAccountId(accountId)) return;
+    const pocket = moveSources.find((a) => !isDebtPayAccountId(a.id));
+    if (pocket) setAccountId(pocket.id);
+  }, [intent, accountId, moveSources]);
 
   const accountChoices =
     intent === 'earn'
@@ -205,9 +220,10 @@ export function FriendlyAddFlow({
       const next = firstAccountId(moveSources, accountId);
       if (next && next !== accountId) setAccountId(next);
       const fromId = next && next !== accountId ? next : accountId;
-      if (!toAccountId || toAccountId === fromId || !moveAccounts.some((a) => a.id === toAccountId)) {
+      const destinations = moveDestinations(accounts, fromId);
+      if (!toAccountId || toAccountId === fromId || !destinations.some((a) => a.id === toAccountId)) {
         const dest =
-          moveAccounts.find((a) => a.id !== fromId)?.id ??
+          destinations[0]?.id ??
           defaultTransferDestinationId(accounts, fromId);
         if (dest && dest !== toAccountId) setToAccountId(dest);
       }
@@ -533,7 +549,8 @@ export function FriendlyAddFlow({
           amount: formatPlain(parsed),
           transactions,
           spendConcepts,
-          accounts,
+          // A cash advance names the card it came from.
+          accounts: creditDraw ? [...accounts, ...accountChoices] : accounts,
           categoryId: resolvedCategoryId,
           accountId,
           toAccountId: intent === 'move' ? toAccountId : undefined,
@@ -999,7 +1016,7 @@ export function FriendlyAddFlow({
                 </Text>
                 <AccountChoiceChips
                   variant="card"
-                  accounts={moveAccounts.filter((a) => a.id !== accountId)}
+                  accounts={moveAccounts}
                   selectedId={toAccountId}
                   onSelect={setToAccountId}
                   allowAddWallet
@@ -1019,7 +1036,11 @@ export function FriendlyAddFlow({
               />
               <SummaryLine
                 label={t('flow.summaryType')}
-                value={t(`type.${intentToType(intent)}` as TranslationKey)}
+                value={
+                  creditDraw
+                    ? t('history.creditDraw')
+                    : t(`type.${intentToType(intent)}` as TranslationKey)
+                }
               />
               {intent !== 'move' ? (
                 <SummaryLine
@@ -1077,7 +1098,7 @@ export function FriendlyAddFlow({
                   <Text style={[styles.intentSub, { marginTop: 10 }]}>
                     {t('flow.movePreview', {
                       from: accountDisplayName(
-                        accounts.find((a) => a.id === accountId) ?? {
+                        accountChoices.find((a) => a.id === accountId) ?? {
                           nameKey: 'account.cash',
                         },
                         t
@@ -1093,6 +1114,7 @@ export function FriendlyAddFlow({
                   </Text>
                   <Text style={[styles.intentSub, { marginTop: 6 }]}>
                     {(() => {
+                      if (creditDraw) return t('move.fromCreditHint');
                       const fromInvest =
                         accounts.find((a) => a.id === accountId)?.type === 'investment';
                       const toInvest =

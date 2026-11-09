@@ -3,6 +3,7 @@ import type { Transaction } from '@/src/types/finance';
 import type { SpendConcept } from '@/src/types/settings';
 import { findSpendSub } from '@/src/data/spendConcepts';
 import { antExpenseBreakdown, filterBetween, sumByType, sumSpendOut } from '@/src/utils/financeMath';
+import { isCreditDraw } from '@/src/utils/ledger';
 import { projectMonth } from '@/src/utils/projection';
 import {
   INCOME_CATEGORY_IDS,
@@ -377,13 +378,26 @@ const income: Handler = (ctx) => {
   return { text: t('search.answerIncome', { amount: format(sum(txs)), period }), txs };
 };
 
+/** Cash advances and cupo drawn into a pocket (card, credicheque, rotativo). */
+const creditDraws: Handler = ({ parsed, list, format, t }) => {
+  if (!parsed.wants.creditDraw) return null;
+  const period = parsed.period.label;
+  const txs = list.filter(isCreditDraw);
+  if (txs.length === 0) return { text: t('search.answerCreditDrawsEmpty', { period }) };
+  return {
+    text: t('search.answerCreditDraws', { amount: format(sum(txs)), period, count: txs.length }),
+    txs,
+  };
+};
+
 const transfers: Handler = ({ parsed, list, format, t }) => {
   const { wants, method, q, noteNeedle } = parsed;
   if (!wants.transfer && !(method === 'transfer' && includesAny(q, ['envie', 'envié', 'mande', 'mandé']))) {
     return null;
   }
   const period = parsed.period.label;
-  let txs = list.filter((x) => x.type === 'transfer');
+  // Your own money moving; advances drawn on credit have their own answer.
+  let txs = list.filter((x) => x.type === 'transfer' && !isCreditDraw(x));
   if (noteNeedle) {
     txs = txs.filter((x) => normalize(x.note ?? '').includes(noteNeedle));
     return {
@@ -703,6 +717,7 @@ export const HANDLERS = {
   projection,
   savings,
   available,
+  creditDraws,
   cardPayments,
   debtPayments,
   debtBalance,

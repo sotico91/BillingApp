@@ -30,13 +30,14 @@ El simulador debe estar en **español**: los recorridos buscan los textos en esp
 | `restore-auto-backup` | La copia del día se guarda con el primer movimiento y restaurarla trae ese estado. |
 | `one-tap` | El botón de un toque dice el concepto (Café · Alimentación); lo escrito reemplaza el monto y el campo vacío registra el último. |
 | `move-money` | Mover solo sale de cuentas con dinero, llega a Inversiones, y "Ver totales" muestra solo cuentas con dinero e inversiones aparte. |
+| `credit-draw` | Mover desde un credicheque a Ahorros: la plata llega a Ahorros y la deuda del credicheque sube lo mismo. |
 | `dictate` | La barra "Díctaselo a Rumi" arriba en Agregar abre "Te escucho…", Cancelar la cierra sin llenar nada y sigue ahí en Ingreso. Lo que interpreta cada frase lo prueba jest (`dictation.test.ts`). |
 
 `subflows/` tiene pasos compartidos: `fresh-start` (datos limpios y onboarding con $1.000.000 en el banco) y `quick-spend` (registro rápido con monto y descripción).
 
 ## Al escribir uno nuevo
 
-- Preferir `id:` (los `testID` de la app: `add-fab`, `quick-amount`, `quick-note`, `category-search`, `flow-amount`, `flow-note`, `edit-note`, `dictate-bar`, `onboard-bank`, `repeat-amount`) a coordenadas.
+- Preferir `id:` (los `testID` de la app: `add-fab`, `quick-amount`, `quick-note`, `category-search`, `flow-amount`, `flow-note`, `edit-note`, `dictate-bar`, `onboard-bank`, `repeat-amount`, `debt-name`, `debt-limit`, `debt-balance`) a coordenadas.
 - iOS junta los textos de un botón en una sola etiqueta ("B, Banco principal, $1.000.000"): usar expresiones regulares y escapar `$`, `.` y paréntesis.
 - El teclado numérico no tiene "Listo": tocar un título ("¿En qué?") lo cierra.
 - `maestro hierarchy` muestra las etiquetas que hay en pantalla.

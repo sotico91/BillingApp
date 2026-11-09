@@ -163,6 +163,19 @@ export function creditAvailable(
   return Math.max(0, (debt.creditLimit ?? 0) - (debt.balance || 0));
 }
 
+/**
+ * How much a charge or draw goes past the card's free cupo. Cards without a
+ * limit on file are never blocked (Rumi doesn't know the cupo).
+ */
+export function creditShortfall(
+  debt: Pick<Debt, 'kind' | 'creditLimit' | 'balance'> | undefined,
+  amount: number
+): number {
+  if (!debt || !isRevolving(debt) || !debt.creditLimit) return 0;
+  const missing = roundMoney(amount - creditAvailable(debt));
+  return missing > SETTLED_EPS ? missing : 0;
+}
+
 export function applyRevolvingCharge(
   debts: Debt[],
   debtId: string | undefined,

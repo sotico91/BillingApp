@@ -38,6 +38,7 @@ export type QueryWants = {
   compare: boolean;
   origin: boolean;
   transfer: boolean;
+  creditDraw: boolean;
   top: boolean;
   average: boolean;
   budget: boolean;
@@ -106,6 +107,7 @@ export function parseQuery(
     compare: isCompareQuery(q),
     origin: includesAny(q, L.origin),
     transfer: includesAny(q, L.transfer),
+    creditDraw: includesAny(q, L.creditDraw),
     top: includesAny(q, L.top),
     average: includesAny(q, L.average),
     budget: includesAny(q, L.budget),
