@@ -90,6 +90,8 @@ export type UserSettings = {
   habitPilotDismissed?: boolean;
   /** When to cue a log: right after paying, or one minute in the evening. */
   habitCue?: HabitCue;
+  /** Day the person's month starts (their pay day), 1–28; 1 or missing = calendar month. */
+  monthStartDay?: number;
   /**
    * Monday date key (YYYY-MM-DD) for the week the user dismissed the ant-spend tip.
    * Cleared automatically next week.

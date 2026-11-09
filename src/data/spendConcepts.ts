@@ -4,6 +4,7 @@ import { guessConceptIcon } from '@/src/data/conceptIcons';
 import { FRIENDLY_TEMPLATES } from '@/src/data/friendlyTemplates';
 import { translations, type Language } from '@/src/i18n/translations';
 import type { CustomConcept, SpendConcept, SpendSub } from '@/src/types/settings';
+import { startOfMonth } from '@/src/utils/financeMath';
 
 export const CREDITS_CONCEPT_ID = 'concept-creditos';
 export const CREDITS_CONCEPT_NAME = 'Créditos';
@@ -338,7 +339,7 @@ export function paidDebtSubIds(
   debts: Pick<Debt, 'categoryId' | 'closedAt'>[],
   now = new Date()
 ): { hidden: Set<string>; paidThisMonth: Set<string> } {
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+  const monthStart = startOfMonth(now).getTime();
   const lastClose = new Map<string, number>();
   const open = new Set<string>();
   for (const debt of debts) {

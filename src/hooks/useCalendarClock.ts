@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { AppState } from 'react-native';
 
+import { getMonthStartDay } from '@/src/utils/financeMath';
+
 /** Keeps day/month keys fresh across midnight and when returning to the app. */
 export function useCalendarClock() {
   const [now, setNow] = useState(() => new Date());
@@ -26,7 +28,8 @@ export function useCalendarClock() {
     year,
     monthIndex,
     day,
-    monthKey: `${year}-${monthIndex}`,
+    // Includes the month start day so month totals recompute when it changes.
+    monthKey: `${year}-${monthIndex}-${getMonthStartDay()}`,
     dayKey: `${year}-${monthIndex}-${day}`,
   };
 }

@@ -1,6 +1,6 @@
 import type { Debt, Transaction } from '@/src/types/finance';
 import type { ReminderRule, SpendConcept } from '@/src/types/settings';
-import { filterByCalendarMonth, predictMonthlySpends } from '@/src/utils/financeMath';
+import { filterByStrictCalendarMonth, predictMonthlySpends } from '@/src/utils/financeMath';
 
 /** Days ahead a daily reminder is planned; refreshed whenever the app opens or a movement is saved. */
 const DAILY_HORIZON_DAYS = 7;
@@ -72,13 +72,13 @@ function typicalMonth(subId: string, transactions: Transaction[], now: Date): nu
 }
 
 function paidIn(subId: string, transactions: Transaction[], year: number, monthIndex: number): number {
-  return filterByCalendarMonth(transactions, year, monthIndex)
+  return filterByStrictCalendarMonth(transactions, year, monthIndex)
     .filter((t) => isSpend(t) && t.categoryId === subId)
     .reduce((s, t) => s + t.amount, 0);
 }
 
 function paidDebtIn(debtId: string, transactions: Transaction[], month: Date): boolean {
-  return filterByCalendarMonth(transactions, month.getFullYear(), month.getMonth()).some(
+  return filterByStrictCalendarMonth(transactions, month.getFullYear(), month.getMonth()).some(
     (t) => t.type === 'debt_payment' && t.debtId === debtId
   );
 }

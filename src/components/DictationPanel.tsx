@@ -4,7 +4,6 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { DictationPhase } from '@/src/hooks/useDictation';
 import { useLanguage } from '@/src/i18n/LanguageContext';
 import { palette, radii } from '@/src/theme/colors';
-import { dictatedDate } from '@/src/utils/dictation';
 import { tapFeedback } from '@/src/utils/selectFeedback';
 
 type BarProps = {
@@ -107,35 +106,6 @@ export function DictationBar({
   );
 }
 
-/** The day a dictated movement happened, when it was not today; ✕ goes back to today. */
-export function DictatedDateChip({ daysAgo, onClear }: { daysAgo: number; onClear: () => void }) {
-  const { t, language } = useLanguage();
-  if (daysAgo <= 0) return null;
-  const day = dictatedDate(daysAgo).toLocaleDateString(language === 'es' ? 'es-CO' : 'en-US', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-  });
-  const label =
-    daysAgo === 1 ? t('quick.dateYesterday', { date: day }) : day.charAt(0).toLocaleUpperCase() + day.slice(1);
-  return (
-    <View style={styles.dateRow}>
-      <MaterialCommunityIcons name="calendar-blank-outline" size={18} color={palette.inkMuted} />
-      <Text style={styles.dateText}>{label}</Text>
-      <Pressable
-        onPress={() => {
-          tapFeedback();
-          onClear();
-        }}
-        hitSlop={10}
-        accessibilityRole="button"
-        accessibilityLabel={t('quick.dateToday')}>
-        <MaterialCommunityIcons name="close" size={18} color={palette.inkMuted} />
-      </Pressable>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   bar: {
     backgroundColor: palette.surfaceSolid,
@@ -196,20 +166,4 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   doneText: { fontFamily: 'DMSans_600SemiBold', fontSize: 14, color: palette.white },
-  dateRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    alignSelf: 'flex-start',
-    borderWidth: 1,
-    borderColor: palette.border,
-    borderRadius: 14,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  dateText: {
-    fontFamily: 'DMSans_600SemiBold',
-    fontSize: 14,
-    color: palette.ink,
-  },
 });

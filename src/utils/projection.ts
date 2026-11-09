@@ -1,6 +1,7 @@
 import type { Debt, Transaction } from '@/src/types/finance';
 import type { SpendConcept } from '@/src/types/settings';
 import {
+  budgetMonthOf,
   calendarMonthRange,
   filterByCalendarMonth,
   isMonthOutflow,
@@ -27,8 +28,14 @@ function median(values: number[]): number {
   return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
 }
 
-function daysInMonth(year: number, monthIndex: number): number {
-  return new Date(year, monthIndex + 1, 0).getDate();
+/** Days of the person's month (it may start on their pay day). */
+function monthDays(year: number, monthIndex: number): Date[] {
+  const { from, to } = calendarMonthRange(year, monthIndex);
+  const days: Date[] = [];
+  for (const d = new Date(from); d.getTime() < to.getTime(); d.setDate(d.getDate() + 1)) {
+    days.push(new Date(d));
+  }
+  return days;
 }
 
 /**
@@ -42,9 +49,8 @@ function weekdayFactors(
   const occurrences = Array<number>(7).fill(0);
   let count = 0;
   for (const month of history) {
-    const total = daysInMonth(month.year, month.monthIndex);
-    for (let day = 1; day <= total; day += 1) {
-      occurrences[new Date(month.year, month.monthIndex, day).getDay()] += 1;
+    for (const day of monthDays(month.year, month.monthIndex)) {
+      occurrences[day.getDay()] += 1;
     }
     for (const t of month.txs) {
       sums[new Date(t.createdAt).getDay()] += t.amount;
@@ -99,8 +105,7 @@ export function projectMonth(
   now = new Date(),
   spendConcepts?: SpendConcept[]
 ): MonthProjection {
-  const year = now.getFullYear();
-  const monthIndex = now.getMonth();
+  const { year, monthIndex } = budgetMonthOf(now);
   const { from, to } = calendarMonthRange(year, monthIndex);
   const totalDays = Math.round((to.getTime() - from.getTime()) / DAY_MS);
   const days = Math.min(totalDays, Math.max(1, Math.ceil((now.getTime() - from.getTime()) / DAY_MS)));
@@ -153,7 +158,7 @@ export function projectMonth(
   const historyDaily =
     typical.length > 0
       ? typical.reduce(
-          (s, h) => s + h.txs.reduce((a, t) => a + t.amount, 0) / daysInMonth(h.year, h.monthIndex),
+          (s, h) => s + h.txs.reduce((a, t) => a + t.amount, 0) / monthDays(h.year, h.monthIndex).length,
           0
         ) / typical.length
       : null;
@@ -164,7 +169,9 @@ export function projectMonth(
   const factors = weekdayFactors(typical);
   let remaining = 0;
   for (let day = days + 1; day <= totalDays; day += 1) {
-    remaining += dailyPace * factors[new Date(year, monthIndex, day).getDay()];
+    remaining +=
+      dailyPace *
+      factors[new Date(from.getFullYear(), from.getMonth(), from.getDate() + day - 1).getDay()];
   }
 
   const projectedSpend = spent + remaining + pendingFixed;

@@ -50,6 +50,8 @@ import {
 } from '@/src/utils/accounts';
 import { isDebtPayAccountId, payAccountIdForDebt } from '@/src/utils/debts';
 import { appAlert } from '@/src/components/AppAlert';
+import { SpendDateChip, daysAgoOf, onDayKeepingTime } from '@/src/components/SpendDateChip';
+import { dictatedDate } from '@/src/utils/dictation';
 
 type Props = {
   transaction: Transaction | null;
@@ -86,6 +88,7 @@ export function EditTransactionModal({ transaction, visible, onClose, onDelete }
   const [accountId, setAccountId] = useState('cash');
   const [toAccountId, setToAccountId] = useState('savings');
   const [note, setNote] = useState('');
+  const [daysAgo, setDaysAgo] = useState(0);
   const [saving, setSaving] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
 
@@ -151,6 +154,7 @@ export function EditTransactionModal({ transaction, visible, onClose, onDelete }
     setAccountId(chargedId);
     setToAccountId(transaction.toAccountId ?? 'savings');
     setNote(transaction.note ?? '');
+    setDaysAgo(daysAgoOf(new Date(transaction.createdAt)));
   }, [transaction, settings.spendConcepts]);
 
   useEffect(() => {
@@ -206,6 +210,14 @@ export function EditTransactionModal({ transaction, visible, onClose, onDelete }
         accountId,
         toAccountId: needsDestination ? toAccountId : undefined,
         note,
+        ...(daysAgo !== daysAgoOf(new Date(transaction.createdAt))
+          ? {
+              createdAt: onDayKeepingTime(
+                dictatedDate(daysAgo),
+                new Date(transaction.createdAt)
+              ).toISOString(),
+            }
+          : {}),
       });
       // Moved to another category by hand: learn it for this description.
       if (type === 'expense' && note.trim() && categoryId && categoryId !== transaction.categoryId) {
@@ -427,6 +439,9 @@ export function EditTransactionModal({ transaction, visible, onClose, onDelete }
                 {creditDraw ? <Text style={styles.copy}>{t('move.fromCreditHint')}</Text> : null}
               </>
             ) : null}
+
+            <Text style={styles.label}>{t('edit.date')}</Text>
+            <SpendDateChip daysAgo={daysAgo} onChange={setDaysAgo} testID="edit-date" />
 
             <Text style={styles.label}>{t('flow.noteOptional')}</Text>
             <TextInput

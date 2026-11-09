@@ -1,7 +1,7 @@
 import { CREDITS_CONCEPT_ID, findSpendSub } from '@/src/data/spendConcepts';
 import type { Transaction } from '@/src/types/finance';
 import type { Currency, SpendConcept } from '@/src/types/settings';
-import { isAntCategoryId } from '@/src/utils/financeMath';
+import { budgetMonthOf, calendarMonthRange, isAntCategoryId } from '@/src/utils/financeMath';
 import { localDateKey } from '@/src/utils/habitPilot';
 
 export type AntSpendTip = {
@@ -44,8 +44,9 @@ function monthBuckets(
   year: number,
   monthIndex: number
 ): Map<string, { total: number; count: number }> {
-  const from = new Date(year, monthIndex, 1, 0, 0, 0, 0).getTime();
-  const to = new Date(year, monthIndex + 1, 1, 0, 0, 0, 0).getTime();
+  const range = calendarMonthRange(year, monthIndex);
+  const from = range.from.getTime();
+  const to = range.to.getTime();
   const map = new Map<string, { total: number; count: number }>();
 
   for (const t of transactions) {
@@ -88,8 +89,7 @@ export function buildAntSpendTips(
   currency: Currency = 'COP'
 ): AntSpendTip[] {
   const { minCurrent: MIN_CURRENT, minDelta: MIN_DELTA } = THRESHOLDS[currency];
-  const y = now.getFullYear();
-  const m = now.getMonth();
+  const { year: y, monthIndex: m } = budgetMonthOf(now);
   const prev = m === 0 ? { year: y - 1, monthIndex: 11 } : { year: y, monthIndex: m - 1 };
 
   const currentMap = monthBuckets(transactions, y, m);

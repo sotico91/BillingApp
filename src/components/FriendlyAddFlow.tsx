@@ -69,7 +69,7 @@ import {
   type InstallmentPayScope,
 } from '@/src/utils/debts';
 import { appAlert } from '@/src/components/AppAlert';
-import { DictatedDateChip } from '@/src/components/DictationPanel';
+import { SpendDateChip } from '@/src/components/SpendDateChip';
 import { dictatedDate, type DictatedMovement } from '@/src/utils/dictation';
 
 type Props = {
@@ -1128,7 +1128,7 @@ export function FriendlyAddFlow({
                 </>
               ) : null}
             </View>
-            <DictatedDateChip daysAgo={daysAgo} onClear={() => setDaysAgo(0)} />
+            <SpendDateChip daysAgo={daysAgo} onChange={setDaysAgo} />
             <Text style={styles.noteLabel}>{t('flow.noteOptional')}</Text>
             <TextInput
               testID="flow-note"

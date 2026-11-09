@@ -40,6 +40,7 @@ import { ensureConceptIcons } from '@/src/data/conceptIcons';
 import { useLanguage } from '@/src/i18n/LanguageContext';
 import { appendUniqueDay, localDateKey } from '@/src/utils/habitPilot';
 import { antTipWeekKey } from '@/src/utils/antSpendTips';
+import { clampMonthStartDay, setMonthStartDay } from '@/src/utils/financeMath';
 
 type SettingsContextValue = {
   settings: UserSettings;
@@ -122,6 +123,7 @@ type SettingsContextValue = {
     quickTemplates: QuickTemplate[];
   }) => Promise<void>;
   updateHabitCue: (cue: HabitCue) => Promise<void>;
+  updateMonthStartDay: (day: number) => Promise<void>;
   startHabitPilot: () => Promise<void>;
   dismissHabitPilot: () => Promise<void>;
   recordHabitOpenDay: () => Promise<void>;
@@ -616,6 +618,13 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     [settings, persist]
   );
 
+  const updateMonthStartDay = useCallback(
+    async (day: number) => {
+      await persist({ ...settings, monthStartDay: clampMonthStartDay(day) });
+    },
+    [settings, persist]
+  );
+
   const startHabitPilot = useCallback(async () => {
     const today = localDateKey();
     await persist({
@@ -662,6 +671,9 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     [settings, persist]
   );
 
+  // Month math reads this before any screen renders, so set it during render.
+  setMonthStartDay(settings.monthStartDay ?? 1);
+
   const value = useMemo(
     () => ({
       settings,
@@ -695,6 +707,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       pruneQuickTemplatesToExistingExpenses,
       restoreSettingsFromBackup,
       updateHabitCue,
+      updateMonthStartDay,
       startHabitPilot,
       dismissHabitPilot,
       recordHabitOpenDay,
@@ -733,6 +746,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       pruneQuickTemplatesToExistingExpenses,
       restoreSettingsFromBackup,
       updateHabitCue,
+      updateMonthStartDay,
       startHabitPilot,
       dismissHabitPilot,
       recordHabitOpenDay,

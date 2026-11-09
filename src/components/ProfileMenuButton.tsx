@@ -17,6 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { listAutoBackups, readAutoBackup } from '@/src/data/autoBackup';
 import { AppModal } from '@/src/components/AppModal';
 import { KeyboardSafeOverlay } from '@/src/components/KeyboardSafe';
+import { MonthStartDaySheet } from '@/src/components/MonthStartDaySheet';
 import { useFinance } from '@/src/hooks/useFinance';
 import { usePro } from '@/src/hooks/usePro';
 import { useSettings } from '@/src/hooks/useSettings';
@@ -62,6 +63,7 @@ export function ProfileMenuButton() {
   } = useFinance();
   const [menuOpen, setMenuOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const [monthStartOpen, setMonthStartOpen] = useState(false);
   const [name, setName] = useState(settings.userName);
   const [saving, setSaving] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -344,6 +346,19 @@ export function ProfileMenuButton() {
                   onPress={() => void toggleNotifyOnExpense()}
                 />
                 <SettingsRow
+                  icon="calendar-start"
+                  label={t('settings.monthStart')}
+                  value={
+                    (settings.monthStartDay ?? 1) > 1
+                      ? t('settings.monthStartDay', { day: settings.monthStartDay ?? 1 })
+                      : t('settings.monthStartCalendar')
+                  }
+                  onPress={() => {
+                    setMenuOpen(false);
+                    setMonthStartOpen(true);
+                  }}
+                />
+                <SettingsRow
                   icon="lock-outline"
                   label={t('settings.lock')}
                   toggle={settings.appLockEnabled}
@@ -394,6 +409,8 @@ export function ProfileMenuButton() {
           </View>
         </View>
       </AppModal>
+
+      <MonthStartDaySheet visible={monthStartOpen} onClose={() => setMonthStartOpen(false)} />
 
       <AppModal
         visible={editOpen}

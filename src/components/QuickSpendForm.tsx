@@ -9,7 +9,7 @@ import { CategorySearch, CATEGORY_SEARCH_MIN_SUBS } from '@/src/components/Categ
 import type { SavedMovement } from '@/src/components/ExpenseForm';
 import { KeyboardSafeScroll } from '@/src/components/KeyboardSafe';
 import { ConceptIcon } from '@/src/components/ConceptIcon';
-import { DictatedDateChip } from '@/src/components/DictationPanel';
+import { SpendDateChip } from '@/src/components/SpendDateChip';
 import { findSpendSub, flattenSpendSubs, isGeneralSubName, subColor } from '@/src/data/spendConcepts';
 import type { FriendlyIntent } from '@/src/data/friendlyTemplates';
 import { useFundsCheck } from '@/src/hooks/useFundsCheck';
@@ -293,7 +293,7 @@ export function QuickSpendForm({ onSaved, onBack, onOpenGuided, dictated, header
           />
         </View>
 
-        <DictatedDateChip daysAgo={daysAgo} onClear={() => setDaysAgo(0)} />
+        <SpendDateChip daysAgo={daysAgo} onChange={setDaysAgo} />
 
         <Text style={styles.section}>{t('quick.what')}</Text>
         {flattenSpendSubs(spendConcepts).length > CATEGORY_SEARCH_MIN_SUBS ? (

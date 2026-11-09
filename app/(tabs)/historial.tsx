@@ -24,7 +24,12 @@ import type { Period, Transaction } from '@/src/types/finance';
 import { isPocketMove } from '@/src/types/finance';
 import { categoryLabel } from '@/src/utils/categoryLabel';
 import { closedDebts } from '@/src/utils/debts';
-import { shiftMonth, spendByConcept, sumByType, sumSpendOut } from '@/src/utils/financeMath';
+import {
+  budgetMonthOf,
+  calendarMonthRange,
+  formatMonthRange,
+  getMonthStartDay,
+  shiftMonth, spendByConcept, sumByType, sumSpendOut } from '@/src/utils/financeMath';
 import { tapFeedback } from '@/src/utils/selectFeedback';
 import { appAlert } from '@/src/components/AppAlert';
 import { useSaveToast } from '@/src/components/SaveToast';
@@ -48,10 +53,7 @@ export default function HistorialScreen() {
 
   const now = new Date();
   const [period, setPeriod] = useState<Period>('mes');
-  const [monthCursor, setMonthCursor] = useState({
-    year: now.getFullYear(),
-    monthIndex: now.getMonth(),
-  });
+  const [monthCursor, setMonthCursor] = useState(() => budgetMonthOf(now));
   const [editing, setEditing] = useState<Transaction | null>(null);
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [listOpen, setListOpen] = useState(true);
@@ -70,9 +72,10 @@ export default function HistorialScreen() {
     [debts]
   );
 
+  const currentMonth = budgetMonthOf(now);
   const isCurrentMonth =
-    monthCursor.year === now.getFullYear() &&
-    monthCursor.monthIndex === now.getMonth();
+    monthCursor.year === currentMonth.year &&
+    monthCursor.monthIndex === currentMonth.monthIndex;
 
   const items = useMemo(() => {
     if (period === 'mes') {
@@ -181,10 +184,7 @@ export default function HistorialScreen() {
             onChange={(next) => {
               setPeriod(next);
               if (next === 'mes') {
-                setMonthCursor({
-                  year: now.getFullYear(),
-                  monthIndex: now.getMonth(),
-                });
+                setMonthCursor(budgetMonthOf(now));
               }
             }}
           />
@@ -193,7 +193,17 @@ export default function HistorialScreen() {
               <Pressable accessibilityRole="button" onPress={goPrevMonth} style={styles.navBtn}>
                 <Text style={styles.navText}>‹ {t('history.prevMonth')}</Text>
               </Pressable>
-              <Text style={styles.monthLabel}>{periodLabel}</Text>
+              <View style={styles.monthTitle}>
+                <Text style={styles.monthLabel}>{periodLabel}</Text>
+                {getMonthStartDay() > 1 ? (
+                  <Text style={styles.monthRange}>
+                    {formatMonthRange(
+                      calendarMonthRange(monthCursor.year, monthCursor.monthIndex),
+                      language
+                    )}
+                  </Text>
+                ) : null}
+              </View>
               <Pressable
                 accessibilityRole="button"
                 onPress={goNextMonth}
@@ -464,8 +474,14 @@ const styles = StyleSheet.create({
   navTextDisabled: {
     color: palette.brandMuted,
   },
+  monthTitle: { flex: 1, alignItems: 'center' },
+  monthRange: {
+    marginTop: 2,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 12,
+    color: palette.inkMuted,
+  },
   monthLabel: {
-    flex: 1,
     textAlign: 'center',
     fontFamily: 'Fraunces_600SemiBold',
     fontSize: 16,

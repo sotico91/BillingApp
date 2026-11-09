@@ -1,5 +1,6 @@
 import type { Period, Transaction } from '@/src/types/finance';
 import {
+  budgetMonthOf,
   calendarMonthRange,
   comparableRange,
   filterBetween,
@@ -73,7 +74,8 @@ export function monthsAgoPeriod(
   language: 'en' | 'es',
   now = new Date()
 ): QueryPeriod {
-  const d = new Date(now.getFullYear(), now.getMonth() - count, 1);
+  const cur = budgetMonthOf(now);
+  const d = new Date(cur.year, cur.monthIndex - count, 1);
   return monthPeriod(d.getFullYear(), d.getMonth(), language);
 }
 
@@ -101,8 +103,9 @@ export function parseMesAgoCount(raw: string): number | null {
 
 /** Named month without a year: if that month is still ahead this year, use last year. */
 export function yearForBareMonth(monthIndex: number, now: Date): number {
-  if (monthIndex > now.getMonth()) return now.getFullYear() - 1;
-  return now.getFullYear();
+  const cur = budgetMonthOf(now);
+  if (monthIndex > cur.monthIndex) return cur.year - 1;
+  return cur.year;
 }
 
 export type QueryPeriod = {
@@ -228,7 +231,8 @@ export function presetPeriod(
       explicit: true,
     };
   }
-  const { from, to } = calendarMonthRange(now.getFullYear(), now.getMonth());
+  const cur = budgetMonthOf(now);
+  const { from, to } = calendarMonthRange(cur.year, cur.monthIndex);
   return { label: t('period.mes'), from, to, analog: 'month', explicit: true };
 }
 
@@ -240,7 +244,8 @@ export function previousLabel(
   t: TFn
 ): string {
   if (period.analog === 'month') {
-    return `${monthLabel(prev.from.getMonth(), language)} ${prev.from.getFullYear()}`;
+    const m = budgetMonthOf(prev.from);
+    return `${monthLabel(m.monthIndex, language)} ${m.year}`;
   }
   if (period.analog === 'year') {
     return language === 'es' ? `el año ${prev.from.getFullYear()}` : String(prev.from.getFullYear());
@@ -257,8 +262,8 @@ export function analogRange(period: QueryPeriod, now = new Date()): { from: Date
 export function fullAnalogRange(period: QueryPeriod): { from: Date; to: Date } {
   if (period.previous) return period.previous;
   if (period.analog === 'month') {
-    const prev = new Date(period.from);
-    prev.setMonth(prev.getMonth() - 1);
+    const cur = budgetMonthOf(period.from);
+    const prev = new Date(cur.year, cur.monthIndex - 1, 1);
     return calendarMonthRange(prev.getFullYear(), prev.getMonth());
   }
   if (period.analog === 'year') {

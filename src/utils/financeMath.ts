@@ -17,10 +17,71 @@ export function startOfWeek(date: Date): Date {
   return d;
 }
 
+/**
+ * Day the person's month starts (their pay day), 1–28. With 24, "November"
+ * runs Oct 24 – Nov 23. Set once from settings; 1 is the calendar month.
+ */
+let monthStartDay = 1;
+
+export function clampMonthStartDay(raw: unknown): number {
+  const n = typeof raw === 'number' ? Math.round(raw) : NaN;
+  return Number.isFinite(n) && n >= 1 && n <= 28 ? n : 1;
+}
+
+export function setMonthStartDay(day: number): void {
+  monthStartDay = clampMonthStartDay(day);
+}
+
+export function getMonthStartDay(): number {
+  return monthStartDay;
+}
+
+/**
+ * The month (year, monthIndex) a date belongs to. A month that starts on the
+ * 16th or later is named after the month holding most of its days, so with
+ * pay day 24, Oct 24 already belongs to November.
+ */
+export function budgetMonthOf(date: Date): { year: number; monthIndex: number } {
+  return budgetMonthFor(monthStartDay, date);
+}
+
+function budgetMonthFor(start: number, date: Date): { year: number; monthIndex: number } {
+  let m = date.getMonth();
+  if (start > 1 && date.getDate() < start) m -= 1;
+  if (start > 15) m += 1;
+  const d = new Date(date.getFullYear(), m, 1);
+  return { year: d.getFullYear(), monthIndex: d.getMonth() };
+}
+
+function monthRangeFor(start: number, year: number, monthIndex: number): { from: Date; to: Date } {
+  const first = start > 15 ? monthIndex - 1 : monthIndex;
+  return {
+    from: new Date(year, first, start, 0, 0, 0, 0),
+    to: new Date(year, first + 1, start, 0, 0, 0, 0),
+  };
+}
+
+/** The month holding `now` if it started on `start` (for previews before saving). */
+export function monthRangeWithStart(start: number, now = new Date()): { from: Date; to: Date } {
+  const day = clampMonthStartDay(start);
+  const { year, monthIndex } = budgetMonthFor(day, now);
+  return monthRangeFor(day, year, monthIndex);
+}
+
+/** "24 oct – 23 nov" / "Oct 24 – Nov 23" for a [from, to) month. */
+export function formatMonthRange(range: { from: Date; to: Date }, language: 'en' | 'es'): string {
+  const last = new Date(range.to);
+  last.setDate(last.getDate() - 1);
+  const fmt = (d: Date) =>
+    d
+      .toLocaleDateString(language === 'es' ? 'es-CO' : 'en-US', { day: 'numeric', month: 'short' })
+      .replace('.', '');
+  return `${fmt(range.from)} – ${fmt(last)}`;
+}
+
 export function startOfMonth(date: Date): Date {
-  const d = startOfDay(date);
-  d.setDate(1);
-  return d;
+  const { year, monthIndex } = budgetMonthOf(date);
+  return calendarMonthRange(year, monthIndex).from;
 }
 
 export function periodStart(period: Period, now = new Date()): Date {
@@ -70,7 +131,8 @@ export function filterByPeriod(
 ): Transaction[] {
   // Calendar month always starts at 0 for the new month (no spill from prior months).
   if (period === 'mes') {
-    return filterByCalendarMonth(transactions, now.getFullYear(), now.getMonth());
+    const { year, monthIndex } = budgetMonthOf(now);
+    return filterByCalendarMonth(transactions, year, monthIndex);
   }
   const from = periodStart(period, now).getTime();
   if (period === 'hoy') {
@@ -81,11 +143,29 @@ export function filterByPeriod(
   return transactions.filter((e) => new Date(e.createdAt).getTime() >= from);
 }
 
-/** Inclusive calendar month: year + monthIndex (0-11). */
+/**
+ * The person's month (year + monthIndex 0-11), [from, to). It is the calendar
+ * month unless they set a pay day: with 24, November is Oct 24 – Nov 23.
+ */
 export function calendarMonthRange(year: number, monthIndex: number): { from: Date; to: Date } {
-  const from = new Date(year, monthIndex, 1, 0, 0, 0, 0);
-  const to = new Date(year, monthIndex + 1, 1, 0, 0, 0, 0);
-  return { from, to };
+  return monthRangeFor(monthStartDay, year, monthIndex);
+}
+
+/** Strict calendar month (1st to 1st), for bills that fall on a calendar day. */
+export function strictCalendarMonthRange(year: number, monthIndex: number): { from: Date; to: Date } {
+  return {
+    from: new Date(year, monthIndex, 1, 0, 0, 0, 0),
+    to: new Date(year, monthIndex + 1, 1, 0, 0, 0, 0),
+  };
+}
+
+export function filterByStrictCalendarMonth(
+  transactions: Transaction[],
+  year: number,
+  monthIndex: number
+): Transaction[] {
+  const { from, to } = strictCalendarMonthRange(year, monthIndex);
+  return filterBetween(transactions, from, to);
 }
 
 export function filterByCalendarMonth(
@@ -387,8 +467,7 @@ export function predictMonthlySpends(
   const liveSubIds = spendConcepts
     ? new Set(spendConcepts.flatMap((c) => c.subs.map((s) => s.id)))
     : null;
-  const year = now.getFullYear();
-  const monthIndex = now.getMonth();
+  const { year, monthIndex } = budgetMonthOf(now);
 
   // Per category, per month back (1 = last month): payments count, total and first day.
   const history = new Map<string, Map<number, MonthSpend>>();
