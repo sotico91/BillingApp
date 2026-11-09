@@ -5,6 +5,7 @@ import { parseQuery, type ParsedQuery } from './parse';
 import { txsForPeriod } from './period';
 import { normalize } from './text';
 import type { AskOptions, TFn } from './types';
+import type { ProFeature } from '@/src/utils/pro';
 
 export { buildSearchSuggestions, type SearchSuggestion } from './suggestions';
 export { parseQueryAmount } from './signals';
@@ -23,6 +24,8 @@ export type AskResult = {
   txs: Transaction[];
   /** Next questions worth one tap. */
   followUps: string[];
+  /** Set when the full answer is a Pro feature. */
+  proFeature?: ProFeature;
 };
 
 const MAX_FOLLOW_UPS = 3;
@@ -83,7 +86,8 @@ export function askRumi(
       intent,
       understood: { period: answer.period ?? parsed.period.label, concept: concept ?? undefined },
       txs: [...(answer.txs ?? [])].sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
-      followUps: followUpsFor(ctx, concept, query),
+      followUps: answer.proFeature ? [] : followUpsFor(ctx, concept, query),
+      proFeature: answer.proFeature,
     };
   }
   return {

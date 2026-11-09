@@ -594,6 +594,7 @@ export const translations = {
     'pro.reasonDebtPlan': 'The plan to get out of debt is part of Pro: how much sooner you finish, how much interest you save and what to pay first.',
     'pro.reasonAfford': '"Can I afford it?" is part of Pro: Rumi checks your month, your installments and your forecast before you buy.',
     'pro.benefitDebtPlan': 'Plan to get out of debt sooner',
+    'pro.seePro': 'See Rumi Pro',
     'pro.benefitAfford': '"Can I afford it?" before you buy',
     'wealth.debtPayDayNeed': 'Payment day must be between 1 and 28.',
     'wealth.debtPayDayHint':
@@ -1223,6 +1224,14 @@ export const translations = {
       'That includes {pending} in expected bills and installments still to come.',
     'search.answerAffordNeedAmount':
       'Tell me the amount — e.g. “Can I afford 500,000?” or “Can I buy something for 200k?”',
+    'search.answerAffordLaterPro': 'Planning {amount} for {label} is part of Rumi Pro: Rumi tells you how much to put aside each month and each fortnight, and whether what is usually left over is enough.',
+    'search.answerAffordLaterPlan': 'To have {amount} by {label}, put aside {perMonth} a month ({perHalf} a fortnight) for {months} months.',
+    'search.answerAffordLaterPlanOne': 'To have {amount} by {label}, put aside {perMonth} this month ({perHalf} a fortnight).',
+    'search.answerAffordLaterNoIncome': 'Log your income to know whether it fits.',
+    'search.answerAffordLaterYes': 'Yes, it fits: you usually have {surplus} left each month, so {free} stays free.',
+    'search.answerAffordLaterNo': 'Not by {label}: you usually have {surplus} left each month, {gap} short of what you need.',
+    'search.answerAffordLaterReach': 'Putting aside {surplus} a month, you get there by {date}.',
+    'search.answerAffordLaterNone': 'Today almost everything that comes in goes out. You would need to cut {perMonth} a month.',
     'search.answerAffordYes':
       'If you buy {amount}, at your current pace you would still end the month with about {left} left.',
     'search.answerAffordNo':
@@ -1964,6 +1973,7 @@ export const translations = {
     'pro.reasonDebtPlan': 'El plan para salir de deudas es parte de Pro: cuánto antes terminas, cuánto ahorras en intereses y qué pagar primero.',
     'pro.reasonAfford': '"¿Me alcanza?" es parte de Pro: Rumi revisa tu mes, tus cuotas y tu proyección antes de que compres.',
     'pro.benefitDebtPlan': 'Plan para salir de deudas antes',
+    'pro.seePro': 'Ver Rumi Pro',
     'pro.benefitAfford': '"¿Me alcanza?" antes de comprar',
     'wealth.debtPayDayNeed': 'El día de pago debe estar entre 1 y 28.',
     'wealth.debtPayDayHint':
@@ -2596,6 +2606,14 @@ export const translations = {
       'Incluye {pending} de cuentas y cuotas esperadas que aún faltan.',
     'search.answerAffordNeedAmount':
       'Dime el monto, por ejemplo: “¿Me alcanza para 500.000?” o “¿Puedo comprar algo de 200 mil?”',
+    'search.answerAffordLaterPro': 'Planear {amount} para {label} es parte de Rumi Pro: Rumi te dice cuánto separar al mes y por quincena, y si te alcanza con lo que te suele sobrar.',
+    'search.answerAffordLaterPlan': 'Para tener {amount} en {label}, separa {perMonth} al mes ({perHalf} por quincena) durante {months} meses.',
+    'search.answerAffordLaterPlanOne': 'Para tener {amount} en {label}, separa {perMonth} este mes ({perHalf} por quincena).',
+    'search.answerAffordLaterNoIncome': 'Registra tus ingresos para saber si te alcanza.',
+    'search.answerAffordLaterYes': 'Sí te alcanza: te suelen sobrar {surplus} al mes, así que te quedan {free} libres.',
+    'search.answerAffordLaterNo': 'Para {label} no llegas: te suelen sobrar {surplus} al mes y te faltan {gap} al mes.',
+    'search.answerAffordLaterReach': 'Separando {surplus} al mes, lo juntas en {date}.',
+    'search.answerAffordLaterNone': 'Hoy se va casi todo lo que entra. Tendrías que recortar {perMonth} al mes.',
     'search.answerAffordYes':
       'Si compras algo de {amount}, a tu ritmo actual cerrarías el mes con unos {left} a favor.',
     'search.answerAffordNo':

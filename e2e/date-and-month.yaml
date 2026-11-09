@@ -1,0 +1,35 @@
+# A spend logged for yesterday with the date chip, then the month set to start
+# on pay day (24): Activity shows the month's range under its name.
+# The month math itself is covered by jest (src/utils/__tests__/monthStart.test.ts).
+appId: com.sotico91.rumi
+---
+- runFlow: subflows/fresh-start.yaml
+- runFlow:
+    file: subflows/quick-spend.yaml
+    env:
+      AMOUNT: "12000"
+      NOTE: "almuerzo"
+- tapOn:
+    id: "spend-date"
+- tapOn:
+    id: "spend-date-1"
+- assertVisible: "Ayer, .*"
+- tapOn: "Guardar \\$12\\.000"
+- extendedWaitUntil:
+    visible: "Inicio"
+    timeout: 10000
+- tapOn: "Actividad"
+- assertVisible: ".*Almuerzo.*12\\.000.*"
+# Settings: my month starts on the 24th.
+- tapOn: "Inicio"
+- tapOn:
+    point: "90%,10%"
+- scrollUntilVisible:
+    element: "Mi mes empieza el día.*"
+- tapOn: "Mi mes empieza el día.*"
+- assertVisible: "¿Qué día empieza tu mes?"
+- tapOn: "Día 24"
+- assertVisible: "Tu mes ahora: .*"
+- tapOn: "Guardar"
+- tapOn: "Actividad"
+- assertVisible: "\\d{1,2} \\w+ – \\d{1,2} \\w+"

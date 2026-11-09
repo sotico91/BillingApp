@@ -9,6 +9,8 @@ Pro is a monthly or annual subscription sold through Google Play and the App Sto
 | Ask Rumi | 5 questions per calendar month | Unlimited |
 | Monthly limits (Plan) | 3 (a debt's installment limit doesn't count) | Unlimited |
 | Subcategory reminders | 3 (debt due-date reminders are always on) | Unlimited |
+| Plan to get out of debt (how much sooner with an extra payment, interest saved, order) | Debt-free date with installments only | Yes |
+| "Can I afford it?" for a later month (put aside per month / fortnight vs usual surplus) | This month only | Yes |
 | New Phase 2 features (category trend, recurring spends logged for you) | — | Yes |
 
 Nothing that already exists is taken away: the limits only stop adding a new limit, reminder or question. Logging, Home, Activity, accounts, export and app lock stay free.
@@ -22,6 +24,7 @@ Nothing that already exists is taken away: the limits only stop adding a new lim
 - `src/utils/pro.ts`: the free allowances and pure rules (tested in `src/utils/__tests__/pro.test.ts`).
 - `src/hooks/usePro.tsx`: `ProProvider` configures RevenueCat, loads the plans and exposes `allow(feature, existing)` (opens `/pro` when the allowance is used up), `noteAsk()`, `purchase()` and `restore()`.
 - `app/pro.tsx`: the Pro screen (reason, benefits, annual/monthly, subscribe, restore, terms, privacy, manage subscription).
+- `debtPlan` and `afford` have no free allowance (`freeAllows` returns false). `DebtPlanCard` in Wealth shows the unlock button to free users; Ask Rumi gets `isPro` in its options and a locked answer carries `proFeature`, which shows "Ver Rumi Pro".
 - Limits are checked in `app/(tabs)/insights.tsx` (ask), `src/components/ConceptsPlanCard.tsx` (new limit) and `src/components/ReminderSettingsCard.tsx` (new reminder or accepted suggestion). Settings shows a "Rumi Pro" row.
 
 **Pro is off until a store key exists.** With no `EXPO_PUBLIC_REVENUECAT_ANDROID_KEY` / `EXPO_PUBLIC_REVENUECAT_IOS_KEY` (local builds, Expo Go, web), nothing is limited and the Pro row is hidden, so a build without keys behaves exactly as before.

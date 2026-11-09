@@ -119,6 +119,7 @@ export default function InsightsScreen() {
         language: language === 'es' ? 'es' : 'en',
         accounts,
         currency: settings.currency,
+        isPro: pro.isPro,
       })
     );
   }
@@ -208,6 +209,18 @@ export default function InsightsScreen() {
               </Text>
             ) : null}
             <Text style={styles.answerBody}>{answer}</Text>
+            {result?.proFeature ? (
+              <Pressable
+                accessibilityRole="button"
+                testID="ask-pro"
+                style={styles.proBtn}
+                onPress={() => {
+                  tapFeedback();
+                  if (result.proFeature) pro.allow(result.proFeature);
+                }}>
+                <Text style={styles.proBtnText}>{t('pro.seePro')}</Text>
+              </Pressable>
+            ) : null}
 
             {result && result.txs.length > 0 ? (
               <Pressable
@@ -526,6 +539,19 @@ const styles = StyleSheet.create({
     letterSpacing: 0.6,
     textTransform: 'uppercase',
     color: palette.inkMuted,
+  },
+  proBtn: {
+    marginTop: 12,
+    alignSelf: 'flex-start',
+    backgroundColor: palette.accent,
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  proBtnText: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 14,
+    color: palette.white,
   },
   answerBody: {
     marginTop: 10,

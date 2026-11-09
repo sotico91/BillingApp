@@ -14,4 +14,6 @@ export type AskOptions = {
   language?: 'en' | 'es';
   accounts?: Account[];
   currency?: Currency;
+  /** False on the free plan: Pro-only answers show what Pro adds instead. Missing = allowed. */
+  isPro?: boolean;
 };

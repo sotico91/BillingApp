@@ -26,6 +26,10 @@ Lo que hace que Rumi ahorre trabajo y explique mejor el dinero.
   - Ya existe la detección (`predictMonthlySpends`, `suggestReminders`); falta convertirla en registros.
   - Sin notificaciones nuevas: usar las que ya existen.
 
+- [x] **Mes desde el día de pago y chip de fecha** (1.7.0).
+- [x] **Pro: plan para salir de deudas y "¿me alcanza?" a futuro** (1.7.0).
+- [ ] **Pro, siguientes:** metas de ahorro con aporte sugerido; "Tu mes en Rumi" (resumen al cerrar el mes, compartible); resumen para la declaración de renta (patrimonio y deudas al 31 de diciembre, ingresos del año). Después, captura desde notificaciones del banco (Fase 4).
+
 ## Fase 3 — Publicar
 
 Pasos en `STORE_CHECKLIST.md`. Al empezar la fase, anotar aquí cuáles ya están hechos.

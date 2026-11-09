@@ -1,4 +1,5 @@
 import type { TranslationKey } from '@/src/i18n/translations';
+import type { ProFeature } from '@/src/utils/pro';
 import type { Transaction } from '@/src/types/finance';
 import type { SpendConcept } from '@/src/types/settings';
 import { findSpendSub } from '@/src/data/spendConcepts';
@@ -24,7 +25,7 @@ import {
 import type { ParsedQuery } from './parse';
 import { tryAnswerPercentQuery } from './percent';
 import { analogRange, dayLabel, previousLabel } from './period';
-import { answerAfford, answerCut, answerProjection } from './planning';
+import { answerAfford, answerAffordLater, answerCut, answerProjection } from './planning';
 import { isCardTopicQuery } from './signals';
 import { includesAny, normalize } from './text';
 import type { AskOptions, TFn } from './types';
@@ -48,6 +49,8 @@ export type AskAnswer = {
   txs?: Transaction[];
   /** The time the answer covers, when it is not the asked period (notes search the whole history). */
   period?: string;
+  /** The answer is a Pro feature the free plan does not have. */
+  proFeature?: ProFeature;
 };
 
 export type Handler = (ctx: AskContext) => AskAnswer | null;
@@ -80,10 +83,12 @@ const percent: Handler = (ctx) => {
   return text ? { text } : null;
 };
 
-const afford: Handler = (ctx) =>
-  ctx.parsed.wants.afford
-    ? { text: answerAfford(ctx.parsed.q, ctx.transactions, ctx.format, ctx.t, ctx.options) }
-    : null;
+const afford: Handler = (ctx) => {
+  if (!ctx.parsed.wants.afford) return null;
+  const later = answerAffordLater(ctx.parsed.q, ctx.transactions, ctx.format, ctx.t, ctx.options);
+  if (later) return { text: later.text, proFeature: later.locked ? 'afford' : undefined };
+  return { text: answerAfford(ctx.parsed.q, ctx.transactions, ctx.format, ctx.t, ctx.options) };
+};
 
 const cut: Handler = (ctx) =>
   ctx.parsed.wants.cut

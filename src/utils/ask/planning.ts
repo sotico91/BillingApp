@@ -2,8 +2,11 @@ import type { Debt, Transaction } from '@/src/types/finance';
 import type { SpendConcept } from '@/src/types/settings';
 import { buildAntSpendTips } from '@/src/utils/antSpendTips';
 import {
+  budgetMonthOf,
+  filterByCalendarMonth,
   filterByPeriod,
   isMonthOutflow,
+  shiftMonth,
   predictMonthlySpends,
   revolvingDebtIds,
   sumByType,
@@ -11,10 +14,128 @@ import {
 } from '@/src/utils/financeMath';
 import { projectMonth } from '@/src/utils/projection';
 import { currencyCopyKey } from '@/src/i18n/translations';
-import { DAY_MS, type QueryPeriod } from './period';
+import { DAY_MS, MES_AGO_WORDS, MONTH_INDEX, monthLabel, type QueryPeriod } from './period';
 import { parseQueryAmount } from './signals';
 import { includesAny } from './text';
 import type { AskOptions, TFn } from './types';
+
+/** Full months behind this one that set what usually is left over. */
+const SURPLUS_MONTHS = 3;
+
+/**
+ * A purchase planned for a later month: "en diciembre", "para marzo", "en 3
+ * meses", "in May". Null when the question is about this month.
+ */
+export function affordTarget(
+  q: string,
+  now = new Date()
+): { months: number; year: number; monthIndex: number } | null {
+  const cur = budgetMonthOf(now);
+  const inMonths = q.match(
+    /\b(?:en|dentro de|in|within)\s+(\d{1,2}|un|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez|once|doce|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\s+(?:mes|meses|month|months)\b/
+  );
+  const EN_WORDS: Record<string, number> = {
+    one: 1, two: 2, three: 3, four: 4, five: 5, six: 6,
+    seven: 7, eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12,
+  };
+  if (inMonths) {
+    const raw = inMonths[1];
+    const n = /^\d+$/.test(raw) ? Number(raw) : MES_AGO_WORDS[raw] ?? EN_WORDS[raw];
+    if (!n || n < 1 || n > 36) return null;
+    const d = new Date(cur.year, cur.monthIndex + n, 1);
+    return { months: n, year: d.getFullYear(), monthIndex: d.getMonth() };
+  }
+  const names = Object.keys(MONTH_INDEX).join('|');
+  const named = q.match(
+    new RegExp(`\\b(?:en|para|hasta|antes de|in|by|for|before)\\s+(?:el mes de\\s+)?(${names})\\b`)
+  );
+  if (!named) return null;
+  const target = MONTH_INDEX[named[1]];
+  const diff = (target - cur.monthIndex + 12) % 12;
+  if (diff === 0) return null;
+  const d = new Date(cur.year, cur.monthIndex + diff, 1);
+  return { months: diff, year: d.getFullYear(), monthIndex: d.getMonth() };
+}
+
+/** What is usually left each month (income − money out), from the last full months with income. */
+export function usualSurplus(transactions: Transaction[], debts: Debt[] = [], now = new Date()): number | null {
+  const cur = budgetMonthOf(now);
+  const revolving = revolvingDebtIds(debts);
+  const left: number[] = [];
+  for (let back = 1; back <= SURPLUS_MONTHS; back += 1) {
+    const m = shiftMonth(cur.year, cur.monthIndex, -back);
+    const txs = filterByCalendarMonth(transactions, m.year, m.monthIndex);
+    const income = sumByType(txs, 'income');
+    if (income <= 0) continue;
+    const out = txs.filter((t) => isMonthOutflow(t, revolving)).reduce((s, t) => s + t.amount, 0);
+    left.push(income - out);
+  }
+  if (left.length === 0) return null;
+  return left.reduce((s, n) => s + n, 0) / left.length;
+}
+
+/**
+ * "¿Me alcanza para un viaje de 2 millones en diciembre?": how much to put
+ * aside each month and each fortnight, against what is usually left over.
+ * Null when the question is about this month (answerAfford covers it).
+ */
+export function answerAffordLater(
+  q: string,
+  transactions: Transaction[],
+  format: (n: number) => string,
+  t: TFn,
+  options: AskOptions,
+  now = new Date()
+): { text: string; locked: boolean } | null {
+  const amount = parseQueryAmount(q);
+  const target = affordTarget(q, now);
+  if (amount == null || !target) return null;
+  const language = options.language ?? 'es';
+  const label = `${monthLabel(target.monthIndex, language)}${
+    target.year !== budgetMonthOf(now).year ? ` ${target.year}` : ''
+  }`;
+  if (options.isPro === false) {
+    return { text: t('search.answerAffordLaterPro', { amount: format(amount), label }), locked: true };
+  }
+  const perMonth = amount / target.months;
+  const base = {
+    amount: format(amount),
+    label,
+    perMonth: format(perMonth),
+    perHalf: format(perMonth / 2),
+    months: target.months,
+  };
+  const plan =
+    target.months === 1 ? t('search.answerAffordLaterPlanOne', base) : t('search.answerAffordLaterPlan', base);
+  const surplus = usualSurplus(transactions, options.debts, now);
+  if (surplus == null) return { text: `${plan} ${t('search.answerAffordLaterNoIncome')}`, locked: false };
+  if (surplus >= perMonth) {
+    return {
+      text: `${t('search.answerAffordLaterYes', { surplus: format(surplus), free: format(surplus - perMonth) })} ${plan}`,
+      locked: false,
+    };
+  }
+  if (surplus <= 0) {
+    return {
+      text: `${t('search.answerAffordLaterNone', { perMonth: format(perMonth) })} ${plan}`,
+      locked: false,
+    };
+  }
+  const needed = Math.ceil(amount / surplus);
+  const cur = budgetMonthOf(now);
+  const reach = new Date(cur.year, cur.monthIndex + needed, 1);
+  return {
+    text: `${t('search.answerAffordLaterNo', {
+      surplus: format(surplus),
+      gap: format(perMonth - surplus),
+      label,
+    })} ${t('search.answerAffordLaterReach', {
+      surplus: format(surplus),
+      date: `${monthLabel(reach.getMonth(), language)} ${reach.getFullYear()}`,
+    })}`,
+    locked: false,
+  };
+}
 
 export function answerAfford(
   q: string,
