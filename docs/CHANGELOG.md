@@ -12,6 +12,7 @@ El detalle de cada cambio está en `git log`.
 
 ## 2026-11-09
 
+- **Versión 1.6.1. "Tarjetas y créditos" en el selector de cuentas:** al elegir el origen en "Mover", el rotativo, el credicheque y el cupo estaban dentro del grupo "Tarjetas de crédito", y no se encontraban. El grupo ahora se llama "Tarjetas y créditos" ("Cards & credit").
 - **Versión 1.6.0. Actualizar sin entrar a Play Store:** en Android, al abrir Rumi (y al volver a ella, como mucho cada 30 minutos) la app le pregunta a Google Play si hay una versión nueva, también en la prueba interna. Si la hay, sale "Hay una versión nueva de Rumi" con "Actualizar" y "Ahora no". Con "Actualizar", Play la instala en pantalla completa y Rumi se vuelve a abrir, sin tocar los datos. "Ahora no" vale hasta que se vuelva a abrir la app. Lo hace un módulo nativo propio (`modules/rumi-store-update`, Play In-App Updates `app-update` 2.1.0), solo en Android. En iPhone no hace nada. Funciona desde la primera versión que lo trae: la 1.6.0 hay que instalarla una vez desde Play.
 - **Builds a la prueba interna sin subir el AAB a mano:** `eas submit` usa la llave de la cuenta de servicio `eas-submit@rumi-play.iam.gserviceaccount.com`, guardada en `credentials/` (fuera de git). La 1.5.1 (15) fue la primera que subió así.
 

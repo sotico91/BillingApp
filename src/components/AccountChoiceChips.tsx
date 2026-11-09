@@ -41,7 +41,8 @@ type Kind = Account['type'];
 /**
  * Where the money comes from (or goes), taking one line once chosen:
  * "Wallets › Nequi · $20.000 · Change". Changing goes kind first (Cash,
- * Banks, Wallets, Savings, Credit cards); a kind with several accounts then
+ * Banks, Wallets, Savings, Cards & credit: cards, credicheques, cupos and
+ * rotativo loans); a kind with several accounts then
  * shows only those, with a way back.
  */
 export function AccountChoiceChips({
