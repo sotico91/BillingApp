@@ -19,12 +19,16 @@ const REASON: Record<ProFeature, TranslationKey> = {
   ask: 'pro.reasonAsk',
   budgets: 'pro.reasonBudgets',
   reminders: 'pro.reasonReminders',
+  debtPlan: 'pro.reasonDebtPlan',
+  afford: 'pro.reasonAfford',
 };
 
 const BENEFITS: { icon: keyof typeof MaterialCommunityIcons.glyphMap; key: TranslationKey }[] = [
   { icon: 'chat-question-outline', key: 'pro.benefitAsk' },
   { icon: 'target', key: 'pro.benefitBudgets' },
   { icon: 'bell-ring-outline', key: 'pro.benefitReminders' },
+  { icon: 'flag-checkered', key: 'pro.benefitDebtPlan' },
+  { icon: 'scale-balance', key: 'pro.benefitAfford' },
   { icon: 'star-four-points-outline', key: 'pro.benefitNew' },
 ];
 

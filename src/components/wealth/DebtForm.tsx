@@ -14,10 +14,11 @@ export function DebtForm({ form }: { form: DebtFormState }) {
     kind,
     editingId,
     saving,
-    fields: { name, balance, installment, payDay, product, creditLimit, drawable },
+    fields: { name, balance, installment, rate, payDay, product, creditLimit, drawable },
     setName,
     setBalance,
     setInstallment,
+    setRate,
     setPayDay,
     setProduct,
     setCreditLimit,
@@ -109,6 +110,17 @@ export function DebtForm({ form }: { form: DebtFormState }) {
         placeholderTextColor={palette.inkSoft}
         style={styles.input}
       />
+      <Text style={styles.label}>{t('wealth.debtRate')}</Text>
+      <TextInput
+        testID="debt-rate"
+        value={rate}
+        onChangeText={setRate}
+        keyboardType="default"
+        placeholder={t('wealth.debtRatePlaceholder')}
+        placeholderTextColor={palette.inkSoft}
+        style={styles.input}
+      />
+      <Text style={styles.copyHint}>{t('wealth.debtRateHint')}</Text>
       <Text style={styles.label}>{t('wealth.debtPayDay')}</Text>
       <TextInput
         value={payDay}

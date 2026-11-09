@@ -8,6 +8,7 @@ import { useLanguage } from '@/src/i18n/LanguageContext';
 import type { TranslationKey } from '@/src/i18n/translations';
 import type { Debt, DebtKind, RevolvingProduct } from '@/src/types/finance';
 import { debtKind, parseNonNegativeAmount, revolvingProduct } from '@/src/utils/debts';
+import { parseMonthlyRate } from '@/src/utils/debtPlan';
 import { clampPayDay, nextPaymentIsoFromDay } from '@/src/utils/payDay';
 import { tapFeedback } from '@/src/utils/selectFeedback';
 
@@ -26,6 +27,8 @@ export function useDebtForm(onReveal: (kind: DebtKind) => void) {
   const [name, setName] = useState('');
   const [balance, setBalance] = useState('');
   const [installment, setInstallment] = useState('');
+  // Optional monthly rate (%), for the plan to get out of debt.
+  const [rate, setRate] = useState('');
   const [payDay, setPayDay] = useState('1');
   const [kind, setKind] = useState<DebtKind>('installment');
   const [product, setProduct] = useState<RevolvingProduct>('card');
@@ -38,6 +41,7 @@ export function useDebtForm(onReveal: (kind: DebtKind) => void) {
     setName('');
     setBalance('');
     setInstallment('');
+    setRate('');
     setPayDay('1');
     setKind('installment');
     setProduct('card');
@@ -57,6 +61,7 @@ export function useDebtForm(onReveal: (kind: DebtKind) => void) {
     setName('');
     setBalance('');
     setInstallment('');
+    setRate('');
     setPayDay('1');
     setKind(nextKind);
     setProduct('card');
@@ -77,6 +82,7 @@ export function useDebtForm(onReveal: (kind: DebtKind) => void) {
     setName(label);
     setBalance(String(debt.balance || ''));
     setInstallment(String(debt.installment || ''));
+    setRate(debt.interestRate > 0 ? String(debt.interestRate).replace('.', ',') : '');
     setPayDay(String(Number.isNaN(day) ? 1 : Math.min(28, Math.max(1, day))));
     setKind(nextKind);
     setProduct(revolvingProduct(debt));
@@ -126,6 +132,11 @@ export function useDebtForm(onReveal: (kind: DebtKind) => void) {
       appAlert(t('wealth.addLoan'), t('wealth.debtNeed'));
       return;
     }
+    const parsedRate = parseMonthlyRate(rate);
+    if (parsedRate == null) {
+      appAlert(revolving ? t('wealth.addCard') : t('wealth.addLoan'), t('wealth.debtRateNeed'));
+      return;
+    }
     const day = clampPayDay(Number(payDay.replace(',', '.')));
     if (!day) {
       appAlert(
@@ -142,7 +153,7 @@ export function useDebtForm(onReveal: (kind: DebtKind) => void) {
         name: name.trim(),
         balance: parsedBalance as number,
         installment: parsedInstallment as number,
-        interestRate: 0,
+        interestRate: parsedRate,
         nextPaymentDate,
         kind,
         revolvingProduct: revolving ? product : undefined,
@@ -184,10 +195,11 @@ export function useDebtForm(onReveal: (kind: DebtKind) => void) {
     showForm,
     editingId,
     kind,
-    fields: { name, balance, installment, payDay, product, creditLimit, drawable },
+    fields: { name, balance, installment, rate, payDay, product, creditLimit, drawable },
     setName,
     setBalance,
     setInstallment,
+    setRate,
     setPayDay,
     setProduct,
     setCreditLimit,

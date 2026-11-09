@@ -8,6 +8,7 @@ import { MoneyText } from '@/src/components/MoneyText';
 import { AppText, BrandScreen, ScreenHeader } from '@/src/components/ui';
 import { DebtCard } from '@/src/components/wealth/DebtCard';
 import { DebtForm } from '@/src/components/wealth/DebtForm';
+import { DebtPlanCard } from '@/src/components/wealth/DebtPlanCard';
 import { PocketsSection } from '@/src/components/wealth/PocketsSection';
 import { styles } from '@/src/components/wealth/styles';
 import { useDebtForm } from '@/src/components/wealth/useDebtForm';
@@ -214,6 +215,8 @@ export default function WealthScreen() {
           {installmentDebts.map(renderDebt)}
         </CollapsibleSection>
       </View>
+
+      <DebtPlanCard debts={liveDebts} />
     </BrandScreen>
   );
 }

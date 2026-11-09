@@ -17,7 +17,8 @@ export const FREE_REMINDERS = 3;
 /** RevenueCat entitlement that unlocks Pro. */
 export const PRO_ENTITLEMENT = 'pro';
 
-export type ProFeature = 'ask' | 'budgets' | 'reminders';
+/** `debtPlan` and `afford` are Pro only: the free plan has none. */
+export type ProFeature = 'ask' | 'budgets' | 'reminders' | 'debtPlan' | 'afford';
 
 /** What is saved on the phone about Pro. */
 export type ProState = {
@@ -99,6 +100,7 @@ export function userBudgetCount(
 export function freeAllows(feature: ProFeature, existing: number): boolean {
   if (feature === 'budgets') return existing < FREE_BUDGETS;
   if (feature === 'reminders') return existing < FREE_REMINDERS;
+  if (feature === 'debtPlan' || feature === 'afford') return false;
   return existing < FREE_ASKS_PER_MONTH;
 }
 
