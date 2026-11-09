@@ -107,8 +107,13 @@ export type Debt = {
   /** Omit or `installment` = fixed cuota. `revolving` = card / credicheque / cupo. */
   kind?: DebtKind;
   revolvingProduct?: RevolvingProduct;
-  /** Credit limit (cupo). Used when kind is revolving. */
+  /** Credit limit (cupo). Used when kind is revolving, or on a drawable loan. */
   creditLimit?: number;
+  /**
+   * Installment loan you can draw money from into your account (crédito
+   * rotativo with a fixed cuota). Lives under loans, not cards.
+   */
+  drawable?: boolean;
   /** Set when an installment loan is paid off; hidden from Wealth, kept for history. */
   closedAt?: string;
 };

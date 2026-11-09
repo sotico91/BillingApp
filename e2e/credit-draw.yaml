@@ -1,28 +1,31 @@
-# Cash advance / cupo drawn into savings: the move can leave from a credicheque,
-# the savings pocket gets the money and the debt goes up by the same amount.
+# Crédito rotativo kept under "Créditos y cuotas": marked as rotativo, it shows up
+# as a Move source and can only land in the main bank. The bank grows, the debt
+# grows the same, and Activity names it as an advance.
 appId: com.sotico91.rumi
 ---
 - runFlow: subflows/fresh-start.yaml
-# A credicheque with $2.000.000 of cupo, nothing used yet.
+# A rotativo loan with $3.000.000 of cupo, nothing used yet.
 - tapOn: "Patrimonio"
 - scrollUntilVisible:
-    element: "Agregar tarjeta"
-- tapOn: "Agregar tarjeta"
-- tapOn: "Credicheque"
+    element: "Agregar crédito"
+- tapOn: "Agregar crédito"
 - tapOn:
     id: "debt-name"
-- inputText: "Credicheque"
-# Close the keyboard (tap a label) so the limit field is the one tapped.
+- inputText: "Rotativo"
+# Close the keyboard (tap a label) before the next field.
 - tapOn: "Qué estás pagando"
+- scrollUntilVisible:
+    element: "Sí, es rotativo"
+- tapOn: "Sí, es rotativo"
 - tapOn:
     id: "debt-limit"
-- inputText: "2000000"
+- inputText: "3000000"
 - tapOn: "Cupo total"
 - scrollUntilVisible:
     element: "Guardar"
 - tapOn: "Guardar"
 - tapOn: "Inicio"
-# Move $500.000 from the credicheque to savings.
+# Move $500.000 from the rotativo: the only destination is the main bank.
 - tapOn:
     id: "add-fab"
 - tapOn: "Mover"
@@ -33,8 +36,10 @@ appId: com.sotico91.rumi
 - tapOn: "Continuar"
 - assertVisible: "¿Desde qué cuenta?"
 - tapOn: "Cambiar la cuenta"
-- tapOn: ".*Credicheque.*"
-- tapOn: ".*Ahorros.*"
+- tapOn: ".*Rotativo.*"
+- assertVisible: ".*Banco principal.*"
+- assertNotVisible: ".*Efectivo.*"
+- assertNotVisible: ".*Inversiones.*"
 - tapOn: "Continuar"
 - assertVisible: "Avance"
 - assertVisible: "Avance o uso del cupo hacia tu cuenta\\. No es ingreso: la deuda sube lo mismo\\."
@@ -48,13 +53,10 @@ appId: com.sotico91.rumi
     timeout: 10000
 - assertVisible: ".*1\\.500\\.000.*"
 - tapOn: "Patrimonio"
-- assertVisible: ".*Ahorros, \\$500\\.000"
-# The credicheque card: it owes $500.000 and has $1.500.000 of cupo left.
+# The rotativo: owes $500.000, $2.500.000 of cupo left.
 - scrollUntilVisible:
-    element: "Debes"
-- assertVisible: "\\$500\\.000"
-- assertVisible: "\\$1\\.500\\.000"
+    element: "Cupo disponible: \\$2\\.500\\.000"
+- assertVisible: "Rotativo"
 - takeScreenshot: credit-draw-wealth
-# Activity names it as an advance from the credicheque.
 - tapOn: "Actividad"
-- assertVisible: ".*Avance · Credicheque → Ahorros.*"
+- assertVisible: ".*Avance · Rotativo → Banco principal.*"

@@ -22,7 +22,7 @@ Built for daily use on **iPhone and Android** (same Expo codebase): guided onboa
 - **Other** reminders: custom concept names (receipts, parking, utilities, etc.)
 - **Understand**: category ranking and “Ask Rumi” (periods, comparisons, notes, month-end forecast; shows what it understood and the movements behind each answer)
 - **Wealth**: accounts, debts, and credit installments
-- **Cash advances**: move money from a credit card, credicheque or revolving line into cash or savings; the debt goes up by the same amount, and it is neither income nor a spend
+- **Cash advances**: move money from a credit card (to cash or the main bank) or from a credicheque, cupo or revolving loan (to the main bank only); the debt goes up by the same amount, and it is neither income nor a spend
 - **i18n** English / Spanish (device language)
 - **On-device** data (AsyncStorage); no remote push server required
 - **Amount privacy** (eye toggle) so balances are not visible at a glance

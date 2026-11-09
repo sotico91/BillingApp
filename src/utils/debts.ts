@@ -96,10 +96,12 @@ export function paymentSettlesInstallment(
 
 /** Any debt that reaches 0 after a payment leaves live Wealth (kept via closedAt). */
 export function closedAtAfterBalance(
-  debt: Pick<Debt, 'kind' | 'closedAt'>,
+  debt: Pick<Debt, 'kind' | 'closedAt' | 'drawable'>,
   nextBalance: number,
   closedAt: string
 ): string | undefined {
+  // A rotativo loan at zero still has its cupo: it stays open to draw from.
+  if (debt.drawable) return undefined;
   if (isSettledBalance(nextBalance)) return debt.closedAt ?? closedAt;
   return undefined;
 }
@@ -118,7 +120,7 @@ export function closePaidInstallments(
   }
   let changed = false;
   const next = debts.map((debt) => {
-    if (isRevolving(debt) || debt.closedAt || !isSettledBalance(debt.balance)) {
+    if (hasCupo(debt) || debt.closedAt || !isSettledBalance(debt.balance)) {
       return debt;
     }
     changed = true;
@@ -140,6 +142,37 @@ export function revolvingAsPayAccounts(
   }));
 }
 
+/** Every debt money can be drawn from, as picker entries (`debt:<id>`). */
+export function drawSourcesAsAccounts(
+  debts: Debt[],
+  labelFor: (debt: Debt) => string
+): Account[] {
+  return debts.filter(canDrawFrom).map((debt) => ({
+    id: payAccountIdForDebt(debt.id),
+    nameKey: 'account.creditCard',
+    name: labelFor(debt),
+    type: 'credit',
+    balance: creditAvailable(debt),
+  }));
+}
+
+/** The main bank account (where a rotativo or cupo pays out). */
+export function mainBankAccount(accounts: Account[]): Account | undefined {
+  return accounts.find((a) => a.id === 'bank-main') ?? accounts.find((a) => a.type === 'bank');
+}
+
+/**
+ * Where a draw can land. A credit card's cash advance: cash or the main bank.
+ * A rotativo, credicheque or cupo: only the main bank account.
+ */
+export function drawDestinations(accounts: Account[], debt: Debt | undefined): Account[] {
+  if (!debt) return [];
+  const main = mainBankAccount(accounts);
+  const card = isRevolving(debt) && revolvingProduct(debt) === 'card';
+  const cash = card ? accounts.filter((a) => a.type === 'cash') : [];
+  return main ? [...cash, main] : cash;
+}
+
 export function debtKind(debt: Pick<Debt, 'kind'>): DebtKind {
   return debt.kind === 'revolving' ? 'revolving' : 'installment';
 }
@@ -155,11 +188,21 @@ export function revolvingProduct(
   return debt.revolvingProduct ?? 'card';
 }
 
+/** Card, cupo or rotativo loan that money can be drawn from (it has a cupo). */
+export function hasCupo(debt: Pick<Debt, 'kind' | 'drawable'>): boolean {
+  return isRevolving(debt) || !!debt.drawable;
+}
+
+/** Open card, credicheque, cupo or rotativo loan: a cash advance can leave from it. */
+export function canDrawFrom(debt: Pick<Debt, 'kind' | 'drawable' | 'closedAt'>): boolean {
+  return hasCupo(debt) && isOpenDebt(debt);
+}
+
 /** Cupo still available to charge. Over-limit reads as 0. */
 export function creditAvailable(
-  debt: Pick<Debt, 'kind' | 'creditLimit' | 'balance'>
+  debt: Pick<Debt, 'kind' | 'creditLimit' | 'balance' | 'drawable'>
 ): number {
-  if (!isRevolving(debt)) return 0;
+  if (!hasCupo(debt)) return 0;
   return Math.max(0, (debt.creditLimit ?? 0) - (debt.balance || 0));
 }
 
@@ -168,10 +211,10 @@ export function creditAvailable(
  * limit on file are never blocked (Rumi doesn't know the cupo).
  */
 export function creditShortfall(
-  debt: Pick<Debt, 'kind' | 'creditLimit' | 'balance'> | undefined,
+  debt: Pick<Debt, 'kind' | 'creditLimit' | 'balance' | 'drawable'> | undefined,
   amount: number
 ): number {
-  if (!debt || !isRevolving(debt) || !debt.creditLimit) return 0;
+  if (!debt || !hasCupo(debt) || !debt.creditLimit) return 0;
   const missing = roundMoney(amount - creditAvailable(debt));
   return missing > SETTLED_EPS ? missing : 0;
 }

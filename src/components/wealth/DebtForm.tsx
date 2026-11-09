@@ -14,13 +14,14 @@ export function DebtForm({ form }: { form: DebtFormState }) {
     kind,
     editingId,
     saving,
-    fields: { name, balance, installment, payDay, product, creditLimit },
+    fields: { name, balance, installment, payDay, product, creditLimit, drawable },
     setName,
     setBalance,
     setInstallment,
     setPayDay,
     setProduct,
     setCreditLimit,
+    setDrawable,
     resetForm,
     handleSaveDebt,
   } = form;
@@ -57,7 +58,21 @@ export function DebtForm({ form }: { form: DebtFormState }) {
         placeholderTextColor={palette.inkSoft}
         style={styles.input}
       />
-      {revolving ? (
+      {!revolving ? (
+        <>
+          <Text style={styles.label}>{t('wealth.drawableLabel')}</Text>
+          <OptionChips
+            value={drawable ? 'yes' : 'no'}
+            onChange={(id) => setDrawable(id === 'yes')}
+            options={[
+              { id: 'no', label: t('wealth.drawableNo') },
+              { id: 'yes', label: t('wealth.drawableYes') },
+            ]}
+          />
+          {drawable ? <Text style={styles.copyHint}>{t('wealth.drawableHint')}</Text> : null}
+        </>
+      ) : null}
+      {revolving || drawable ? (
         <>
           <Text style={styles.label}>{t('wealth.debtLimit')}</Text>
           <TextInput

@@ -48,7 +48,9 @@ export function DebtCard({ debt, paid, editing, onEdit, onRemove }: Props) {
   const tag =
     revolving && revolvingProduct(debt) !== 'card'
       ? t(productLabelKey(revolvingProduct(debt)))
-      : null;
+      : debt.drawable
+        ? t('wealth.drawableTag')
+        : null;
   const showConcept =
     Boolean(hit) &&
     conceptLabel.trim().toLocaleLowerCase() !== label.trim().toLocaleLowerCase();
@@ -119,6 +121,11 @@ export function DebtCard({ debt, paid, editing, onEdit, onRemove }: Props) {
           {due > 0 ? (
             <Text style={styles.meta}>
               {t('wealth.installment', { amount: format(due) })}
+            </Text>
+          ) : null}
+          {debt.drawable && debt.creditLimit ? (
+            <Text style={styles.meta}>
+              {t('wealth.drawableAvailable', { amount: format(available) })}
             </Text>
           ) : null}
         </>

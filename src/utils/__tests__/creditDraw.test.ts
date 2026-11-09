@@ -1,8 +1,14 @@
 import type { Account, Debt, Transaction } from '@/src/types/finance';
 import { moveDestinations, moveSourcesWithCredit } from '@/src/utils/accounts';
-import { creditShortfall, payAccountIdForDebt } from '@/src/utils/debts';
+import {
+  closePaidInstallments,
+  creditAvailable,
+  creditShortfall,
+  payAccountIdForDebt,
+} from '@/src/utils/debts';
 import {
   applyAccountDelta,
+  applyDebtPayment,
   applyTxDebts,
   isCreditDraw,
   normalizePocketMove,
@@ -34,7 +40,18 @@ const base: Debt = {
 };
 const visa: Debt = { ...base, id: 'visa', name: 'Visa', balance: 0, revolvingProduct: 'card' };
 const loan: Debt = { ...base, id: 'loan', name: 'Libre inversión', kind: 'installment' };
-const debts = [base, visa, loan];
+// A crédito rotativo kept under loans (fixed cuota) and marked as drawable.
+const rotLoan: Debt = {
+  ...base,
+  id: 'rotloan',
+  name: 'Rotativo banco',
+  kind: 'installment',
+  revolvingProduct: undefined,
+  drawable: true,
+  balance: 0,
+  creditLimit: 3000000,
+};
+const debts = [base, visa, loan, rotLoan];
 
 const balance = (list: Account[], id: string) => list.find((a) => a.id === id)?.balance;
 const debtBalance = (list: Debt[], id: string) => list.find((d) => d.id === id)?.balance;
@@ -73,10 +90,10 @@ describe('credit draws (cash advance / cupo into a pocket)', () => {
   });
 
   it('fills the destination and raises the debt by the same amount', () => {
-    const tx = draw('rot', 'savings', 300000);
+    const tx = draw('rot', 'bank', 300000);
     const nextAccounts = applyAccountDelta(accounts, tx, 1);
-    expect(balance(nextAccounts, 'savings')).toBe(300000);
-    expect(balance(nextAccounts, 'bank')).toBe(100000);
+    expect(balance(nextAccounts, 'bank')).toBe(400000);
+    expect(balance(nextAccounts, 'savings')).toBe(0);
     expect(balance(nextAccounts, 'credit-card')).toBe(0);
     expect(debtBalance(applyTxDebts(debts, tx, 1), 'rot')).toBe(500000);
   });
@@ -95,13 +112,37 @@ describe('credit draws (cash advance / cupo into a pocket)', () => {
     expect(debtBalance(ds, 'rot')).toBe(200000);
   });
 
-  it('needs an open revolving debt and a money pocket to land in', () => {
-    expect(pocketMoveAccountsReady(accounts, draw('rot', 'savings', 1), debts)).toBe(true);
-    expect(pocketMoveAccountsReady(accounts, draw('loan', 'savings', 1), debts)).toBe(false);
-    expect(pocketMoveAccountsReady(accounts, draw('nope', 'savings', 1), debts)).toBe(false);
-    expect(pocketMoveAccountsReady(accounts, draw('rot', 'credit-card', 1), debts)).toBe(false);
+  it('a card goes to cash or the main bank; a rotativo or cupo only to the main bank', () => {
+    const ready = (from: string, to: string) =>
+      pocketMoveAccountsReady(accounts, draw(from, to, 1), debts);
+    expect(ready('visa', 'cash')).toBe(true);
+    expect(ready('visa', 'bank')).toBe(true);
+    expect(ready('visa', 'savings')).toBe(false);
+    expect(ready('rot', 'bank')).toBe(true);
+    expect(ready('rot', 'cash')).toBe(false);
+    expect(ready('rot', 'savings')).toBe(false);
+    expect(ready('rotloan', 'bank')).toBe(true);
+    expect(ready('rotloan', 'cash')).toBe(false);
+    expect(ready('loan', 'bank')).toBe(false);
+    expect(ready('nope', 'bank')).toBe(false);
     const closed = [{ ...base, closedAt: '2026-10-01' }];
-    expect(pocketMoveAccountsReady(accounts, draw('rot', 'savings', 1), closed)).toBe(false);
+    expect(pocketMoveAccountsReady(accounts, draw('rot', 'bank', 1), closed)).toBe(false);
+  });
+
+  it('a rotativo kept under loans: the debt grows, its cupo shrinks, it never closes at zero', () => {
+    const tx = draw('rotloan', 'bank', 500000);
+    const [next] = applyTxDebts([rotLoan], tx, 1);
+    expect(next.balance).toBe(500000);
+    expect(creditAvailable(next)).toBe(2500000);
+    expect(creditShortfall(next, 2600000)).toBe(100000);
+    const [paid] = applyDebtPayment(
+      [next],
+      { ...tx, type: 'debt_payment', debtId: 'rotloan', creditDebtId: undefined },
+      1
+    );
+    expect(paid.balance).toBe(0);
+    expect(paid.closedAt).toBeUndefined();
+    expect(closePaidInstallments([rotLoan], []).changed).toBe(false);
   });
 
   it('only blocks past the free cupo when the limit is known', () => {
@@ -116,12 +157,22 @@ describe('move pickers', () => {
 
   it('offers pockets with money plus open cards and cupos, not installment loans', () => {
     const ids = moveSourcesWithCredit(accounts, debts, label).map((a) => a.id);
-    expect(ids).toEqual(['bank', 'debt:rot', 'debt:visa']);
+    expect(ids).toEqual(['bank', 'debt:rot', 'debt:visa', 'debt:rotloan']);
   });
 
-  it('credit lands in cash, banks, wallets or savings — not investments', () => {
-    const fromCredit = moveDestinations(accounts, 'debt:rot').map((a) => a.id);
-    expect(fromCredit).toEqual(['cash', 'bank', 'savings']);
-    expect(moveDestinations(accounts, 'bank').map((a) => a.id)).toContain('investments');
+  it('offers only the allowed landing pockets', () => {
+    const to = (from: string) => moveDestinations(accounts, from, debts).map((a) => a.id);
+    expect(to('debt:visa')).toEqual(['cash', 'bank']);
+    expect(to('debt:rot')).toEqual(['bank']);
+    expect(to('debt:rotloan')).toEqual(['bank']);
+    expect(to('bank')).toContain('investments');
+  });
+
+  it('prefers the onboarding main bank over other banks', () => {
+    const withMain: Account[] = [
+      ...accounts,
+      { id: 'bank-main', nameKey: 'account.bankMain', type: 'bank', balance: 0 },
+    ];
+    expect(moveDestinations(withMain, 'debt:rot', debts).map((a) => a.id)).toEqual(['bank-main']);
   });
 });

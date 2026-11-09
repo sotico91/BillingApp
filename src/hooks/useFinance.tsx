@@ -121,6 +121,7 @@ type FinanceContextValue = {
     kind?: Debt['kind'];
     revolvingProduct?: Debt['revolvingProduct'];
     creditLimit?: number;
+    drawable?: boolean;
   }) => Promise<Debt>;
   updateDebt: (
     id: string,
@@ -136,6 +137,7 @@ type FinanceContextValue = {
         | 'kind'
         | 'revolvingProduct'
         | 'creditLimit'
+        | 'drawable'
       >
     >
   ) => Promise<Debt | null>;
@@ -450,6 +452,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       kind?: Debt['kind'];
       revolvingProduct?: Debt['revolvingProduct'];
       creditLimit?: number;
+      drawable?: boolean;
     }) => {
       const nextDate =
         input.nextPaymentDate ??
@@ -474,7 +477,11 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
         isPermanent: true,
         kind,
         revolvingProduct: kind === 'revolving' ? (input.revolvingProduct ?? 'card') : undefined,
-        creditLimit: kind === 'revolving' ? input.creditLimit : undefined,
+        drawable: kind === 'installment' && input.drawable ? true : undefined,
+        creditLimit:
+          kind === 'revolving' || (kind === 'installment' && input.drawable)
+            ? input.creditLimit
+            : undefined,
       };
       const next = [debt, ...debts];
       setDebts(next);
@@ -499,6 +506,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
           | 'kind'
           | 'revolvingProduct'
           | 'creditLimit'
+          | 'drawable'
         >
       >
     ) => {
@@ -519,9 +527,18 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
           kind === 'revolving'
             ? (patch.revolvingProduct ?? existing.revolvingProduct ?? 'card')
             : undefined,
-        creditLimit: kind === 'revolving' ? (patch.creditLimit ?? existing.creditLimit) : undefined,
+        drawable:
+          kind === 'installment' && (patch.drawable ?? existing.drawable) ? true : undefined,
+        creditLimit:
+          kind === 'revolving' || (kind === 'installment' && (patch.drawable ?? existing.drawable))
+            ? (patch.creditLimit ?? existing.creditLimit)
+            : undefined,
         closedAt: closedAtAfterBalance(
-          { kind, closedAt: existing.closedAt },
+          {
+            kind,
+            closedAt: existing.closedAt,
+            drawable: kind === 'installment' && (patch.drawable ?? existing.drawable),
+          },
           patch.balance !== undefined ? patch.balance : existing.balance,
           existing.closedAt ?? new Date().toISOString()
         ),

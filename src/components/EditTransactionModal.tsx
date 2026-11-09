@@ -122,7 +122,7 @@ export function EditTransactionModal({ transaction, visible, onClose, onDelete }
     return accountsForExpenseSource(accounts, method, { keepId, debts, debtLabel });
   }, [type, accounts, method, debts, t]);
 
-  const destinations = useMemo(() => moveDestinations(accounts, accountId), [accounts, accountId]);
+  const destinations = useMemo(() => moveDestinations(accounts, accountId, debts), [accounts, accountId, debts]);
   const creditDraw = type === 'transfer' && isDebtPayAccountId(accountId);
   useEffect(() => {
     if (!isPocketMove(type)) return;
@@ -421,7 +421,7 @@ export function EditTransactionModal({ transaction, visible, onClose, onDelete }
                   accounts={destinations}
                   selectedId={toAccountId}
                   onSelect={setToAccountId}
-                  allowAddWallet
+                  allowAddWallet={!creditDraw}
                   quiet
                 />
                 {creditDraw ? <Text style={styles.copy}>{t('move.fromCreditHint')}</Text> : null}

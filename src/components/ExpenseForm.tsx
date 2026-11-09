@@ -183,7 +183,7 @@ export function ExpenseForm({
     return accountsForExpenseSource(accounts, method, { debts, debtLabel });
   }, [type, accounts, method, debts, t]);
 
-  const destinations = useMemo(() => moveDestinations(accounts, accountId), [accounts, accountId]);
+  const destinations = useMemo(() => moveDestinations(accounts, accountId, debts), [accounts, accountId, debts]);
   const creditDraw = type === 'transfer' && isDebtPayAccountId(accountId);
   useEffect(() => {
     if (!isPocketMove(type)) return;

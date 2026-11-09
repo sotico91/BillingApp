@@ -30,6 +30,8 @@ export function useDebtForm(onReveal: (kind: DebtKind) => void) {
   const [kind, setKind] = useState<DebtKind>('installment');
   const [product, setProduct] = useState<RevolvingProduct>('card');
   const [creditLimit, setCreditLimit] = useState('');
+  // Loan you can draw from into your account (crédito rotativo).
+  const [drawable, setDrawable] = useState(false);
   const [saving, setSaving] = useState(false);
 
   function resetForm() {
@@ -40,6 +42,7 @@ export function useDebtForm(onReveal: (kind: DebtKind) => void) {
     setKind('installment');
     setProduct('card');
     setCreditLimit('');
+    setDrawable(false);
     setEditingId(null);
     setShowForm(false);
   }
@@ -58,6 +61,7 @@ export function useDebtForm(onReveal: (kind: DebtKind) => void) {
     setKind(nextKind);
     setProduct('card');
     setCreditLimit('');
+    setDrawable(false);
     setShowForm(true);
     onReveal(nextKind);
   }
@@ -77,17 +81,20 @@ export function useDebtForm(onReveal: (kind: DebtKind) => void) {
     setKind(nextKind);
     setProduct(revolvingProduct(debt));
     setCreditLimit(debt.creditLimit ? String(debt.creditLimit) : '');
+    setDrawable(!!debt.drawable);
     setShowForm(true);
     onReveal(nextKind);
   }
 
   async function handleSaveDebt() {
     const revolving = kind === 'revolving';
-    const parsedLimit = revolving ? parse(creditLimit) : null;
-    const parsedBalance = revolving
+    // A rotativo loan has a cupo and may be at zero, like a card.
+    const withCupo = revolving || drawable;
+    const parsedLimit = withCupo ? parse(creditLimit) : null;
+    const parsedBalance = withCupo
       ? parseNonNegativeAmount(balance, parse)
       : parse(balance);
-    const parsedInstallment = revolving
+    const parsedInstallment = withCupo
       ? parseNonNegativeAmount(installment, parse)
       : parse(installment);
     if (!name.trim()) {
@@ -104,6 +111,15 @@ export function useDebtForm(onReveal: (kind: DebtKind) => void) {
       }
       if (parsedBalance == null || parsedInstallment == null) {
         appAlert(t('wealth.addCard'), t('wealth.debtNeedRevolving'));
+        return;
+      }
+    } else if (drawable) {
+      if (!parsedLimit) {
+        appAlert(t('wealth.addLoan'), t('wealth.debtNeedLimit'));
+        return;
+      }
+      if (parsedBalance == null || parsedInstallment == null) {
+        appAlert(t('wealth.addLoan'), t('wealth.debtNeed'));
         return;
       }
     } else if (!parsedBalance || !parsedInstallment) {
@@ -130,7 +146,8 @@ export function useDebtForm(onReveal: (kind: DebtKind) => void) {
         nextPaymentDate,
         kind,
         revolvingProduct: revolving ? product : undefined,
-        creditLimit: revolving ? parsedLimit ?? undefined : undefined,
+        creditLimit: withCupo ? parsedLimit ?? undefined : undefined,
+        drawable: !revolving && drawable,
       };
       if (editingId) {
         const existing = debts.find((d) => d.id === editingId);
@@ -167,13 +184,14 @@ export function useDebtForm(onReveal: (kind: DebtKind) => void) {
     showForm,
     editingId,
     kind,
-    fields: { name, balance, installment, payDay, product, creditLimit },
+    fields: { name, balance, installment, payDay, product, creditLimit, drawable },
     setName,
     setBalance,
     setInstallment,
     setPayDay,
     setProduct,
     setCreditLimit,
+    setDrawable,
     saving,
     resetForm,
     startCreate,

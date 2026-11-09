@@ -189,7 +189,7 @@ export function FriendlyAddFlow({
       ),
     [accounts, debts, t]
   );
-  const moveAccounts = useMemo(() => moveDestinations(accounts, accountId), [accounts, accountId]);
+  const moveAccounts = useMemo(() => moveDestinations(accounts, accountId, debts), [accounts, accountId, debts]);
   const creditDraw = intent === 'move' && isDebtPayAccountId(accountId);
   // Switching to "Move" after a card spend: start from a pocket, never a card by surprise.
   const lastIntent = useRef(intent);
@@ -220,7 +220,7 @@ export function FriendlyAddFlow({
       const next = firstAccountId(moveSources, accountId);
       if (next && next !== accountId) setAccountId(next);
       const fromId = next && next !== accountId ? next : accountId;
-      const destinations = moveDestinations(accounts, fromId);
+      const destinations = moveDestinations(accounts, fromId, debts);
       if (!toAccountId || toAccountId === fromId || !destinations.some((a) => a.id === toAccountId)) {
         const dest =
           destinations[0]?.id ??
@@ -237,7 +237,7 @@ export function FriendlyAddFlow({
     }
     const next = firstAccountId(methodAccounts, accountId);
     if (next && next !== accountId) setAccountId(next);
-  }, [intent, methodAccounts, incomeAccounts, moveAccounts, moveSources, accountId, toAccountId, accounts]);
+  }, [intent, methodAccounts, incomeAccounts, moveAccounts, moveSources, accountId, toAccountId, accounts, debts]);
 
   const incomeChoices = useMemo(
     () => categoriesForKind('income', settings.enabledCategoryIds),
@@ -1019,7 +1019,7 @@ export function FriendlyAddFlow({
                   accounts={moveAccounts}
                   selectedId={toAccountId}
                   onSelect={setToAccountId}
-                  allowAddWallet
+                  allowAddWallet={!creditDraw}
                 />
               </>
             ) : null}

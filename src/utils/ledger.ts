@@ -3,9 +3,10 @@ import { roundMoney } from '@/src/utils/money';
 import {
   applyRevolvingCharge,
   closedAtAfterBalance,
+  canDrawFrom,
   debtIdFromPayAccountId,
+  drawDestinations,
   isOpenDebt,
-  isRevolving,
 } from '@/src/utils/debts';
 import { dueBeforePayment, nextDueAfterPayment } from '@/src/utils/payDay';
 
@@ -98,10 +99,13 @@ export function pocketMoveAccountsReady(
   }
   const drawn = tx.type === 'transfer' ? debtIdFromPayAccountId(tx.accountId) : undefined;
   if (drawn) {
-    const debt = debts?.find((d) => d.id === drawn);
-    if (debts && (!debt || !isRevolving(debt) || !isOpenDebt(debt))) return false;
-    const to = accounts.find((a) => a.id === tx.toAccountId);
-    return !!to && to.type !== 'credit';
+    if (!debts) {
+      const to = accounts.find((a) => a.id === tx.toAccountId);
+      return !!to && to.type !== 'credit';
+    }
+    const debt = debts.find((d) => d.id === drawn);
+    if (!debt || !canDrawFrom(debt)) return false;
+    return drawDestinations(accounts, debt).some((a) => a.id === tx.toAccountId);
   }
   const from = accounts.some((a) => a.id === tx.accountId);
   const to =
