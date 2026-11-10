@@ -20,5 +20,5 @@ Personal finance app (Expo ~57, React Native, TypeScript, Expo Router). On-devic
 - Nothing may be named "billing".
 - Commit on `main`, no co-author trailers.
 - Every release to Play (or the App Store) bumps `version` in `app.json` and `package.json` first: patch for fixes, minor for features. Never ship two builds with the same version name. See docs/ANDROID.md.
-- Keep: floating totals panel, the "Plan" tab name, intent cards before quick add, the + floating on Home (not in the tab bar).
+- Keep: floating totals panel, the "Plan" tab name, the + floating on Home (not in the tab bar). Add opens the one-screen spend form; Ingreso / Mover / Deuda tabs open the guided steps. The "¿Qué pasó?" cards, templates and the guided/advanced switch were removed on purpose (1.8.1).
 - Copy goes through `translations.ts` in both languages; min text 12px, AA contrast.

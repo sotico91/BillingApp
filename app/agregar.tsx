@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { AppAlertHost } from '@/src/components/AppAlert';
 import { DictationBar } from '@/src/components/DictationPanel';
@@ -16,7 +16,7 @@ import { useFinance } from '@/src/hooks/useFinance';
 import { useMoney } from '@/src/hooks/useMoney';
 import { useSettings } from '@/src/hooks/useSettings';
 import { useLanguage } from '@/src/i18n/LanguageContext';
-import { colors, radius, shadow, space, type } from '@/src/theme';
+import { colors, space } from '@/src/theme';
 import { categoryLabel } from '@/src/utils/categoryLabel';
 import { openDebts } from '@/src/utils/debts';
 import { dictationVocabulary, type DictatedMovement } from '@/src/utils/dictation';
@@ -60,12 +60,10 @@ export default function AgregarScreen() {
 
   // Spending is the most common entry, so "Add" opens the one-screen expense
   // form. Links that already know what they want (pay a debt, a reminder) skip it.
+  // The guided steps only open with something to do (income, move, debt, a card spend);
+  // the advanced form only for links that bring a category (reminders, one-tap habits).
   const [mode, setMode] = useState<'quick' | 'friendly' | 'advanced'>(() =>
-    params.mode === 'advanced' || prefilledCategoryId
-      ? 'advanced'
-      : payIntent || params.mode === 'friendly'
-        ? 'friendly'
-        : 'quick'
+    params.mode === 'advanced' || prefilledCategoryId ? 'advanced' : payIntent ? 'friendly' : 'quick'
   );
   const [guidedIntent, setGuidedIntent] = useState<FriendlyIntent | undefined>(undefined);
   // Amount typed in the quick form travels to the guided flow.
@@ -183,11 +181,6 @@ export default function AgregarScreen() {
             header={dictationBar}
             dictated={dictatedSpend}
             onSaved={handleSaved}
-            onBack={() => {
-              setGuidedIntent(undefined);
-              setGuidedDictation(undefined);
-              setMode('friendly');
-            }}
             onOpenGuided={(intent, amount) => {
               // Picked by hand: start that flow clean.
               setGuidedDictation(undefined);
@@ -198,27 +191,6 @@ export default function AgregarScreen() {
           />
         ) : (
           <>
-          <View style={styles.modeSwitch} accessibilityRole="tablist">
-            <Pressable
-              onPress={() => setMode('friendly')}
-              accessibilityRole="tab"
-              accessibilityState={{ selected: mode === 'friendly' }}
-              style={[styles.modeBtn, mode === 'friendly' && styles.modeOn]}>
-              <Text style={[styles.modeText, mode === 'friendly' && styles.modeTextOn]}>
-                {t('flow.friendly')}
-              </Text>
-            </Pressable>
-            <Pressable
-              onPress={() => setMode('advanced')}
-              accessibilityRole="tab"
-              accessibilityState={{ selected: mode === 'advanced' }}
-              style={[styles.modeBtn, mode === 'advanced' && styles.modeOn]}>
-              <Text style={[styles.modeText, mode === 'advanced' && styles.modeTextOn]}>
-                {t('flow.advanced')}
-              </Text>
-            </Pressable>
-          </View>
-
           {mode === 'friendly' ? (
             <FriendlyAddFlow
               key={`${guidedIntent ?? 'pick'}-${guidedAmount ?? ''}-${guidedDictation?.id ?? ''}`}
@@ -228,24 +200,11 @@ export default function AgregarScreen() {
               onSaved={handleSaved}
               initialIntent={guidedIntent ?? payIntent}
               initialDebtId={payDebtId}
-              onBackFromStart={
-                guidedIntent
-                  ? () => {
-                      setGuidedIntent(undefined);
-                      setGuidedDictation(undefined);
-                      setMode('quick');
-                    }
-                  : undefined
-              }
-              onPickSpend={
-                payIntent
-                  ? undefined
-                  : () => {
-                      setGuidedIntent(undefined);
-                      setGuidedDictation(undefined);
-                      setMode('quick');
-                    }
-              }
+              onBackFromStart={() => {
+                setGuidedIntent(undefined);
+                setGuidedDictation(undefined);
+                setMode('quick');
+              }}
             />
           ) : (
             <KeyboardSafeScroll
@@ -279,32 +238,6 @@ const styles = StyleSheet.create({
     padding: space.gutter,
     paddingBottom: space.xxl,
     gap: space.sm,
-  },
-  modeSwitch: {
-    flexDirection: 'row',
-    backgroundColor: 'rgba(15,28,36,0.06)',
-    borderRadius: radius.md,
-    padding: space.xxs,
-    gap: space.xxs,
-  },
-  modeBtn: {
-    flex: 1,
-    paddingVertical: 10,
-    borderRadius: radius.sm,
-    alignItems: 'center',
-  },
-  modeOn: {
-    backgroundColor: colors.bg.surface,
-    ...shadow.e1,
-  },
-  modeText: {
-    ...type.caption,
-    fontFamily: type.bodyStrong.fontFamily,
-    color: colors.text.secondary,
-  },
-  modeTextOn: {
-    color: colors.text.primary,
-    fontFamily: type.label.fontFamily,
   },
   advancedPad: {
     paddingBottom: 120,

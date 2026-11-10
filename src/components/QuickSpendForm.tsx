@@ -46,9 +46,6 @@ const KINDS: { id: FriendlyIntent; labelKey: TranslationKey }[] = [
 
 type Props = {
   onSaved?: (result: SavedMovement) => void;
-  /** Templates and the full guided flow ("What happened?" cards). */
-  onBack: () => void;
-  /** Open the guided flow for anything the quick form does not cover. */
   /** Opens the guided flow for this intent, carrying the amount already typed. */
   onOpenGuided: (intent: FriendlyIntent, amount?: string) => void;
   /** Shown first, scrolling with the form (the dictation bar). */
@@ -62,7 +59,7 @@ type Props = {
  * from, save. Everything else (income, moves, debt payments, new
  * subcategories) opens the guided flow.
  */
-export function QuickSpendForm({ onSaved, onBack, onOpenGuided, dictated, header }: Props) {
+export function QuickSpendForm({ onSaved, onOpenGuided, dictated, header }: Props) {
   const { t } = useLanguage();
   const { formatPlain, parse, currency } = useMoney();
   const { settings, updateQuickTemplate, teachCategory } = useSettings();
@@ -410,16 +407,6 @@ export function QuickSpendForm({ onSaved, onBack, onOpenGuided, dictated, header
         </Pressable>
       </View>
 
-      <Pressable
-        onPress={() => {
-          tapFeedback();
-          onBack();
-        }}
-        hitSlop={8}
-        accessibilityRole="button"
-        style={styles.more}>
-        <Text style={styles.moreText}>{t('quick.moreOptions')}</Text>
-      </Pressable>
     </KeyboardSafeScroll>
   );
 }
@@ -456,12 +443,6 @@ const styles = StyleSheet.create({
   kindTextOn: {
     fontFamily: 'DMSans_700Bold',
     color: palette.ink,
-  },
-  more: { alignSelf: 'center', paddingVertical: 8 },
-  moreText: {
-    fontFamily: 'DMSans_600SemiBold',
-    fontSize: 14,
-    color: palette.bg,
   },
   body: {
     paddingTop: 4,

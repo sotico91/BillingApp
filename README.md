@@ -14,7 +14,7 @@ Built for daily use on **iPhone and Android** (same Expo codebase): guided onboa
 ## Features
 
 - **Quick add** that files a spend from its description (lunch, uber, football…) in your category for it, creating it when missing; works the same in English and Spanish
-- **Guided and advanced logging** for expenses, income, transfers, and debt payments, plus quick templates (coffee, delivery, transport, salary, savings)
+- **One-screen logging** for expenses, with step-by-step forms for income, transfers and debt payments (tabs on the same screen)
 - **Spends need money**: only accounts with a balance are offered; with every pocket at zero Rumi asks to log the income first (credit cards are not blocked)
 - **Home** month summary: income, expenses, savings signal, debts, and net worth
 - **Activity** by today / week / month, with edit and delete, and what each category cost month by month

@@ -23,38 +23,6 @@ export type FriendlyTemplate = {
   };
 };
 
-export const FRIENDLY_INTENTS: {
-  id: FriendlyIntent;
-  emoji: string;
-  titleKey: string;
-  subtitleKey: string;
-}[] = [
-  {
-    id: 'spend',
-    emoji: '🧾',
-    titleKey: 'flow.intent.spend',
-    subtitleKey: 'flow.intent.spendSub',
-  },
-  {
-    id: 'move',
-    emoji: '🔁',
-    titleKey: 'flow.intent.move',
-    subtitleKey: 'flow.intent.moveSub',
-  },
-  {
-    id: 'earn',
-    emoji: '💰',
-    titleKey: 'flow.intent.earn',
-    subtitleKey: 'flow.intent.earnSub',
-  },
-  {
-    id: 'debt',
-    emoji: '💳',
-    titleKey: 'flow.intent.debt',
-    subtitleKey: 'flow.intent.debtSub',
-  },
-];
-
 export const FRIENDLY_TEMPLATES: FriendlyTemplate[] = [
   {
     id: 'tpl-coffee',

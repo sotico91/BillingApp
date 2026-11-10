@@ -11,12 +11,10 @@ import {
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import {
-  FRIENDLY_INTENTS,
-  FRIENDLY_TEMPLATES,
   intentToType,
   type FriendlyIntent,
 } from '@/src/data/friendlyTemplates';
-import { categoriesForKind, defaultCategoryIdForKind } from '@/src/data/categories';
+import { categoriesForKind } from '@/src/data/categories';
 import { findConceptById, flattenSpendSubs } from '@/src/data/spendConcepts';
 import { useFundsCheck } from '@/src/hooks/useFundsCheck';
 import { useFinance } from '@/src/hooks/useFinance';
@@ -48,7 +46,6 @@ import type { SavedMovement } from '@/src/components/ExpenseForm';
 import {
   accountDisplayName,
   accountsForExpenseSource,
-  defaultIncomeAccountId,
   defaultSpendAccountId,
   defaultTransferDestinationId,
   firstAccountId,
@@ -78,10 +75,8 @@ type Props = {
   initialDebtId?: string;
   /** Amount already typed in the quick form: kept, and the "How much?" step is skipped. */
   initialAmount?: string;
-  /** When set, tapping "I spent" opens the one-screen quick form instead. */
-  onPickSpend?: () => void;
-  /** Back from the first step returns here (the quick form) instead of "What happened?". */
-  onBackFromStart?: () => void;
+  /** Back from the first step returns to the quick form. */
+  onBackFromStart: () => void;
   /** Income, move or debt dictated at the top of Add: fills what was said. */
   dictated?: DictatedMovement;
   /** Shown first, scrolling with the steps (the dictation bar). */
@@ -93,14 +88,13 @@ export function FriendlyAddFlow({
   initialIntent,
   initialDebtId,
   initialAmount,
-  onPickSpend,
   onBackFromStart,
   dictated,
   header,
 }: Props) {
   const { t } = useLanguage();
   const { format, formatPlain, parse, currency } = useMoney();
-  const { settings, updateQuickTemplate, ensureSpendConceptSub, teachCategory } = useSettings();
+  const { settings, updateQuickTemplate, teachCategory } = useSettings();
   const { addTransaction, totalForPeriod, accounts, debts, transactions } = useFinance();
   const keyboardVisible = useKeyboardVisible();
 
@@ -108,10 +102,9 @@ export function FriendlyAddFlow({
   const liveDebts = useMemo(() => openDebts(debts), [debts]);
   const incomeAccounts = useMemo(() => incomeDestinationAccounts(accounts), [accounts]);
 
-  // Arriving with an intent (from the quick form or a debt) skips "What happened?",
-  // and with the amount already typed, "How much?" too.
+  // Steps start at 1 ("How much?"); with the amount already typed it is skipped.
   const [step, setStep] = useState(() => {
-    if (!initialIntent) return 0;
+    if (!initialIntent) return 1;
     const hasAmount = !!(initialAmount && parse(initialAmount));
     if (!hasAmount) return 1;
     // Dictated with everything a step asks for: straight to the summary.
@@ -149,25 +142,10 @@ export function FriendlyAddFlow({
   const [note, setNote] = useState(dictated?.note ?? '');
   const hint = useCategorySuggestion(note, spendConcepts);
   const [saving, setSaving] = useState(false);
-  const [fromTemplate, setFromTemplate] = useState(false);
-  const [applyingTemplate, setApplyingTemplate] = useState(false);
   const savingLock = useRef(false);
   const checkFunds = useFundsCheck();
   const scrollRef = useRef<ScrollView>(null);
 
-  const lastSpendAccountId = useMemo(() => {
-    const match = categoryId
-      ? transactions.find(
-          (tx) =>
-            tx.type === 'expense' && tx.categoryId === categoryId && (tx.accountId || tx.creditDebtId)
-        )
-      : undefined;
-    const tx =
-      match ??
-      transactions.find((row) => row.type === 'expense' && (row.accountId || row.creditDebtId));
-    if (tx?.creditDebtId) return payAccountIdForDebt(tx.creditDebtId);
-    return tx?.accountId;
-  }, [transactions, categoryId]);
 
   const methodAccounts = useMemo(
     () =>
@@ -249,11 +227,10 @@ export function FriendlyAddFlow({
     [conceptId, spendConcepts]
   );
 
-  const templates = FRIENDLY_TEMPLATES;
-
   const asksPaymentMethod = intent === 'spend' || intent === 'debt';
   const totalSteps = intent === 'spend' ? 6 : intent === 'move' ? 4 : 5;
-  const progress = ((step + 1) / totalSteps) * 100;
+  // Step 0 ("What happened?") is gone: the steps shown run 1 … totalSteps − 1.
+  const progress = (step / (totalSteps - 1)) * 100;
   const paymentStep = intent === 'spend' ? 4 : intent === 'move' ? 2 : 3;
   const reviewStep = totalSteps - 1;
 
@@ -318,84 +295,11 @@ export function FriendlyAddFlow({
     setStep(1);
   }, [initialDebtId, initialIntent, liveDebts]);
 
-  async function applyTemplate(id: string) {
-    const tpl = FRIENDLY_TEMPLATES.find((x) => x.id === id);
-    if (!tpl || applyingTemplate) return;
-    tapFeedback();
-    setApplyingTemplate(true);
-    try {
-      setIntent(tpl.intent);
-      if (tpl.intent !== 'debt') {
-        setDebtId(null);
-        setPayScope(null);
-      }
-      if (tpl.amountHint) setAmount(String(tpl.amountHint));
-      if (tpl.intent === 'move') {
-        setAccountId(defaultIncomeAccountId(accounts));
-        setToAccountId(
-          tpl.id === 'tpl-save'
-            ? accounts.find((a) => a.type === 'savings')?.id ?? 'savings'
-            : defaultTransferDestinationId(accounts, 'bank-main')
-        );
-      }
-      if (tpl.intent === 'earn') {
-        setAccountId(defaultIncomeAccountId(accounts));
-      }
-      if (tpl.intent === 'spend') {
-        if (lastSpendAccountId?.startsWith('debt:')) {
-          setMethod('credit');
-          setAccountId(lastSpendAccountId);
-        } else {
-          setMethod('debit');
-          setAccountId(
-            defaultSpendAccountId(accounts, {
-              lastAccountId: lastSpendAccountId,
-              amount: tpl.amountHint,
-            })
-          );
-        }
-      }
-
-      if (tpl.intent === 'spend' && tpl.spend) {
-        const path = await ensureSpendConceptSub({
-          conceptId: tpl.spend.conceptId,
-          conceptName: t(tpl.spend.conceptNameKey),
-          subName: t(tpl.titleKey as TranslationKey),
-          color: tpl.spend.color,
-          isAnt: tpl.spend.isAnt,
-        });
-        if (!path) {
-          appAlert(t('flow.chooseConcept'), t('flow.noConceptsBody'));
-          return;
-        }
-        setConceptId(path.conceptId);
-        setCategoryId(path.subId);
-        setFromTemplate(true);
-      } else {
-        setConceptId(null);
-        setCategoryId(tpl.intent === 'move' ? '' : (tpl.categoryId ?? 'otros'));
-        setFromTemplate(false);
-      }
-      setStep(1);
-    } finally {
-      setApplyingTemplate(false);
-    }
-  }
-
   function goNext() {
     if (step === 1) {
       const parsed = parse(amount);
       if (!parsed) {
         appAlert(t('add.invalidTitle'), t('add.invalidMessage'), undefined, { tone: 'warning' });
-        return;
-      }
-      if (
-        fromTemplate &&
-        intent === 'spend' &&
-        conceptId &&
-        categoryId
-      ) {
-        setStep(paymentStep);
         return;
       }
       if (intent === 'debt') {
@@ -606,7 +510,7 @@ export function FriendlyAddFlow({
         <View style={[styles.progressFill, { width: `${progress}%` }]} />
       </View>
       <Text style={styles.stepLabel}>
-        {t('flow.stepOf', { current: step + 1, total: totalSteps })}
+        {t('flow.stepOf', { current: step, total: totalSteps - 1 })}
       </Text>
 
       <KeyboardSafeScroll
@@ -614,102 +518,6 @@ export function FriendlyAddFlow({
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.body}>
         {header}
-        {step === 0 ? (
-          <Animated.View entering={FadeInDown.springify()} style={styles.block}>
-            <Text style={styles.title}>{t('flow.whatHappened')}</Text>
-            <View style={styles.intentGrid}>
-              {FRIENDLY_INTENTS.map((item) => (
-                <Pressable
-                  accessibilityRole="button"
-                  key={item.id}
-                  onPress={() => {
-                    tapFeedback();
-                    if (item.id === 'spend' && onPickSpend) {
-                      onPickSpend();
-                      return;
-                    }
-                    setFromTemplate(false);
-                    setIntent(item.id);
-                    if (item.id !== 'debt') {
-                      setDebtId(null);
-                      setPayScope(null);
-                    }
-                    if (item.id === 'earn') {
-                      setConceptId(null);
-                      setCategoryId(
-                        defaultCategoryIdForKind('income', settings.enabledCategoryIds)
-                      );
-                      setAccountId(defaultIncomeAccountId(accounts));
-                    }
-                    if (item.id === 'spend') {
-                      setConceptId(null);
-                      setCategoryId('');
-                      setAccountId(
-                        defaultSpendAccountId(accounts, {
-                          lastAccountId: lastSpendAccountId,
-                          amount: parse(amount) ?? undefined,
-                        })
-                      );
-                    }
-                    if (item.id === 'move') {
-                      setConceptId(null);
-                      setCategoryId('');
-                      setAccountId(defaultIncomeAccountId(accounts));
-                      setToAccountId(
-                        defaultTransferDestinationId(
-                          accounts,
-                          defaultIncomeAccountId(accounts)
-                        )
-                      );
-                    }
-                    if (item.id === 'debt') {
-                      setConceptId(null);
-                      setCategoryId('otros');
-                      setDebtId(liveDebts[0]?.id ?? null);
-                    }
-                    goNext();
-                  }}
-                  style={styles.intentCard}>
-                  <Text style={styles.emoji}>{item.emoji}</Text>
-                  <Text style={styles.intentTitle}>
-                    {t(item.titleKey as TranslationKey)}
-                  </Text>
-                  <Text style={styles.intentSub}>
-                    {t(item.subtitleKey as TranslationKey)}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
-
-            <Text style={styles.section}>{t('flow.pickTemplate')}</Text>
-            <View style={styles.tplGrid}>
-              {templates.map((tpl) => (
-                <Pressable
-                  accessibilityRole="button"
-                  key={tpl.id}
-                  onPress={() => void applyTemplate(tpl.id)}
-                  disabled={applyingTemplate}
-                  style={[styles.tplCard, applyingTemplate && { opacity: 0.6 }]}>
-                  <Text style={styles.emoji}>{tpl.emoji}</Text>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.tplTitle}>
-                      {t(tpl.titleKey as TranslationKey)}
-                    </Text>
-                    <Text style={styles.tplSub}>
-                      {t(tpl.subtitleKey as TranslationKey)}
-                    </Text>
-                    {tpl.amountHint ? (
-                      <Text style={styles.tplAmount}>
-                        {t('flow.suggested')}: {format(tpl.amountHint)}
-                      </Text>
-                    ) : null}
-                  </View>
-                </Pressable>
-              ))}
-            </View>
-          </Animated.View>
-        ) : null}
-
         {step === 1 ? (
           <Animated.View entering={FadeInDown.springify()} style={styles.block}>
             <Text style={styles.title}>{t('flow.howMuch')}</Text>
@@ -1162,21 +970,17 @@ export function FriendlyAddFlow({
         ) : null}
       </KeyboardSafeScroll>
 
-      {keyboardVisible || step === 0 ? null : (
+      {keyboardVisible ? null : (
       <View style={styles.footer}>
         {step > 0 ? (
           <Pressable
             accessibilityRole="button"
             onPress={() => {
-              if (step === 1 && onBackFromStart) {
+              if (step === 1) {
                 onBackFromStart();
                 return;
               }
               if (intent === 'spend' && step === paymentStep) {
-                if (fromTemplate) {
-                  setStep(1);
-                  return;
-                }
                 const concept = conceptId
                   ? findConceptById(spendConcepts, conceptId)
                   : undefined;
@@ -1264,65 +1068,12 @@ const styles = StyleSheet.create({
     color: palette.ink,
     letterSpacing: -0.5,
   },
-  section: {
-    marginTop: 8,
-    fontFamily: 'DMSans_600SemiBold',
-    fontSize: 14,
-    color: palette.inkMuted,
-  },
-  intentGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-  },
-  intentCard: {
-    width: '48%',
-    backgroundColor: '#F7FAFC',
-    borderRadius: 18,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: palette.border,
-    minHeight: 120,
-  },
-  emoji: { fontSize: 28, marginBottom: 8 },
-  intentTitle: {
-    fontFamily: 'DMSans_600SemiBold',
-    fontSize: 16,
-    color: palette.ink,
-  },
   intentSub: {
     marginTop: 4,
     fontFamily: 'DMSans_400Regular',
     fontSize: 12,
     color: palette.inkMuted,
     lineHeight: 16,
-  },
-  tplGrid: { gap: 8 },
-  tplCard: {
-    flexDirection: 'row',
-    gap: 12,
-    alignItems: 'center',
-    backgroundColor: '#FFF8F4',
-    borderRadius: 16,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(255,107,74,0.2)',
-  },
-  tplTitle: {
-    fontFamily: 'DMSans_600SemiBold',
-    fontSize: 15,
-    color: palette.ink,
-  },
-  tplSub: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 12,
-    color: palette.inkMuted,
-  },
-  tplAmount: {
-    marginTop: 2,
-    fontFamily: 'Fraunces_600SemiBold',
-    fontSize: 13,
-    color: palette.accentDeep,
   },
   amountRow: {
     flexDirection: 'row',
