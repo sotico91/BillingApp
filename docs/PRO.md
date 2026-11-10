@@ -21,13 +21,13 @@ The limits only stop adding a new limit, reminder or question; what was already 
 **Exports and backups are Pro (decided 2026-11-10, shipped in 1.8.0):** taking data out of the phone (Excel, CSV, JSON backup) is a paid feature. What stays free, so nobody's data is held hostage:
 - **Restore a backup** (JSON or an automatic copy): anyone can bring their data back.
 - **Automatic copies on the phone** (`AutoBackupRunner`): they keep running for everyone; they protect against data loss, they are not an export.
-- **Founders** keep every export, as part of their free Pro.
+- **Founders** keep every export while their free Pro lasts.
 
 **Retention:** Rumi keeps every year of movements; nothing is deleted on its own. When there are more than 3 years, Rumi may offer once a year to export the oldest year to Excel and, if the person wants, remove it from the phone. A DIAN review can reach 5 years back, so the data must never disappear without the person asking.
 
 **Rumi Pro look:** while Pro is on (bought or founder), Home shows a gold "PRO" tag next to "Rumi" and the launch screen shows "Rumi Pro" under the mark. When a subscription expires, RevenueCat drops the `pro` entitlement and the app goes back to plain Rumi. The last state is saved as `showsPro` in `rumi.pro.v1`, because the launch screen runs before the store answers. The store icon and listing are the same for everyone.
 
-**Founders:** whoever had finished onboarding the first time they open a build with Pro turned on keeps Pro for free, for good (`founder` in `rumi.pro.v1`, decided once). A fresh install, or a restore from backup on a new phone, is not a founder.
+**Founders:** whoever had finished onboarding the first time they open a build with Pro turned on gets Pro for free for 90 days (`FOUNDER_DAYS` in `src/utils/pro.ts`; `founder` and `founderSince` in `rumi.pro.v1`, decided once). Until 1.9.0 founder Pro had no end; founders from then start their 90 days on the first launch of 1.9.0. Decided 2026-11-10 so the closed-test testers use Pro long enough to want it and then subscribe. When it ends, Pro limits apply again, nothing set up is taken away, and the Pro screen says "Tu Pro de fundador terminó" above the plans. The annual plan's 7-day trial still applies to them (they never had `rumi_pro`). A fresh install, or a restore from backup on a new phone, is not a founder.
 
 ## Code
 

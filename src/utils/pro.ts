@@ -14,6 +14,13 @@ export const FREE_BUDGETS = 3;
 /** Subcategory reminders a free user can keep. Debt due-date reminders are always free. */
 export const FREE_REMINDERS = 3;
 
+/**
+ * Days of free Pro a founder gets, counted from the first launch of a build
+ * with founder time (1.9.0) or, for someone new to Pro, from the first launch
+ * with Pro on. Until 1.9.0 founder Pro had no end.
+ */
+export const FOUNDER_DAYS = 90;
+
 /** RevenueCat entitlement that unlocks Pro. */
 export const PRO_ENTITLEMENT = 'pro';
 
@@ -23,10 +30,12 @@ export type ProFeature = 'ask' | 'budgets' | 'reminders' | 'debtPlan' | 'afford'
 /** What is saved on the phone about Pro. */
 export type ProState = {
   /**
-   * Installed before Pro existed: Pro for free, for good. `undefined` until the
-   * first launch with Pro turned on decides it.
+   * Installed before Pro existed: Pro for free for `FOUNDER_DAYS`. `undefined`
+   * until the first launch with Pro turned on decides it.
    */
   founder?: boolean;
+  /** Local day (YYYY-MM-DD) the founder's free Pro started. */
+  founderSince?: string;
   /** Calendar month (YYYY-MM) that `askCount` belongs to. */
   askMonth?: string;
   /** Questions asked in `askMonth`. */
@@ -56,13 +65,44 @@ export function recordAsk(state: ProState, now: Date): ProState {
   return { ...state, askMonth: monthKey(now), askCount: asksUsed(state, now) + 1 };
 }
 
+function dayKey(date: Date): string {
+  return `${monthKey(date)}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
 /**
  * Decided once, the first time Pro is on: whoever had already finished
- * onboarding was using Rumi before Pro and keeps it free.
+ * onboarding was using Rumi before Pro and gets it free for `FOUNDER_DAYS`.
+ * A founder from before 1.9.0 (no start day saved) starts the count now.
  */
-export function decideFounder(state: ProState, onboardingDone: boolean): ProState {
-  if (state.founder !== undefined) return state;
-  return { ...state, founder: onboardingDone };
+export function decideFounder(state: ProState, onboardingDone: boolean, now: Date): ProState {
+  if (state.founder === undefined) {
+    return onboardingDone
+      ? { ...state, founder: true, founderSince: dayKey(now) }
+      : { ...state, founder: false };
+  }
+  if (state.founder && !state.founderSince) return { ...state, founderSince: dayKey(now) };
+  return state;
+}
+
+/** Last moment of the founder's free Pro (start of the day it ends); null if not a founder. */
+export function founderUntil(state: ProState): Date | null {
+  if (state.founder !== true || !state.founderSince) return null;
+  const [y, m, d] = state.founderSince.split('-').map(Number);
+  if (!y || !m || !d) return null;
+  return new Date(y, m - 1, d + FOUNDER_DAYS);
+}
+
+/** The founder's free Pro is still running. */
+export function founderActive(state: ProState, now: Date): boolean {
+  if (state.founder !== true) return false;
+  const until = founderUntil(state);
+  // Not dated yet (first frame after the update): still Pro until the date is saved.
+  return until === null || now < until;
+}
+
+/** Was a founder and the free time is over. */
+export function founderEnded(state: ProState, now: Date): boolean {
+  return state.founder === true && !founderActive(state, now);
 }
 
 /**

@@ -58,6 +58,11 @@ export default function ProScreen() {
   const trial = selected?.product.introPrice?.price === 0;
   const site = language === 'es' ? SITE : `${SITE}en/`;
   const store = Platform.OS === 'ios' ? 'App Store' : 'Google Play';
+  const founderDate = pro.founderUntil?.toLocaleDateString(language === 'es' ? 'es-CO' : 'en-US', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
 
   async function buy() {
     if (!selected) return;
@@ -117,7 +122,11 @@ export default function ProScreen() {
         <View style={styles.card}>
           <AppText variant="title">{pro.founder ? t('pro.founderTitle') : t('pro.activeTitle')}</AppText>
           <AppText variant="body" style={styles.muted}>
-            {pro.founder ? t('pro.founderBody') : t('pro.activeBody', { store })}
+            {pro.founder
+              ? founderDate
+                ? t('pro.founderBody', { date: founderDate })
+                : t('pro.founderBodyNoDate')
+              : t('pro.activeBody', { store })}
           </AppText>
           {pro.subscribed && pro.manageUrl ? (
             <Button
@@ -127,6 +136,13 @@ export default function ProScreen() {
               style={styles.top}
             />
           ) : null}
+        </View>
+      ) : pro.founderEnded && pro.available ? (
+        <View style={styles.card}>
+          <AppText variant="title">{t('pro.founderEndedTitle')}</AppText>
+          <AppText variant="body" style={styles.muted}>
+            {t('pro.founderEndedBody')}
+          </AppText>
         </View>
       ) : null}
 

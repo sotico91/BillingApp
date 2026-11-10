@@ -19,6 +19,9 @@ import {
   PRO_ENTITLEMENT,
   asksLeft as asksLeftOf,
   decideFounder,
+  founderActive,
+  founderEnded,
+  founderUntil,
   freeAllows,
   recordAsk,
   rememberShowsPro,
@@ -62,8 +65,12 @@ type ProContextValue = {
   available: boolean;
   /** Pro is unlocked: bought in the store or kept as a founder. */
   isPro: boolean;
-  /** Installed before Pro existed: Pro for free, for good. */
+  /** Installed before Pro existed and the free founder time is still running. */
   founder: boolean;
+  /** When the founder's free Pro ends (null when not a founder). */
+  founderUntil: Date | null;
+  /** Was a founder and the free time is over. */
+  founderEnded: boolean;
   /** Pro bought in the store and active now. */
   subscribed: boolean;
   /** The app shows itself as Rumi Pro (subscribed or founder; never when Pro is off). */
@@ -123,10 +130,12 @@ export function ProProvider({ children }: { children: ReactNode }) {
     })();
   }, []);
 
-  // Founder is decided the first time Pro is on, so people who update keep it free.
+  // Founder is decided the first time Pro is on, so people who update get it
+  // free for a while; a founder from before 1.9.0 starts that count now.
   useEffect(() => {
-    if (!available || !loaded || !settingsReady || state.founder !== undefined) return;
-    persist(decideFounder(state, settings.onboardingDone));
+    if (!available || !loaded || !settingsReady) return;
+    const next = decideFounder(state, settings.onboardingDone, new Date());
+    if (next !== state) persist(next);
   }, [available, loaded, settingsReady, settings.onboardingDone, state, persist]);
 
   const refreshPlans = useCallback(async () => {
@@ -160,7 +169,14 @@ export function ProProvider({ children }: { children: ReactNode }) {
   }, [key, refreshPlans]);
 
   const subscribed = hasPro(info);
-  const founder = state.founder === true;
+  const now = new Date();
+  const founder = founderActive(state, now);
+  // Memoized so the context value stays the same between renders.
+  const until = useMemo(
+    () => founderUntil({ founder: state.founder, founderSince: state.founderSince }),
+    [state.founder, state.founderSince]
+  );
+  const ended = founderEnded(state, now);
   const isPro = !available || subscribed || founder;
   const showsPro = available && (subscribed || founder);
 
@@ -216,6 +232,8 @@ export function ProProvider({ children }: { children: ReactNode }) {
       available,
       isPro,
       founder,
+      founderUntil: until,
+      founderEnded: ended,
       subscribed,
       showsPro,
       asksLeft,
@@ -228,7 +246,7 @@ export function ProProvider({ children }: { children: ReactNode }) {
       restore,
       refreshPlans,
     }),
-    [available, isPro, founder, subscribed, showsPro, asksLeft, monthly, annual, info, allow, noteAsk, purchase, restore, refreshPlans]
+    [available, isPro, founder, until, ended, subscribed, showsPro, asksLeft, monthly, annual, info, allow, noteAsk, purchase, restore, refreshPlans]
   );
 
   return <ProContext.Provider value={value}>{children}</ProContext.Provider>;

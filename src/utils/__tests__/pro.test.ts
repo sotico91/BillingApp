@@ -3,7 +3,11 @@ import {
   annualSavingPercent,
   asksLeft,
   asksUsed,
+  FOUNDER_DAYS,
   decideFounder,
+  founderActive,
+  founderEnded,
+  founderUntil,
   freeAllows,
   monthKey,
   recordAsk,
@@ -41,17 +45,47 @@ describe('free questions per month', () => {
 });
 
 describe('founder (installed before Pro)', () => {
-  it('is a founder when onboarding was already done', () => {
-    expect(decideFounder({}, true).founder).toBe(true);
+  const nov10 = new Date(2026, 10, 10, 9, 0);
+
+  it('is a founder when onboarding was already done, from today', () => {
+    expect(decideFounder({}, true, nov10)).toEqual({ founder: true, founderSince: '2026-11-10' });
   });
 
   it('is not a founder on a fresh install', () => {
-    expect(decideFounder({}, false).founder).toBe(false);
+    expect(decideFounder({}, false, nov10)).toEqual({ founder: false });
   });
 
   it('is decided only once', () => {
-    expect(decideFounder({ founder: false }, true).founder).toBe(false);
-    expect(decideFounder({ founder: true }, false).founder).toBe(true);
+    expect(decideFounder({ founder: false }, true, nov10).founder).toBe(false);
+    const dated = { founder: true, founderSince: '2026-11-01' };
+    expect(decideFounder(dated, false, nov10)).toBe(dated);
+  });
+
+  it('starts the count for a founder from before founder time existed', () => {
+    expect(decideFounder({ founder: true, askCount: 2 }, true, nov10)).toEqual({
+      founder: true,
+      askCount: 2,
+      founderSince: '2026-11-10',
+    });
+  });
+
+  it(`lasts ${FOUNDER_DAYS} days`, () => {
+    const state = { founder: true, founderSince: '2026-11-10' };
+    expect(founderUntil(state)).toEqual(new Date(2027, 1, 8));
+    expect(founderActive(state, new Date(2027, 1, 7, 23, 59))).toBe(true);
+    expect(founderActive(state, new Date(2027, 1, 8, 0, 0))).toBe(false);
+    expect(founderEnded(state, new Date(2027, 1, 8, 0, 0))).toBe(true);
+  });
+
+  it('stays Pro until an old founder gets a start day', () => {
+    expect(founderActive({ founder: true }, nov10)).toBe(true);
+    expect(founderEnded({ founder: true }, nov10)).toBe(false);
+  });
+
+  it('is never active or ended for someone who is not a founder', () => {
+    expect(founderActive({ founder: false }, nov10)).toBe(false);
+    expect(founderEnded({ founder: false }, nov10)).toBe(false);
+    expect(founderUntil({})).toBeNull();
   });
 });
 
