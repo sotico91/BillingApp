@@ -10,6 +10,11 @@ El detalle de cada cambio está en `git log`.
 - **Comentarios de código en inglés:** todos los comentarios del código van en inglés.
   Los textos que ve el usuario van en `src/i18n/translations.ts` (es/en).
 
+## 2026-11-10
+
+- **Versión 1.8.0. Excel por año y exportaciones en Pro:** en Ajustes → Tus datos, "Exportar a Excel (por año)" arma un `.xlsx` con una hoja "Resumen" (los 12 meses con ingresos, salidas, balance y cantidad de movimientos, más el total del año) y una hoja por mes con sus movimientos y totales. Usa meses calendario, como los lee un contador. Si hay movimientos de varios años, primero pregunta "¿De qué año?". Exportar a Excel, exportar movimientos (CSV) y exportar respaldo (JSON) son de Rumi Pro; restaurar un respaldo y las copias automáticas siguen gratis, y los fundadores conservan todo. Librería: SheetJS 0.20.3 (desde cdn.sheetjs.com, sin módulo nativo). Las filas de cada movimiento salen de `src/utils/movementRows.ts`, compartido por CSV y Excel.
+- **"Buscar actualización" en Ajustes → Ayuda (Android, instalada desde Play):** le pregunta a Google Play en ese momento, sin esperar los 30 minutos del aviso automático. Si hay versión nueva, abre la actualización de Play en pantalla completa; si no, dice qué versión tienes. Recorrido nuevo `e2e/export-excel.yaml`.
+
 ## 2026-11-09
 
 - **Versión 1.7.0. Tu mes desde el día de pago, la fecha de cualquier movimiento, plan para salir de deudas y "¿me alcanza?" a futuro:**

@@ -11,14 +11,14 @@ Pro is a monthly or annual subscription sold through Google Play and the App Sto
 | Subcategory reminders | 3 (debt due-date reminders are always on) | Unlimited |
 | Plan to get out of debt (how much sooner with an extra payment, interest saved, order) | Debt-free date with installments only | Yes |
 | "Can I afford it?" for a later month (put aside per month / fortnight vs usual surplus) | This month only | Yes |
-| Excel export (planned, 1.8.0): one `.xlsx` per year, a "Resumen" sheet with the 12 months side by side and one sheet per month (date, type, category, description, account, amount, month totals); asks which year when there is more than one | — | Yes |
+| Excel export (1.8.0): one `.xlsx` per year, a "Resumen" sheet with the 12 months side by side and one sheet per month (date, type, category, description, account, amount, month totals); asks which year when there is more than one | — | Yes |
 | Movements CSV export | — | Yes |
 | Backup export (JSON file to keep or move to another phone) | — | Yes |
 | New Phase 2 features (category trend, recurring spends logged for you) | — | Yes |
 
 The limits only stop adding a new limit, reminder or question; what was already set up keeps working. Logging, Home, Activity, accounts and app lock stay free.
 
-**Exports and backups are Pro (decided 2026-11-10):** taking data out of the phone (Excel, CSV, JSON backup) is a paid feature. What stays free, so nobody's data is held hostage:
+**Exports and backups are Pro (decided 2026-11-10, shipped in 1.8.0):** taking data out of the phone (Excel, CSV, JSON backup) is a paid feature. What stays free, so nobody's data is held hostage:
 - **Restore a backup** (JSON or an automatic copy): anyone can bring their data back.
 - **Automatic copies on the phone** (`AutoBackupRunner`): they keep running for everyone; they protect against data loss, they are not an export.
 - **Founders** keep every export, as part of their free Pro.
@@ -35,6 +35,7 @@ The limits only stop adding a new limit, reminder or question; what was already 
 - `src/hooks/usePro.tsx`: `ProProvider` configures RevenueCat, loads the plans and exposes `allow(feature, existing)` (opens `/pro` when the allowance is used up), `noteAsk()`, `purchase()` and `restore()`.
 - `app/pro.tsx`: the Pro screen (reason, benefits, annual/monthly, subscribe, restore, terms, privacy, manage subscription).
 - `debtPlan` and `afford` have no free allowance (`freeAllows` returns false). `DebtPlanCard` in Wealth shows the unlock button to free users; Ask Rumi gets `isPro` in its options and a locked answer carries `proFeature`, which shows "Ver Rumi Pro".
+- Exports: `ProfileMenuButton` checks `pro.allow('export')` before Excel, CSV and JSON; the rows show "Rumi Pro" to free users. Workbook: `src/utils/excelExport.ts` (SheetJS 0.20.3 from cdn.sheetjs.com, pure), cells from `src/utils/movementRows.ts`, file and share in `shareYearExcel` (`backup.ts`).
 - Limits are checked in `app/(tabs)/insights.tsx` (ask), `src/components/ConceptsPlanCard.tsx` (new limit) and `src/components/ReminderSettingsCard.tsx` (new reminder or accepted suggestion). Settings shows a "Rumi Pro" row.
 
 **Pro is off until a store key exists.** With no `EXPO_PUBLIC_REVENUECAT_ANDROID_KEY` / `EXPO_PUBLIC_REVENUECAT_IOS_KEY` (local builds, Expo Go, web), nothing is limited and the Pro row is hidden, so a build without keys behaves exactly as before.

@@ -31,10 +31,20 @@ import {
   shareBackupJson,
   type RumiBackup,
   shareTransactionsCsv,
+  shareYearExcel,
 } from '@/src/utils/backup';
 import { tapFeedback } from '@/src/utils/selectFeedback';
 import { authenticateAppLock, getAppLockKind } from '@/src/utils/appLock';
 import { appAlert } from '@/src/components/AppAlert';
+import Constants from 'expo-constants';
+import {
+  checkStoreUpdate,
+  startStoreUpdate,
+  storeUpdateSupported,
+} from '@/modules/rumi-store-update';
+
+const APP_VERSION = Constants.expoConfig?.version ?? '';
+import { yearsWithMovements } from '@/src/utils/excelExport';
 
 /**
  * The avatar in Home's header. Opens Settings: profile, preferences, your
@@ -125,6 +135,7 @@ export function ProfileMenuButton() {
 
   async function exportBackup() {
     setMenuOpen(false);
+    if (!pro.allow('export')) return;
     setBusy(true);
     try {
       await shareBackupJson({
@@ -143,8 +154,63 @@ export function ProfileMenuButton() {
     }
   }
 
+  /** Asks Google Play right now (not every 30 minutes like on launch) and updates if there is one. */
+  async function checkForUpdate() {
+    setMenuOpen(false);
+    setBusy(true);
+    try {
+      const info = await checkStoreUpdate();
+      if (info.available || info.inProgress) {
+        await startStoreUpdate();
+        return;
+      }
+      appAlert(t('update.latestTitle'), t('update.latestBody', { version: APP_VERSION }), undefined, {
+        tone: 'success',
+      });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  /** Excel of one year; asks which one when there is more than one. */
+  function exportExcel() {
+    setMenuOpen(false);
+    if (!pro.allow('export')) return;
+    const years = yearsWithMovements(transactions);
+    if (years.length === 0) {
+      appAlert(t('excel.emptyTitle'), t('excel.emptyBody'));
+      return;
+    }
+    if (years.length === 1) {
+      void runExcel(years[0]);
+      return;
+    }
+    appAlert(t('excel.pickYear'), t('excel.pickYearBody'), [
+      ...years.map((year) => ({ text: String(year), onPress: () => void runExcel(year) })),
+      { text: t('history.cancel'), style: 'cancel' as const },
+    ]);
+  }
+
+  async function runExcel(year: number) {
+    setBusy(true);
+    try {
+      await shareYearExcel(transactions, year, {
+        language,
+        t,
+        accounts,
+        debts,
+        spendConcepts: settings.spendConcepts ?? [],
+      });
+    } catch {
+      appAlert(t('backup.errorTitle'), t('backup.exportError'), undefined, { tone: 'warning' });
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function exportCsv() {
     setMenuOpen(false);
+    if (!pro.allow('export')) return;
     setBusy(true);
     try {
       await shareTransactionsCsv(transactions, {
@@ -368,13 +434,21 @@ export function ProfileMenuButton() {
 
               <SettingsGroup title={t('settings.data')}>
                 <SettingsRow
+                  icon="microsoft-excel"
+                  label={t('excel.row')}
+                  hint={pro.isPro ? t('excel.rowHint') : t('excel.rowHintPro')}
+                  onPress={exportExcel}
+                />
+                <SettingsRow
                   icon="download-outline"
                   label={t('backup.exportJson')}
+                  hint={pro.isPro ? undefined : t('pro.onlyPro')}
                   onPress={() => void exportBackup()}
                 />
                 <SettingsRow
                   icon="file-document-outline"
                   label={t('backup.exportCsv')}
+                  hint={pro.isPro ? undefined : t('pro.onlyPro')}
                   onPress={() => void exportCsv()}
                 />
                 <SettingsRow
@@ -385,6 +459,14 @@ export function ProfileMenuButton() {
               </SettingsGroup>
 
               <SettingsGroup title={t('settings.help')}>
+                {storeUpdateSupported() ? (
+                  <SettingsRow
+                    icon="update"
+                    label={t('update.checkRow')}
+                    value={APP_VERSION}
+                    onPress={() => void checkForUpdate()}
+                  />
+                ) : null}
                 <SettingsRow
                   icon="chat-processing-outline"
                   label={t('support.report')}

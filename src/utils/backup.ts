@@ -2,7 +2,12 @@ import { Share, Platform } from 'react-native';
 import { Directory, File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 
-import { categoryLabel } from '@/src/utils/categoryLabel';
+import {
+  movementCells,
+  movementHeader,
+  type CsvExportContext,
+} from '@/src/utils/movementRows';
+import { writeYearWorkbook } from '@/src/utils/excelExport';
 import { csvEscape } from '@/src/utils/csv';
 import { backupFileName } from '@/src/utils/fileNames';
 import type {
@@ -11,17 +16,14 @@ import type {
   Budget,
   Subscription,
   Transaction,
-  TransactionType,
-  PaymentMethod,
 } from '@/src/types/finance';
-import type { QuickTemplate, SpendConcept, UserSettings } from '@/src/types/settings';
+import type { QuickTemplate, UserSettings } from '@/src/types/settings';
 import {
   BACKUP_FORMAT,
   BACKUP_VERSION,
   parseBackupJson,
   type RumiBackup,
 } from '@/src/utils/backupParse';
-import type { Language, TranslationKey } from '@/src/i18n/translations';
 
 export {
   BACKUP_FORMAT,
@@ -30,6 +32,7 @@ export {
   parseBackupJson,
 } from '@/src/utils/backupParse';
 export type { RumiBackup } from '@/src/utils/backupParse';
+export { movementCells, movementHeader, type CsvExportContext } from '@/src/utils/movementRows';
 
 export type BackupSnapshot = {
   transactions: Transaction[];
@@ -41,75 +44,10 @@ export type BackupSnapshot = {
   quickTemplates: QuickTemplate[];
 };
 
-type TranslateFn = (key: TranslationKey, params?: Record<string, string | number>) => string;
-
-export type CsvExportContext = {
-  language: Language;
-  t: TranslateFn;
-  accounts: Account[];
-  debts: Debt[];
-  spendConcepts: SpendConcept[];
-};
-
 function stamp(): string {
   const d = new Date();
   const p = (n: number) => String(n).padStart(2, '0');
   return `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}`;
-}
-
-function formatCsvDate(iso: string, language: Language): string {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  const p = (n: number) => String(n).padStart(2, '0');
-  const day = p(d.getDate());
-  const month = p(d.getMonth() + 1);
-  const year = d.getFullYear();
-  const time = `${p(d.getHours())}:${p(d.getMinutes())}`;
-  return language === 'es' ? `${day}/${month}/${year} ${time}` : `${month}/${day}/${year} ${time}`;
-}
-
-function typeLabel(type: TransactionType, t: TranslateFn): string {
-  return t(`type.${type}` as TranslationKey);
-}
-
-function methodLabel(method: PaymentMethod | undefined, t: TranslateFn): string {
-  if (!method) return '';
-  return t(`method.${method}` as TranslationKey);
-}
-
-function accountLabel(
-  accountId: string | undefined,
-  accounts: Account[],
-  t: TranslateFn
-): string {
-  if (!accountId) return '';
-  const acc = accounts.find((a) => a.id === accountId);
-  if (!acc) return '';
-  if (acc.name?.trim()) return acc.name.trim();
-  try {
-    const label = t(acc.nameKey as TranslationKey);
-    if (label && label !== acc.nameKey) return label;
-  } catch {
-    /* fall through */
-  }
-  return acc.nameKey;
-}
-
-function debtLabel(debtId: string | undefined, debts: Debt[], t: TranslateFn): string {
-  if (!debtId) return '';
-  const debt = debts.find((d) => d.id === debtId);
-  if (!debt) return '';
-  if (debt.name?.trim()) return debt.name.trim();
-  if (debt.nameKey) {
-    try {
-      const label = t(debt.nameKey as TranslationKey);
-      if (label && label !== debt.nameKey) return label;
-    } catch {
-      /* fall through */
-    }
-    return debt.nameKey;
-  }
-  return '';
 }
 
 export function buildBackup(snapshot: BackupSnapshot): RumiBackup {
@@ -132,32 +70,11 @@ export function transactionsToCsv(
   transactions: Transaction[],
   ctx: CsvExportContext
 ): string {
-  const { language, t, accounts, debts, spendConcepts } = ctx;
-  const header = [
-    t('csv.date'),
-    t('csv.type'),
-    t('csv.amount'),
-    t('csv.concept'),
-    t('csv.account'),
-    t('csv.toAccount'),
-    t('csv.method'),
-    t('csv.debt'),
-    t('csv.note'),
-  ];
+  const header = movementHeader(ctx.t);
   const rows = [...transactions]
     .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
     .map((tx) =>
-      [
-        formatCsvDate(tx.createdAt, language),
-        typeLabel(tx.type, t),
-        String(tx.amount),
-        tx.categoryId ? categoryLabel(tx.categoryId, t, spendConcepts) : '',
-        accountLabel(tx.accountId, accounts, t),
-        accountLabel(tx.toAccountId, accounts, t),
-        methodLabel(tx.paymentMethod, t),
-        debtLabel(tx.debtId, debts, t),
-        tx.note ?? '',
-      ]
+      movementCells(tx, ctx)
         .map((cell) => csvEscape(String(cell)))
         .join(',')
     );
@@ -168,7 +85,7 @@ export function transactionsToCsv(
 /** Exports are readable copies of the data, so each lives in its own folder that gets emptied. */
 const EXPORT_DIR = 'rumi-exports';
 /** Exports written straight into the cache by versions before EXPORT_DIR. */
-const LEGACY_EXPORT_RE = /^Rumi[_-].+\.(json|csv)$/;
+const LEGACY_EXPORT_RE = /^Rumi[_-].+\.(json|csv|xlsx)$/;
 
 /**
  * Deletes exported files left in the cache. Not right after sharing: on
@@ -187,7 +104,7 @@ export function clearExportedFiles(): void {
   }
 }
 
-async function writeCacheFile(filename: string, contents: string): Promise<File> {
+export async function writeCacheFile(filename: string, contents: string | Uint8Array): Promise<File> {
   clearExportedFiles();
   const dir = new Directory(Paths.cache, EXPORT_DIR);
   dir.create();
@@ -201,9 +118,10 @@ async function writeCacheFile(filename: string, contents: string): Promise<File>
  * Share the real file (not its text) so it can be saved as .json / .csv.
  * Sharing long text on Android gets truncated by the receiving app.
  */
-async function shareFile(
+export async function shareFile(
   file: File,
-  contents: string,
+  /** Text to share when files cannot be shared; null for binary files. */
+  contents: string | null,
   title: string,
   type: { mimeType: string; UTI: string }
 ) {
@@ -215,10 +133,14 @@ async function shareFile(
     await Share.share({ url: file.uri, title });
     return;
   }
-  await Share.share({ message: contents, title });
+  if (contents != null) await Share.share({ message: contents, title });
 }
 
 const JSON_TYPE = { mimeType: 'application/json', UTI: 'public.json' };
+export const XLSX_TYPE = {
+  mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  UTI: 'org.openxmlformats.spreadsheetml.sheet',
+};
 const CSV_TYPE = { mimeType: 'text/csv', UTI: 'public.comma-separated-values-text' };
 
 export async function shareBackupJson(snapshot: BackupSnapshot): Promise<void> {
@@ -251,4 +173,17 @@ export async function pickAndReadBackupFile(): Promise<RumiBackup> {
   const picked = result.result;
   const raw = await picked.text();
   return parseBackupJson(raw);
+}
+
+/** Excel of one calendar year: a summary sheet and one sheet per month with movements. */
+export async function shareYearExcel(
+  transactions: Transaction[],
+  year: number,
+  ctx: CsvExportContext
+): Promise<void> {
+  const bytes = writeYearWorkbook(transactions, year, ctx);
+  const filename =
+    ctx.language === 'es' ? `Rumi-${year}-movimientos.xlsx` : `Rumi-${year}-movements.xlsx`;
+  const file = await writeCacheFile(filename, bytes);
+  await shareFile(file, null, filename, XLSX_TYPE);
 }

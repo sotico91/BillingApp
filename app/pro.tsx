@@ -21,6 +21,7 @@ const REASON: Record<ProFeature, TranslationKey> = {
   reminders: 'pro.reasonReminders',
   debtPlan: 'pro.reasonDebtPlan',
   afford: 'pro.reasonAfford',
+  export: 'pro.reasonExport',
 };
 
 const BENEFITS: { icon: keyof typeof MaterialCommunityIcons.glyphMap; key: TranslationKey }[] = [
@@ -29,6 +30,7 @@ const BENEFITS: { icon: keyof typeof MaterialCommunityIcons.glyphMap; key: Trans
   { icon: 'bell-ring-outline', key: 'pro.benefitReminders' },
   { icon: 'flag-checkered', key: 'pro.benefitDebtPlan' },
   { icon: 'scale-balance', key: 'pro.benefitAfford' },
+  { icon: 'microsoft-excel', key: 'pro.benefitExport' },
   { icon: 'star-four-points-outline', key: 'pro.benefitNew' },
 ];
 
