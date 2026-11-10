@@ -12,4 +12,5 @@ appId: com.sotico91.rumi
 - tapOn:
     id: "quick-note"
 - inputText: ${NOTE}
-- tapOn: "¿En qué?"
+# "¿En qué?" may be scrolled under the header by now: close the keyboard lower down.
+- tapOn: "¿De dónde salió?"

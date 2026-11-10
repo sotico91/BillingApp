@@ -293,9 +293,11 @@ export function QuickSpendForm({ onSaved, onBack, onOpenGuided, dictated, header
           />
         </View>
 
-        <SpendDateChip daysAgo={daysAgo} onChange={setDaysAgo} />
-
-        <Text style={styles.section}>{t('quick.what')}</Text>
+        <SpendDateChip
+          daysAgo={daysAgo}
+          onChange={setDaysAgo}
+          leading={<Text style={styles.section}>{t('quick.what')}</Text>}
+        />
         {flattenSpendSubs(spendConcepts).length > CATEGORY_SEARCH_MIN_SUBS ? (
           <CategorySearch
             concepts={spendConcepts}

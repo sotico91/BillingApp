@@ -13,7 +13,7 @@ appId: com.sotico91.rumi
     id: "spend-date"
 - tapOn:
     id: "spend-date-1"
-- assertVisible: "Ayer, .*"
+- assertVisible: "Fecha: Ayer, .*"
 - tapOn: "Guardar \\$12\\.000"
 - extendedWaitUntil:
     visible: "Inicio"
@@ -24,12 +24,10 @@ appId: com.sotico91.rumi
 - tapOn: "Inicio"
 - tapOn:
     point: "90%,10%"
-- scrollUntilVisible:
-    element: "Mi mes empieza el día.*"
-- tapOn: "Mi mes empieza el día.*"
+- tapOn: ".*Mi mes empieza el día.*"
 - assertVisible: "¿Qué día empieza tu mes?"
 - tapOn: "Día 24"
 - assertVisible: "Tu mes ahora: .*"
 - tapOn: "Guardar"
 - tapOn: "Actividad"
-- assertVisible: "\\d{1,2} \\w+ – \\d{1,2} \\w+"
+- assertVisible: "24 \\w+ – 23 \\w+"

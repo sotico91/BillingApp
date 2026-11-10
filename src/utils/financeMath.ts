@@ -75,7 +75,8 @@ export function formatMonthRange(range: { from: Date; to: Date }, language: 'en'
   const fmt = (d: Date) =>
     d
       .toLocaleDateString(language === 'es' ? 'es-CO' : 'en-US', { day: 'numeric', month: 'short' })
-      .replace('.', '');
+      .replace('.', '')
+      .replace(' de ', ' ');
   return `${fmt(range.from)} – ${fmt(last)}`;
 }
 

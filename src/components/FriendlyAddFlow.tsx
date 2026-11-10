@@ -1128,8 +1128,11 @@ export function FriendlyAddFlow({
                 </>
               ) : null}
             </View>
-            <SpendDateChip daysAgo={daysAgo} onChange={setDaysAgo} />
-            <Text style={styles.noteLabel}>{t('flow.noteOptional')}</Text>
+            <SpendDateChip
+              daysAgo={daysAgo}
+              onChange={setDaysAgo}
+              leading={<Text style={styles.noteLabel}>{t('flow.noteOptional')}</Text>}
+            />
             <TextInput
               testID="flow-note"
               value={note}
