@@ -79,6 +79,8 @@ type ProContextValue = {
   asksLeft: number;
   monthly: PurchasesPackage | null;
   annual: PurchasesPackage | null;
+  /** RevenueCat customer id of this install, to find it in the dashboard (support, promotional Pro). */
+  supportId: string | null;
   /** Store page where the subscription is managed or cancelled. */
   manageUrl: string | null;
   /**
@@ -110,6 +112,7 @@ export function ProProvider({ children }: { children: ReactNode }) {
   const [info, setInfo] = useState<CustomerInfo | null>(null);
   const [monthly, setMonthly] = useState<PurchasesPackage | null>(null);
   const [annual, setAnnual] = useState<PurchasesPackage | null>(null);
+  const [supportId, setSupportId] = useState<string | null>(null);
   const configured = useRef(false);
 
   const persist = useCallback((next: ProState) => {
@@ -161,6 +164,7 @@ export function ProProvider({ children }: { children: ReactNode }) {
     }
     const listener = (next: CustomerInfo) => setInfo(next);
     Purchases.addCustomerInfoUpdateListener(listener);
+    void Purchases.getAppUserID().then(setSupportId).catch(() => {});
     void Purchases.getCustomerInfo().then(setInfo).catch(() => {});
     void refreshPlans();
     return () => {
@@ -239,6 +243,7 @@ export function ProProvider({ children }: { children: ReactNode }) {
       asksLeft,
       monthly,
       annual,
+      supportId,
       manageUrl: info?.managementURL ?? null,
       allow,
       noteAsk,
@@ -246,7 +251,7 @@ export function ProProvider({ children }: { children: ReactNode }) {
       restore,
       refreshPlans,
     }),
-    [available, isPro, founder, until, ended, subscribed, showsPro, asksLeft, monthly, annual, info, allow, noteAsk, purchase, restore, refreshPlans]
+    [available, isPro, founder, until, ended, subscribed, showsPro, asksLeft, monthly, annual, supportId, info, allow, noteAsk, purchase, restore, refreshPlans]
   );
 
   return <ProContext.Provider value={value}>{children}</ProContext.Provider>;

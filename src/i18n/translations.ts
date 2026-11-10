@@ -189,6 +189,7 @@ export const translations = {
     'pro.settingsFree': 'See plans',
     'pro.settingsActive': 'Active',
     'pro.settingsFounder': 'Founder',
+    'pro.supportId': 'Support ID (press and hold to copy): {id}',
     'pro.asksLeft': '{count} free {count|question|questions} left this month',
 
     'history.title': 'Activity',
@@ -1578,6 +1579,7 @@ export const translations = {
     'pro.settingsFree': 'Ver planes',
     'pro.settingsActive': 'Activo',
     'pro.settingsFounder': 'Fundador',
+    'pro.supportId': 'ID de soporte (mantén presionado para copiar): {id}',
     'pro.asksLeft': '{count|Te queda|Te quedan} {count} {count|pregunta gratis|preguntas gratis} este mes',
 
     'history.title': 'Actividad',

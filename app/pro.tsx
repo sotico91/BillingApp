@@ -220,6 +220,12 @@ export default function ProScreen() {
           </AppText>
         </Pressable>
       </View>
+
+      {pro.supportId ? (
+        <AppText variant="caption" selectable style={styles.legal}>
+          {t('pro.supportId', { id: pro.supportId })}
+        </AppText>
+      ) : null}
     </ScrollView>
   );
 }

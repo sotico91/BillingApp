@@ -29,6 +29,8 @@ The limits only stop adding a new limit, reminder or question; what was already 
 
 **Founders:** whoever had finished onboarding the first time they open a build with Pro turned on gets Pro for free for 90 days (`FOUNDER_DAYS` in `src/utils/pro.ts`; `founder` and `founderSince` in `rumi.pro.v1`, decided once). Until 1.9.0 founder Pro had no end; founders from then start their 90 days on the first launch of 1.9.0. Decided 2026-11-10 so the closed-test testers use Pro long enough to want it and then subscribe. When it ends, Pro limits apply again, nothing set up is taken away, and the Pro screen says "Tu Pro de fundador terminó" above the plans. The annual plan's 7-day trial still applies to them (they never had `rumi_pro`). A fresh install, or a restore from backup on a new phone, is not a founder.
 
+**Owner's phone, Pro for good:** the owner's install gets a lifetime promotional `pro` entitlement in RevenueCat (Customers → the customer → Grant promotional → Lifetime). The customer is found by the "ID de soporte" at the bottom of the Pro screen (1.9.0), which is the RevenueCat app user id. It is tied to the install, not the Google account: after a reinstall or a new phone, grant it again to the new id.
+
 ## Code
 
 - `src/utils/pro.ts`: the free allowances and pure rules (tested in `src/utils/__tests__/pro.test.ts`).
