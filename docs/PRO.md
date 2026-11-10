@@ -11,9 +11,19 @@ Pro is a monthly or annual subscription sold through Google Play and the App Sto
 | Subcategory reminders | 3 (debt due-date reminders are always on) | Unlimited |
 | Plan to get out of debt (how much sooner with an extra payment, interest saved, order) | Debt-free date with installments only | Yes |
 | "Can I afford it?" for a later month (put aside per month / fortnight vs usual surplus) | This month only | Yes |
+| Excel export (planned, 1.8.0): one `.xlsx` per year, a "Resumen" sheet with the 12 months side by side and one sheet per month (date, type, category, description, account, amount, month totals); asks which year when there is more than one | — | Yes |
+| Movements CSV export | — | Yes |
+| Backup export (JSON file to keep or move to another phone) | — | Yes |
 | New Phase 2 features (category trend, recurring spends logged for you) | — | Yes |
 
-Nothing that already exists is taken away: the limits only stop adding a new limit, reminder or question. Logging, Home, Activity, accounts, export and app lock stay free.
+The limits only stop adding a new limit, reminder or question; what was already set up keeps working. Logging, Home, Activity, accounts and app lock stay free.
+
+**Exports and backups are Pro (decided 2026-11-10):** taking data out of the phone (Excel, CSV, JSON backup) is a paid feature. What stays free, so nobody's data is held hostage:
+- **Restore a backup** (JSON or an automatic copy): anyone can bring their data back.
+- **Automatic copies on the phone** (`AutoBackupRunner`): they keep running for everyone; they protect against data loss, they are not an export.
+- **Founders** keep every export, as part of their free Pro.
+
+**Retention:** Rumi keeps every year of movements; nothing is deleted on its own. When there are more than 3 years, Rumi may offer once a year to export the oldest year to Excel and, if the person wants, remove it from the phone. A DIAN review can reach 5 years back, so the data must never disappear without the person asking.
 
 **Rumi Pro look:** while Pro is on (bought or founder), Home shows a gold "PRO" tag next to "Rumi" and the launch screen shows "Rumi Pro" under the mark. When a subscription expires, RevenueCat drops the `pro` entitlement and the app goes back to plain Rumi. The last state is saved as `showsPro` in `rumi.pro.v1`, because the launch screen runs before the store answers. The store icon and listing are the same for everyone.
 
