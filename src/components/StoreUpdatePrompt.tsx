@@ -9,18 +9,18 @@ import {
   storeUpdateSupported,
 } from '@/modules/rumi-store-update';
 
-/** Ask Play again at most this often while the app keeps coming back to the front. */
-const RECHECK_MS = 30 * 60 * 1000;
+import { shouldCheckUpdate, updateSnoozed } from '@/src/utils/storeUpdate';
 
 /**
  * Android installed from Google Play: when a newer build is out (internal test
  * included), offer to update right here. Play runs the update full screen and
- * restarts Rumi. "Not now" holds until the next launch.
+ * restarts Rumi. It asks Play on launch and every time Rumi comes back to the
+ * front (the app is rarely killed); "Not now" holds that version for 2 hours.
  */
 export function StoreUpdatePrompt() {
   const { t } = useLanguage();
   const lastCheck = useRef(0);
-  const declined = useRef<number | null>(null);
+  const declined = useRef<{ versionCode: number; at: number } | null>(null);
   const asking = useRef(false);
 
   useEffect(() => {
@@ -28,7 +28,7 @@ export function StoreUpdatePrompt() {
 
     async function check() {
       const now = Date.now();
-      if (asking.current || now - lastCheck.current < RECHECK_MS) return;
+      if (!shouldCheckUpdate(now, lastCheck.current, asking.current)) return;
       lastCheck.current = now;
       const info = await checkStoreUpdate();
       // An update already started and cut off: Play resumes it on its own screen.
@@ -36,7 +36,7 @@ export function StoreUpdatePrompt() {
         await startStoreUpdate();
         return;
       }
-      if (!info.available || declined.current === (info.versionCode ?? 0)) return;
+      if (!info.available || updateSnoozed(declined.current, info.versionCode ?? 0, Date.now())) return;
       asking.current = true;
       appAlert(
         t('update.title'),
@@ -46,7 +46,7 @@ export function StoreUpdatePrompt() {
             text: t('update.later'),
             style: 'cancel',
             onPress: () => {
-              declined.current = info.versionCode ?? 0;
+              declined.current = { versionCode: info.versionCode ?? 0, at: Date.now() };
               asking.current = false;
             },
           },
