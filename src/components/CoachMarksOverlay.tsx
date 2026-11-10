@@ -13,19 +13,28 @@ import type { TranslationKey } from '@/src/i18n/translations';
 import { palette, radii } from '@/src/theme/colors';
 
 type Step = {
-  id: 'privacy' | 'money' | 'glance' | 'tabs';
+  id: 'privacy' | 'money' | 'glance' | 'tabs' | 'settings';
   title: TranslationKey;
   body: TranslationKey;
+  /** How long the mark stays before moving on by itself. */
+  ms?: number;
 };
 
-// Two marks: where to log, and where everything else is. The eye explains
-// itself and Home's ⓘ legend covers "available vs. this month".
+// Three marks: where to log, where everything else is, and where Settings
+// and the security facts live. The eye explains itself and Home's ⓘ legend
+// covers "available vs. this month".
 const STEPS: Step[] = [
   { id: 'glance', title: 'coach.glanceTitle', body: 'coach.glanceBody' },
   { id: 'tabs', title: 'coach.tabsTitle', body: 'coach.tabsBody' },
+  // Longer text (what is protected and what is not), so it stays longer.
+  { id: 'settings', title: 'coach.settingsTitle', body: 'coach.settingsBody', ms: 10000 },
 ];
 
 const STEP_MS = 4200;
+/** Home's profile button (opens Settings): size and distance from the header top. */
+const AVATAR_SIZE = 36;
+const AVATAR_TOP = 8;
+const GUTTER = 20;
 const FAB_SIZE = 52;
 /** Room between the spotlight ring and Home's + button. */
 const RING = 8;
@@ -62,7 +71,7 @@ export function CoachMarksOverlay() {
 
   useEffect(() => {
     if (!visible) return;
-    const timer = setTimeout(goNext, STEP_MS);
+    const timer = setTimeout(goNext, STEPS[step]?.ms ?? STEP_MS);
     return () => clearTimeout(timer);
     // Restart the timer whenever the step changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -76,6 +85,9 @@ export function CoachMarksOverlay() {
   // Home's + floats above the tab bar, bottom right.
   const addBottom = tabBarHeight(insets.bottom) + ADD_FAB_OFFSET;
   const addSpot = ADD_FAB_SIZE + RING * 2;
+  // Home's profile button sits top right in the header.
+  const avatarSpot = AVATAR_SIZE + RING * 2;
+  const avatarTop = insets.top + AVATAR_TOP;
 
   return (
     <AppModal visible transparent animationType="fade" statusBarTranslucent>
@@ -140,10 +152,26 @@ export function CoachMarksOverlay() {
           />
         ) : null}
 
+        {current.id === 'settings' ? (
+          <View
+            pointerEvents="none"
+            style={[
+              styles.spot,
+              {
+                width: avatarSpot,
+                height: avatarSpot,
+                borderRadius: avatarSpot / 2,
+                right: GUTTER - RING,
+                top: avatarTop - RING,
+              },
+            ]}
+          />
+        ) : null}
+
         <Animated.View
           key={current.id}
           entering={
-            current.id === 'tabs'
+            current.id === 'tabs' || current.id === 'settings'
               ? FadeInUp.springify()
               : FadeInDown.springify()
           }
@@ -157,6 +185,12 @@ export function CoachMarksOverlay() {
               bottom: addBottom + ADD_FAB_SIZE + RING + 18,
             },
             current.id === 'tabs' && { left: 18, right: 18, bottom: tabTop + 86 },
+            current.id === 'settings' && {
+              right: CARD_SIDE,
+              left: CARD_SIDE,
+              maxWidth: undefined,
+              top: avatarTop + AVATAR_SIZE + RING + 14,
+            },
           ]}>
           <View
             style={[
@@ -164,6 +198,7 @@ export function CoachMarksOverlay() {
               current.id === 'privacy' && styles.cardLeft,
               current.id === 'money' && styles.cardCenter,
               current.id === 'glance' && styles.cardRight,
+              current.id === 'settings' && styles.cardRight,
             ]}>
             <Text style={styles.kicker}>
               {t('coach.step', { current: step + 1, total: STEPS.length })}
@@ -179,6 +214,11 @@ export function CoachMarksOverlay() {
                   right: ADD_FAB_OFFSET + ADD_FAB_SIZE / 2 - CARD_SIDE - 6,
                 },
                 current.id === 'tabs' && styles.arrowCenter,
+                current.id === 'settings' && {
+                  top: -6,
+                  bottom: undefined,
+                  right: GUTTER + AVATAR_SIZE / 2 - CARD_SIDE - 6,
+                },
               ]}
             />
           </View>
@@ -186,7 +226,12 @@ export function CoachMarksOverlay() {
 
         <Animated.View
           entering={FadeIn.duration(220)}
-          style={[styles.footer, { top: insets.top + 10 }]}
+          style={[
+            styles.footer,
+            current.id === 'settings'
+              ? { bottom: Math.max(insets.bottom, 12) + 16 }
+              : { top: insets.top + 10 },
+          ]}
           pointerEvents="box-none">
           <Pressable
             onPress={(e) => {

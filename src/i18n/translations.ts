@@ -1067,6 +1067,9 @@ export const translations = {
     'coach.tabsTitle': 'The rest lives down here',
     'coach.tabsBody':
       'Activity to fix entries, Plan for categories, Wealth for accounts, Insights to ask Rumi. Lost? Tap ?.',
+    'coach.settingsTitle': 'Settings and your security',
+    'coach.settingsBody':
+      "Your data is stored encrypted on this phone only: no account, no cloud. In Settings (your initial, up here) you turn on fingerprint lock and see your copies. Heads up: if you delete the app or lose your phone without a backup saved elsewhere, it can't be recovered.",
 
     'guide.menu': 'How to use',
     'guide.openA11y': 'How to use Rumi',
@@ -2459,6 +2462,9 @@ export const translations = {
     'coach.tabsTitle': 'El resto está abajo',
     'coach.tabsBody':
       'Actividad para corregir, Plan para categorías, Patrimonio para cuentas, Análisis para preguntarle a Rumi. ¿Perdido? Toca ?.',
+    'coach.settingsTitle': 'Ajustes y tu seguridad',
+    'coach.settingsBody':
+      'Tus datos se guardan cifrados solo en este teléfono: sin cuenta y sin nube. En Ajustes (tu inicial, aquí arriba) activas el bloqueo con huella y ves tus copias. Ojo: si borras la app o pierdes el teléfono sin un respaldo guardado afuera, no se pueden recuperar.',
 
     'guide.menu': 'Cómo usar',
     'guide.openA11y': 'Cómo usar Rumi',

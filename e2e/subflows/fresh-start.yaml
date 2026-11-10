@@ -24,6 +24,8 @@ appId: com.sotico91.rumi
 - inputText: "1000000"
 - tapOn: "PASO 4 DE 4"
 - tapOn: "Listo, vamos"
+# The first-launch tips cover Home for about 18 s (the last one, Settings and
+# security, stays 10 s) and close on their own.
 - extendedWaitUntil:
     visible: "Inicio"
-    timeout: 10000
+    timeout: 25000
