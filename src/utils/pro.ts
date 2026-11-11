@@ -13,6 +13,8 @@ export const FREE_ASKS_PER_MONTH = 5;
 export const FREE_BUDGETS = 3;
 /** Subcategory reminders a free user can keep. Debt due-date reminders are always free. */
 export const FREE_REMINDERS = 3;
+/** Savings goals a free user can keep. */
+export const FREE_GOALS = 1;
 
 /**
  * Days of free Pro a founder gets, counted from the first launch of a build
@@ -25,7 +27,14 @@ export const FOUNDER_DAYS = 90;
 export const PRO_ENTITLEMENT = 'pro';
 
 /** `debtPlan`, `afford` and `export` (Excel, CSV, JSON backup) are Pro only. */
-export type ProFeature = 'ask' | 'budgets' | 'reminders' | 'debtPlan' | 'afford' | 'export';
+export type ProFeature =
+  | 'ask'
+  | 'budgets'
+  | 'reminders'
+  | 'goals'
+  | 'debtPlan'
+  | 'afford'
+  | 'export';
 
 /** What is saved on the phone about Pro. */
 export type ProState = {
@@ -140,6 +149,7 @@ export function userBudgetCount(
 export function freeAllows(feature: ProFeature, existing: number): boolean {
   if (feature === 'budgets') return existing < FREE_BUDGETS;
   if (feature === 'reminders') return existing < FREE_REMINDERS;
+  if (feature === 'goals') return existing < FREE_GOALS;
   if (feature === 'debtPlan' || feature === 'afford' || feature === 'export') return false;
   return existing < FREE_ASKS_PER_MONTH;
 }

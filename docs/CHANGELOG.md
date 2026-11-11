@@ -10,6 +10,13 @@ El detalle de cada cambio está en `git log`.
 - **Comentarios de código en inglés:** todos los comentarios del código van en inglés.
   Los textos que ve el usuario van en `src/i18n/translations.ts` (es/en).
 
+## 2026-11-11
+
+- **Versión 1.10.0, a partir de la encuesta a testers** (8 respuestas, NPS +75):
+  - **Metas de ahorro en Patrimonio:** nombre, monto, fecha opcional (3, 6, 12 o 24 meses) y bolsillo (uno nuevo con el nombre de la meta o uno existente). Lo ahorrado es el saldo de ese bolsillo, así que la meta siempre cuadra con la plata real; "Aportar" abre Mover con el bolsillo como destino y el origen con más saldo. Con fecha, dice "Aparta $X al mes para llegar en <mes>" (redondeado al mil en COP) y avisa si la fecha ya pasó. Plan gratis: 1 meta; Pro: ilimitadas (`ProFeature` `goals`, `FREE_GOALS`). Se guardan en los ajustes (`savingsGoals`), así que entran en respaldos y copias. Lógica en `src/utils/savingsGoals.ts`.
+  - **"Fechas" en Actividad:** una cuarta opción junto a Hoy / Esta semana / Este mes. Abre un calendario (toca el primer día y luego el último; no deja elegir días futuros) con atajos de 7 días, 30 días y este año; la primera vez arranca en los últimos 30 días. El resumen muestra ingresos, gastos, balance y gasto por categoría de esas fechas. `src/utils/dateRange.ts`, `DateRangeSheet`.
+  - **El tip "Ajustes y tu seguridad" llega a quien ya tenía Rumi:** se muestra una vez, solo ese paso, a instalaciones de antes de la 1.9.0 que no tienen el bloqueo activado (un tester pidió "poner contraseña" sin saber que existe). Botón "Entendido". Bandera `securityTipDone` en los ajustes; restaurar un respaldo viejo no la borra.
+
 ## 2026-11-10
 
 - **Versión 1.9.0. Pro de fundador por 90 días:** quien ya usaba Rumi cuando se prendió Pro ya no lo tiene gratis para siempre, sino por 90 días (`FOUNDER_DAYS` en `src/utils/pro.ts`). Los fundadores de antes empiezan a contar desde que abren la 1.9.0. La pantalla Pro dice hasta qué fecha lo tienen y, cuando termina, "Tu Pro de fundador terminó" encima de los planes; vuelven los límites gratis y nada de lo configurado se quita. Al pie de la pantalla Pro sale el "ID de soporte" (el id de RevenueCat, se copia manteniendo presionado) para encontrar un teléfono en RevenueCat y darle Pro de por vida, como al del dueño. La idea: que los testers de la prueba cerrada usen Pro, se acostumbren y luego se suscriban.

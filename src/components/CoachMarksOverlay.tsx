@@ -30,6 +30,9 @@ const STEPS: Step[] = [
   { id: 'settings', title: 'coach.settingsTitle', body: 'coach.settingsBody', ms: 10000 },
 ];
 
+/** Installs from before the security mark existed see only that mark, once. */
+const SECURITY_ONLY: Step[] = STEPS.filter((s) => s.id === 'settings');
+
 const STEP_MS = 4200;
 /** Home's profile button (opens Settings): size and distance from the header top. */
 const AVATAR_SIZE = 36;
@@ -48,9 +51,14 @@ export function CoachMarksOverlay() {
   const [step, setStep] = useState(0);
   const [dismissing, setDismissing] = useState(false);
 
+  const securityOnly =
+    !coachMarksPending && !settings.securityTipDone && !settings.appLockEnabled;
+  const steps = coachMarksPending ? STEPS : SECURITY_ONLY;
+  const single = steps.length === 1;
+
   const visible =
     ready &&
-    coachMarksPending &&
+    (coachMarksPending || securityOnly) &&
     settings.onboardingDone &&
     !!settings.userName.trim() &&
     !dismissing;
@@ -62,7 +70,7 @@ export function CoachMarksOverlay() {
   }
 
   function goNext() {
-    if (step >= STEPS.length - 1) {
+    if (step >= steps.length - 1) {
       void finish();
       return;
     }
@@ -71,7 +79,7 @@ export function CoachMarksOverlay() {
 
   useEffect(() => {
     if (!visible) return;
-    const timer = setTimeout(goNext, STEPS[step]?.ms ?? STEP_MS);
+    const timer = setTimeout(goNext, steps[step]?.ms ?? STEP_MS);
     return () => clearTimeout(timer);
     // Restart the timer whenever the step changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -79,7 +87,8 @@ export function CoachMarksOverlay() {
 
   if (!visible) return null;
 
-  const current = STEPS[step];
+  const current = steps[step];
+  if (!current) return null;
   const fabBottom = Math.max(insets.bottom, 12) + 78;
   const tabTop = Math.max(insets.bottom, 12) + 18;
   // Home's + floats above the tab bar, bottom right.
@@ -200,9 +209,11 @@ export function CoachMarksOverlay() {
               current.id === 'glance' && styles.cardRight,
               current.id === 'settings' && styles.cardRight,
             ]}>
-            <Text style={styles.kicker}>
-              {t('coach.step', { current: step + 1, total: STEPS.length })}
-            </Text>
+            {single ? null : (
+              <Text style={styles.kicker}>
+                {t('coach.step', { current: step + 1, total: steps.length })}
+              </Text>
+            )}
             <Text style={styles.title}>{t(current.title)}</Text>
             <Text style={styles.body}>{t(current.body)}</Text>
             <View
@@ -240,9 +251,9 @@ export function CoachMarksOverlay() {
             }}
             hitSlop={10}
             style={styles.skipBtn}>
-            <Text style={styles.skipText}>{t('coach.skip')}</Text>
+            <Text style={styles.skipText}>{t(single ? 'coach.gotIt' : 'coach.skip')}</Text>
           </Pressable>
-          <Text style={styles.hint}>{t('coach.tapHint')}</Text>
+          {single ? null : <Text style={styles.hint}>{t('coach.tapHint')}</Text>}
         </Animated.View>
       </Pressable>
     </AppModal>

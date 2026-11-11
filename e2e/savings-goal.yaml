@@ -1,0 +1,56 @@
+# A savings goal in Wealth: a new pocket named after it, the monthly amount to
+# reach it by the chosen date, and "Aportar" opening Move into that pocket.
+# The goal math is covered by jest (src/utils/__tests__/savingsGoals.test.ts).
+appId: com.sotico91.rumi
+---
+- runFlow: subflows/fresh-start.yaml
+- tapOn: "Patrimonio"
+- scrollUntilVisible:
+    element:
+      id: "goal-add"
+    direction: DOWN
+- tapOn:
+    id: "goal-add"
+- tapOn:
+    id: "goal-name"
+- inputText: "Viaje"
+# "Siguiente" on the keyboard moves to the amount.
+- pressKey: Enter
+- inputText: "600000"
+- tapOn: "¿Para cuándo?"
+- tapOn: "En 6 meses"
+- assertVisible: "Bolsillo nuevo: Viaje"
+- scrollUntilVisible:
+    element:
+      id: "goal-save"
+    direction: DOWN
+- tapOn:
+    id: "goal-save"
+- assertVisible: "Aparta \\$100\\.000 al mes para llegar en .*"
+- assertVisible: ".*\\$0 de \\$600\\.000.*"
+- takeScreenshot: goal-card
+- scrollUntilVisible:
+    element:
+      id: "goal-contribute"
+    direction: DOWN
+- tapOn:
+    id: "goal-contribute"
+- tapOn:
+    id: "flow-amount"
+- inputText: "150000"
+- tapOn: "¿De cuánto fue?"
+- tapOn: "Continuar"
+- assertVisible: ".*Viaje.*"
+- takeScreenshot: goal-move
+- tapOn: "Continuar"
+- tapOn: "Sí, guardar"
+- extendedWaitUntil:
+    visible: "Inicio"
+    timeout: 10000
+- tapOn: "Patrimonio"
+- scrollUntilVisible:
+    element:
+      text: ".*\\$150\\.000 de \\$600\\.000.*"
+    direction: DOWN
+- assertVisible: "Aparta \\$75\\.000 al mes para llegar en .*"
+- takeScreenshot: goal-after

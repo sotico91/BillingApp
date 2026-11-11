@@ -31,6 +31,8 @@ El simulador debe estar en **español**: los recorridos buscan los textos en esp
 | `one-tap` | El botón de un toque dice el concepto (Café · Alimentación); lo escrito reemplaza el monto y el campo vacío registra el último. |
 | `move-money` | Mover solo sale de cuentas con dinero, llega a Inversiones, y "Ver totales" muestra solo cuentas con dinero e inversiones aparte. |
 | `credit-draw` | Un crédito rotativo en Créditos y cuotas marcado "Sí, es rotativo" aparece como origen en Mover, solo deja llegar al Banco principal, y la deuda sube lo mismo que el banco. |
+| `date-range` | "Fechas" en Actividad abre el calendario; un atajo filtra los movimientos y el resumen muestra ingresos, gastos y balance de esas fechas. |
+| `savings-goal` | Una meta en Patrimonio crea su bolsillo, dice cuánto apartar al mes, "Aportar" abre Mover hacia ese bolsillo y el avance sube con el saldo. |
 | `dictate` | La barra "Díctaselo a Rumi" arriba en Agregar abre "Te escucho…", Cancelar la cierra sin llenar nada y sigue ahí en Ingreso. Lo que interpreta cada frase lo prueba jest (`dictation.test.ts`). |
 
 `subflows/` tiene pasos compartidos: `fresh-start` (datos limpios y onboarding con $1.000.000 en el banco) y `quick-spend` (registro rápido con monto y descripción).

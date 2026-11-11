@@ -11,7 +11,7 @@ import { usePro } from '@/src/hooks/usePro';
 import { useLanguage } from '@/src/i18n/LanguageContext';
 import type { TranslationKey } from '@/src/i18n/translations';
 import { colors, radius, space } from '@/src/theme';
-import { FREE_ASKS_PER_MONTH, FREE_BUDGETS, FREE_REMINDERS, annualSavingPercent, type ProFeature } from '@/src/utils/pro';
+import { FREE_ASKS_PER_MONTH, FREE_BUDGETS, FREE_GOALS, FREE_REMINDERS, annualSavingPercent, type ProFeature } from '@/src/utils/pro';
 
 const SITE = 'https://sotico91.github.io/RumiApp/';
 
@@ -19,6 +19,7 @@ const REASON: Record<ProFeature, TranslationKey> = {
   ask: 'pro.reasonAsk',
   budgets: 'pro.reasonBudgets',
   reminders: 'pro.reasonReminders',
+  goals: 'pro.reasonGoals',
   debtPlan: 'pro.reasonDebtPlan',
   afford: 'pro.reasonAfford',
   export: 'pro.reasonExport',
@@ -28,6 +29,7 @@ const BENEFITS: { icon: keyof typeof MaterialCommunityIcons.glyphMap; key: Trans
   { icon: 'chat-question-outline', key: 'pro.benefitAsk' },
   { icon: 'target', key: 'pro.benefitBudgets' },
   { icon: 'bell-ring-outline', key: 'pro.benefitReminders' },
+  { icon: 'piggy-bank-outline', key: 'pro.benefitGoals' },
   { icon: 'flag-checkered', key: 'pro.benefitDebtPlan' },
   { icon: 'scale-balance', key: 'pro.benefitAfford' },
   { icon: 'microsoft-excel', key: 'pro.benefitExport' },
@@ -113,6 +115,7 @@ export default function ProScreen() {
                 asks: FREE_ASKS_PER_MONTH,
                 budgets: FREE_BUDGETS,
                 reminders: FREE_REMINDERS,
+                goals: FREE_GOALS,
               })
             : t('pro.subtitle')}
         </AppText>

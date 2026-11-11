@@ -1,0 +1,40 @@
+# Activity's "Fechas": any span of days. The first tap opens the sheet on the
+# last 30 days; a preset or two taps on the calendar pick the span, and the
+# summary shows that span's income, spend and balance.
+# The picking rules are covered by jest (src/utils/__tests__/dateRange.test.ts).
+appId: com.sotico91.rumi
+---
+- runFlow: subflows/fresh-start.yaml
+- runFlow:
+    file: subflows/quick-spend.yaml
+    env:
+      AMOUNT: "12000"
+      NOTE: "almuerzo"
+- tapOn: "Guardar \\$12\\.000"
+- tapOn:
+    text: "Permitir"
+    optional: true
+- extendedWaitUntil:
+    visible: "Inicio"
+    timeout: 10000
+- tapOn: "Actividad"
+- tapOn:
+    id: "period-rango"
+- assertVisible: "Elegir fechas"
+- tapOn:
+    id: "range-last7"
+- assertNotVisible: "Elegir fechas"
+- assertVisible: ".*Cambiar fechas.*"
+- assertVisible: ".*Almuerzo.*12\\.000.*"
+- tapOn: ".*Resumen del periodo.*"
+- assertVisible: ".*Gastos.*"
+- takeScreenshot: range-summary
+# Reopen and pick just today with two taps on the same day.
+- tapOn:
+    id: "range-change"
+- assertVisible: "Elegir fechas"
+- assertVisible: "Ver .*"
+- takeScreenshot: range-sheet
+- tapOn:
+    id: "range-last30"
+- assertVisible: ".*Almuerzo.*12\\.000.*"

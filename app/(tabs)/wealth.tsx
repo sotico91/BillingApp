@@ -10,6 +10,7 @@ import { DebtCard } from '@/src/components/wealth/DebtCard';
 import { DebtForm } from '@/src/components/wealth/DebtForm';
 import { DebtPlanCard } from '@/src/components/wealth/DebtPlanCard';
 import { PocketsSection } from '@/src/components/wealth/PocketsSection';
+import { SavingsGoalsCard } from '@/src/components/wealth/SavingsGoalsCard';
 import { styles } from '@/src/components/wealth/styles';
 import { useDebtForm } from '@/src/components/wealth/useDebtForm';
 import { useFinance } from '@/src/hooks/useFinance';
@@ -117,6 +118,8 @@ export default function WealthScreen() {
         </>
       }>
       <PocketsSection />
+
+      <SavingsGoalsCard />
 
       <View>
         <CollapsibleSection

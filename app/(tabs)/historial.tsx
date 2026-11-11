@@ -11,7 +11,9 @@ import { EditTransactionModal } from '@/src/components/EditTransactionModal';
 import { EmptyState } from '@/src/components/EmptyState';
 import { ExpenseRow } from '@/src/components/ExpenseRow';
 import { MoneyText } from '@/src/components/MoneyText';
-import { PeriodToggle } from '@/src/components/PeriodToggle';
+import { PeriodToggle, type ViewPeriod } from '@/src/components/PeriodToggle';
+import { DateRangeSheet } from '@/src/components/DateRangeSheet';
+import { formatDayRange, presetRange, rangeBounds, type DayRange } from '@/src/utils/dateRange';
 import { ConceptIcon } from '@/src/components/ConceptIcon';
 import { categoryVisual } from '@/src/data/spendConcepts';
 import { useFinance } from '@/src/hooks/useFinance';
@@ -20,7 +22,7 @@ import { useSettings } from '@/src/hooks/useSettings';
 import { useLanguage } from '@/src/i18n/LanguageContext';
 import type { TranslationKey } from '@/src/i18n/translations';
 import { palette, radii } from '@/src/theme/colors';
-import type { Period, Transaction } from '@/src/types/finance';
+import type { Transaction } from '@/src/types/finance';
 import { isPocketMove } from '@/src/types/finance';
 import { categoryLabel } from '@/src/utils/categoryLabel';
 import { closedDebts } from '@/src/utils/debts';
@@ -44,6 +46,7 @@ export default function HistorialScreen() {
   const {
     transactionsForPeriod,
     transactionsForMonth,
+    transactionsForRange,
     totalForPeriod,
     removeTransaction,
     restoreTransaction,
@@ -52,7 +55,12 @@ export default function HistorialScreen() {
   } = useFinance();
 
   const now = new Date();
-  const [period, setPeriod] = useState<Period>('mes');
+  const [period, setPeriod] = useState<ViewPeriod>('mes');
+  // 'rango': the days picked in the sheet (both ends included).
+  const [range, setRange] = useState<DayRange | null>(null);
+  const [rangeOpen, setRangeOpen] = useState(false);
+  /** Month and picked dates show income, spend and balance; today / this week only spend. */
+  const fullStats = period === 'mes' || period === 'rango';
   const [monthCursor, setMonthCursor] = useState(() => budgetMonthOf(now));
   const [editing, setEditing] = useState<Transaction | null>(null);
   const [summaryOpen, setSummaryOpen] = useState(false);
@@ -85,8 +93,13 @@ export default function HistorialScreen() {
         'mine'
       );
     }
+    if (period === 'rango') {
+      if (!range) return [];
+      const b = rangeBounds(range);
+      return transactionsForRange(b.from, b.to, 'mine');
+    }
     return transactionsForPeriod(period, 'mine');
-  }, [period, monthCursor, transactionsForMonth, transactionsForPeriod]);
+  }, [period, monthCursor, range, transactionsForMonth, transactionsForPeriod, transactionsForRange]);
 
   const totalPages = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages - 1);
@@ -97,7 +110,7 @@ export default function HistorialScreen() {
 
   useEffect(() => {
     setPage(0);
-  }, [period, monthCursor.year, monthCursor.monthIndex]);
+  }, [period, monthCursor.year, monthCursor.monthIndex, range]);
 
   useEffect(() => {
     if (page > totalPages - 1) setPage(Math.max(0, totalPages - 1));
@@ -105,11 +118,13 @@ export default function HistorialScreen() {
 
   // Match Home savings: expenses plus loan installments (card payments excluded).
   const expenseTotal =
-    period === 'mes' ? sumSpendOut(items, debts) : totalForPeriod(period, 'expense', 'mine');
+    period === 'mes' || period === 'rango'
+      ? sumSpendOut(items, debts)
+      : totalForPeriod(period, 'expense', 'mine');
   const incomeTotal = sumByType(items, 'income');
   const byConcept = useMemo(
-    () => (period === 'mes' ? spendByConcept(items, settings.spendConcepts ?? [], debts) : []),
-    [period, items, settings.spendConcepts, debts]
+    () => (fullStats ? spendByConcept(items, settings.spendConcepts ?? [], debts) : []),
+    [fullStats, items, settings.spendConcepts, debts]
   );
   const monthBalance = incomeTotal - expenseTotal;
 
@@ -124,7 +139,9 @@ export default function HistorialScreen() {
   const periodLabel =
     period === 'mes'
       ? monthName.charAt(0).toUpperCase() + monthName.slice(1)
-      : t(`period.${period}` as TranslationKey);
+      : period === 'rango' && range
+        ? formatDayRange(range, language)
+        : t(`period.${period}` as TranslationKey);
 
   /** Deletes at once and offers Undo on the toast, instead of asking first. */
   function deleteWithUndo(tx: Transaction) {
@@ -182,12 +199,30 @@ export default function HistorialScreen() {
           <PeriodToggle
             value={period}
             onChange={(next) => {
+              if (next === 'rango') {
+                // First time: start from the last 30 days so the list is never blank.
+                if (!range) setRange(presetRange('last30'));
+                setPeriod('rango');
+                setRangeOpen(true);
+                return;
+              }
               setPeriod(next);
               if (next === 'mes') {
                 setMonthCursor(budgetMonthOf(now));
               }
             }}
           />
+          {period === 'rango' && range ? (
+            <Pressable
+              testID="range-change"
+              accessibilityRole="button"
+              accessibilityLabel={`${periodLabel}. ${t('range.change')}`}
+              onPress={() => setRangeOpen(true)}
+              style={({ pressed }) => [styles.rangeBar, pressed && { opacity: 0.7 }]}>
+              <Text style={styles.monthLabel}>{periodLabel}</Text>
+              <Text style={styles.rangeChange}>{t('range.change')}</Text>
+            </Pressable>
+          ) : null}
           {period === 'mes' ? (
             <View style={styles.monthNav}>
               <Pressable accessibilityRole="button" onPress={goPrevMonth} style={styles.navBtn}>
@@ -219,6 +254,15 @@ export default function HistorialScreen() {
       }
       overlay={
         <>
+          <DateRangeSheet
+            visible={rangeOpen}
+            value={range}
+            onClose={() => setRangeOpen(false)}
+            onApply={(next) => {
+              setRange(next);
+              setRangeOpen(false);
+            }}
+          />
           <EditTransactionModal
             visible={!!editing}
             transaction={editing}
@@ -245,7 +289,7 @@ export default function HistorialScreen() {
             </Text>
             <MoneyText style={styles.summaryAmount}>{format(expenseTotal)}</MoneyText>
 
-            {period === 'mes' ? (
+            {fullStats ? (
               <View style={styles.monthStats}>
                 <View style={styles.stat}>
                   <Text style={styles.statLabel}>{t('history.monthIncome')}</Text>
@@ -260,7 +304,9 @@ export default function HistorialScreen() {
                   </MoneyText>
                 </View>
                 <View style={styles.stat}>
-                  <Text style={styles.statLabel}>{t('history.monthBalance')}</Text>
+                  <Text style={styles.statLabel}>
+                    {t(period === 'rango' ? 'history.rangeBalance' : 'history.monthBalance')}
+                  </Text>
                   <MoneyText
                     style={[
                       styles.statValue,
@@ -318,10 +364,12 @@ export default function HistorialScreen() {
               icon="receipt-text-outline"
               title={t('history.emptyTitle')}
               body={
-                period === 'mes' && !isCurrentMonth ? t('history.emptyPast') : t('history.empty')
+                period === 'rango' || (period === 'mes' && !isCurrentMonth)
+                  ? t('history.emptyPast')
+                  : t('history.empty')
               }
               action={
-                period === 'mes' && !isCurrentMonth
+                period === 'rango' || (period === 'mes' && !isCurrentMonth)
                   ? undefined
                   : {
                       label: t('history.emptyCta'),
@@ -475,6 +523,19 @@ const styles = StyleSheet.create({
     color: palette.brandMuted,
   },
   monthTitle: { flex: 1, alignItems: 'center' },
+  rangeBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+    paddingVertical: 6,
+  },
+  rangeChange: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 14,
+    color: colors.text.highlight,
+    textDecorationLine: 'underline',
+  },
   monthRange: {
     marginTop: 2,
     fontFamily: 'DMSans_400Regular',

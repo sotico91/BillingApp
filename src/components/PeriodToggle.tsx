@@ -6,12 +6,15 @@ import type { TranslationKey } from '@/src/i18n/translations';
 import { palette, radii } from '@/src/theme/colors';
 import type { Period } from '@/src/types/expense';
 
+/** Activity adds 'rango': any span of days, picked in a sheet. */
+export type ViewPeriod = Period | 'rango';
+
 type Props = {
-  value: Period;
-  onChange: (period: Period) => void;
+  value: ViewPeriod;
+  onChange: (period: ViewPeriod) => void;
 };
 
-const PERIODS: Period[] = ['hoy', 'semana', 'mes'];
+const PERIODS: ViewPeriod[] = ['hoy', 'semana', 'mes', 'rango'];
 
 export function PeriodToggle({ value, onChange }: Props) {
   const { t } = useLanguage();
@@ -23,9 +26,10 @@ export function PeriodToggle({ value, onChange }: Props) {
         return (
           <SelectPressable
             key={period}
+            testID={`period-${period}`}
             onPress={() => onChange(period)}
             style={[styles.item, selected && styles.itemSelected]}>
-            <Text style={[styles.text, selected && styles.textSelected]}>
+            <Text numberOfLines={1} style={[styles.text, selected && styles.textSelected]}>
               {t(`period.${period}` as TranslationKey)}
             </Text>
           </SelectPressable>

@@ -29,7 +29,9 @@ Lo que hace que Rumi ahorre trabajo y explique mejor el dinero.
 - [x] **Mes desde el día de pago y chip de fecha** (1.7.0).
 - [x] **Pro: plan para salir de deudas y "¿me alcanza?" a futuro** (1.7.0).
 - [x] **Pro: exportaciones (1.8.0).** Excel por año (SheetJS, sin módulo nativo): hoja "Resumen" con los 12 meses y una hoja por mes; si hay varios años, primero "¿De qué año?". Exportar CSV y exportar respaldo JSON pasan a Pro (`ProFeature` `export`); restaurar un respaldo y las copias automáticas siguen gratis. Detalle en docs/PRO.md.
-- [ ] **Pro, siguientes:** metas de ahorro con aporte sugerido; "Tu mes en Rumi" (resumen al cerrar el mes, compartible); resumen para la declaración de renta (patrimonio y deudas al 31 de diciembre, ingresos del año). Después, captura desde notificaciones del banco (Fase 4).
+- [x] **Metas de ahorro (1.10.0):** cada meta usa un bolsillo de Patrimonio y avanza con su saldo; "Aportar" abre Mover hacia ese bolsillo; con fecha, dice cuánto apartar al mes. 1 meta gratis, ilimitadas con Pro. La pidieron 6 de 8 testers en la encuesta del 2026-11-10.
+- [x] **Filtro por fechas en Actividad (1.10.0):** "Fechas" junto a Hoy / Esta semana / Este mes abre un calendario (primer día, último día) y atajos (7 días, 30 días, este año).
+- [ ] **Pro, siguientes:** "Tu mes en Rumi" (resumen al cerrar el mes, compartible); resumen para la declaración de renta (patrimonio y deudas al 31 de diciembre, ingresos del año). Después, captura desde notificaciones del banco (Fase 4).
 
 ## Fase 3 — Publicar
 

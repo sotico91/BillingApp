@@ -1,3 +1,5 @@
+import type { SavingsGoal } from '@/src/utils/savingsGoals';
+
 export type Currency = 'COP' | 'USD';
 
 export type SpendSub = {
@@ -47,6 +49,13 @@ export type UserSettings = {
   onboardingDone: boolean;
   /** First-launch coach marks over the main controls. */
   coachMarksDone: boolean;
+  /**
+   * The "Settings and your security" mark was seen. Installs from before 1.9.1
+   * never saw it, so they get it once on its own (unless the lock is already on).
+   */
+  securityTipDone?: boolean;
+  /** Savings goals, each tied to a money pocket (see src/utils/savingsGoals.ts). */
+  savingsGoals?: SavingsGoal[];
   /** Require Face ID / fingerprint / device PIN to open the app. */
   appLockEnabled: boolean;
   /** Stable id for this install / person. Used to attribute expenses. */

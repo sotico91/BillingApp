@@ -49,6 +49,7 @@ import { useCalendarClock } from '@/src/hooks/useCalendarClock';
 import {
   antExpenseBreakdown,
   detectRecurring,
+  filterBetween,
   filterByCalendarMonth,
   filterByPeriod,
   percentOfBase,
@@ -207,6 +208,8 @@ type FinanceContextValue = {
   updateBudget: (categoryId: string, limit: number) => Promise<void>;
   removeBudget: (categoryId: string) => Promise<void>;
   transactionsForPeriod: (period: Period, scope?: PersonScope) => Transaction[];
+  /** Movements in [from, to), for Activity's picked dates. */
+  transactionsForRange: (from: Date, to: Date, scope?: PersonScope) => Transaction[];
   transactionsForMonth: (
     year: number,
     monthIndex: number,
@@ -958,6 +961,12 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
     [scopedTransactions, now, monthKey]
   );
 
+  const transactionsForRange = useCallback(
+    (from: Date, to: Date, scope: PersonScope = 'mine') =>
+      filterBetween(scopedTransactions(scope), from, to),
+    [scopedTransactions]
+  );
+
   const transactionsForMonth = useCallback(
     (year: number, monthIndex: number, scope: PersonScope = 'mine') =>
       filterByCalendarMonth(scopedTransactions(scope), year, monthIndex),
@@ -1138,6 +1147,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       removeBudget,
       transactionsForPeriod,
       transactionsForMonth,
+      transactionsForRange,
       totalForPeriod,
       insightsForPeriod,
       antForPeriod,
@@ -1188,6 +1198,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       removeBudget,
       transactionsForPeriod,
       transactionsForMonth,
+      transactionsForRange,
       totalForPeriod,
       insightsForPeriod,
       antForPeriod,

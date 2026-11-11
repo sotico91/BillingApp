@@ -35,6 +35,8 @@ export default function AgregarScreen() {
     mode?: string;
     intent?: string;
     debtId?: string;
+    /** intent=move: the pocket to move money into (a savings goal's "Aportar"). */
+    toAccountId?: string;
   }>();
   const prefilledCategoryId =
     typeof params.categoryId === 'string' ? params.categoryId : undefined;
@@ -56,7 +58,19 @@ export default function AgregarScreen() {
         ? ('spend' as const)
         : params.intent === 'earn'
           ? ('earn' as const)
-          : undefined;
+          : params.intent === 'move'
+            ? ('move' as const)
+            : undefined;
+  // A goal's "Aportar": Move with its pocket as the destination, from the
+  // fullest other pocket, so the flow doesn't swap the destination away.
+  const [moveInto] = useState<DictatedMovement | undefined>(() => {
+    const to = typeof params.toAccountId === 'string' ? params.toAccountId : undefined;
+    if (payIntent !== 'move' || !to || !accounts.some((a) => a.id === to)) return undefined;
+    const from = accounts
+      .filter((a) => a.id !== to && a.type !== 'credit' && a.balance > 0)
+      .sort((a, b) => b.balance - a.balance)[0];
+    return { type: 'move', amount: null, note: '', daysAgo: 0, toAccountId: to, accountId: from?.id };
+  });
 
   // Spending is the most common entry, so "Add" opens the one-screen expense
   // form. Links that already know what they want (pay a debt, a reminder) skip it.
@@ -195,7 +209,7 @@ export default function AgregarScreen() {
             <FriendlyAddFlow
               key={`${guidedIntent ?? 'pick'}-${guidedAmount ?? ''}-${guidedDictation?.id ?? ''}`}
               initialAmount={guidedAmount}
-              dictated={guidedDictation?.movement}
+              dictated={guidedDictation?.movement ?? moveInto}
               header={dictationBar}
               onSaved={handleSaved}
               initialIntent={guidedIntent ?? payIntent}

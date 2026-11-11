@@ -9,6 +9,7 @@ Pro is a monthly or annual subscription sold through Google Play and the App Sto
 | Ask Rumi | 5 questions per calendar month | Unlimited |
 | Monthly limits (Plan) | 3 (a debt's installment limit doesn't count) | Unlimited |
 | Subcategory reminders | 3 (debt due-date reminders are always on) | Unlimited |
+| Savings goals (1.10.0): a goal tied to a pocket, progress bar and the monthly amount to reach it by a date | 1 | Unlimited |
 | Plan to get out of debt (how much sooner with an extra payment, interest saved, order) | Debt-free date with installments only | Yes |
 | "Can I afford it?" for a later month (put aside per month / fortnight vs usual surplus) | This month only | Yes |
 | Excel export (1.8.0): one `.xlsx` per year, a "Resumen" sheet with the 12 months side by side and one sheet per month (date, type, category, description, account, amount, month totals); asks which year when there is more than one | — | Yes |

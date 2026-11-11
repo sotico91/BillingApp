@@ -41,6 +41,7 @@ import { useLanguage } from '@/src/i18n/LanguageContext';
 import { appendUniqueDay, localDateKey } from '@/src/utils/habitPilot';
 import { antTipWeekKey } from '@/src/utils/antSpendTips';
 import { clampMonthStartDay, setMonthStartDay } from '@/src/utils/financeMath';
+import type { SavingsGoal } from '@/src/utils/savingsGoals';
 
 type SettingsContextValue = {
   settings: UserSettings;
@@ -58,6 +59,9 @@ type SettingsContextValue = {
   }) => Promise<void>;
   completeCoachMarks: () => Promise<void>;
   updateAppLock: (enabled: boolean) => Promise<void>;
+  /** Adds a goal, or replaces the one with the same id. */
+  saveSavingsGoal: (goal: SavingsGoal) => Promise<void>;
+  removeSavingsGoal: (id: string) => Promise<void>;
   /** Turns the due-date reminder of one debt on or off. */
   setDebtReminder: (debtId: string, on: boolean) => Promise<void>;
   /** Stops suggesting a reminder for this subcategory. */
@@ -244,11 +248,31 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
 
   const completeCoachMarks = useCallback(async () => {
     setCoachMarksPending(false);
-    if (settings.coachMarksDone) return;
-    const next: UserSettings = { ...settings, coachMarksDone: true };
+    if (settings.coachMarksDone && settings.securityTipDone) return;
+    const next: UserSettings = { ...settings, coachMarksDone: true, securityTipDone: true };
     setSettings(next);
     await saveSettings(next);
   }, [settings]);
+
+  const saveSavingsGoal = useCallback(
+    async (goal: SavingsGoal) => {
+      const list = settings.savingsGoals ?? [];
+      const exists = list.some((g) => g.id === goal.id);
+      const savingsGoals = exists
+        ? list.map((g) => (g.id === goal.id ? goal : g))
+        : [...list, goal];
+      await persist({ ...settings, savingsGoals });
+    },
+    [settings, persist]
+  );
+
+  const removeSavingsGoal = useCallback(
+    async (id: string) => {
+      const savingsGoals = (settings.savingsGoals ?? []).filter((g) => g.id !== id);
+      await persist({ ...settings, savingsGoals });
+    },
+    [settings, persist]
+  );
 
   const updateAppLock = useCallback(
     async (enabled: boolean) => {
@@ -599,6 +623,8 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         ...DEFAULT_SETTINGS,
         ...input.settings,
         onboardingDone: true,
+        // A backup from before 1.9.1 has no flag: don't show the security tip again if seen here.
+        securityTipDone: input.settings.securityTipDone || settings.securityTipDone,
         personId: input.settings.personId || settings.personId || DEFAULT_SETTINGS.personId,
       };
       setSettings(nextSettings);
@@ -608,7 +634,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         saveQuickTemplates(input.quickTemplates ?? []),
       ]);
     },
-    [settings.personId]
+    [settings.personId, settings.securityTipDone]
   );
 
   const updateHabitCue = useCallback(
@@ -682,6 +708,8 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       quickTemplates,
       completeOnboarding,
       completeCoachMarks,
+      saveSavingsGoal,
+      removeSavingsGoal,
       updateAppLock,
       setDebtReminder,
       dismissReminderSuggestion,
@@ -721,6 +749,8 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       quickTemplates,
       completeOnboarding,
       completeCoachMarks,
+      saveSavingsGoal,
+      removeSavingsGoal,
       updateAppLock,
       setDebtReminder,
       dismissReminderSuggestion,
