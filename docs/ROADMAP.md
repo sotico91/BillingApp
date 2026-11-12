@@ -13,6 +13,8 @@ Que lo que ya existe no se rompa al entregar y se sienta fluido.
   Se corren antes de cada entrega con `npm run e2e` (ver `E2E.md`). Hecho el 2026-10-23.
 - [ ] **Fluidez en Android real:** confirmar en el teléfono que Actividad y el cambio de pestañas ya no se traban (arreglo del 2026-10-23).
   Si sigue, perfilar en el teléfono antes de tocar más código.
+- [ ] **Cierre reportado en la encuesta:** un tester en Android marcó "la app se cerró o tuvo un error" y también se enredó con cuentas y mover plata. Se le escribió el 2026-11-12 para saber en qué pantalla pasó; reproducirlo antes de arreglar.
+- [ ] **Primer arranque más claro:** 2 de 9 testers se enredaron al configurar Rumi al principio. Preguntar qué parte (cuentas, día de pago, qué poner) antes de cambiar el onboarding.
 
 ## Fase 2 — Valor diario
 
@@ -22,6 +24,8 @@ Lo que hace que Rumi ahorre trabajo y explique mejor el dinero.
   - En Actividad, al tocar una categoría de "Gastado por categoría": sus últimos 6 meses como barras simples con el monto encima, el mes actual resaltado.
   - Una sola línea arriba: "Alimentación: $X este mes, 20% más que el promedio". Sin ejes complicados ni leyendas.
   - Antes de escribirla, cargar la guía de gráficas (skill `dataviz`).
+- [ ] **Comparar meses:** 4 de 9 testers pidieron más gráficas y comparación entre meses, y "entender el mes" fue lo peor calificado (4,3 de 5). Va junto con la gráfica de tendencia de arriba: este mes contra el anterior y contra el promedio, en Actividad o Análisis.
+- [ ] **Presupuesto por quincena:** 3 de 9 testers. Topes y "lo que te queda" por quincena (1–15 y 16–fin, o desde el día de pago), sobre lo que ya hace "Mi mes empieza el día".
 - [ ] **Gastos repetidos que se registran solos:** Netflix, arriendo o el plan del celular, el día que tocan, con confirmación de un toque.
   - Ya existe la detección (`predictMonthlySpends`, `suggestReminders`); falta convertirla en registros.
   - Sin notificaciones nuevas: usar las que ya existen.
@@ -29,9 +33,27 @@ Lo que hace que Rumi ahorre trabajo y explique mejor el dinero.
 - [x] **Mes desde el día de pago y chip de fecha** (1.7.0).
 - [x] **Pro: plan para salir de deudas y "¿me alcanza?" a futuro** (1.7.0).
 - [x] **Pro: exportaciones (1.8.0).** Excel por año (SheetJS, sin módulo nativo): hoja "Resumen" con los 12 meses y una hoja por mes; si hay varios años, primero "¿De qué año?". Exportar CSV y exportar respaldo JSON pasan a Pro (`ProFeature` `export`); restaurar un respaldo y las copias automáticas siguen gratis. Detalle en docs/PRO.md.
-- [x] **Metas de ahorro (1.10.0):** cada meta usa un bolsillo de Patrimonio y avanza con su saldo; "Aportar" abre Mover hacia ese bolsillo; con fecha, dice cuánto apartar al mes. 1 meta gratis, ilimitadas con Pro. La pidieron 6 de 8 testers en la encuesta del 2026-11-10.
+- [x] **Metas de ahorro (1.10.0):** cada meta usa un bolsillo de Patrimonio y avanza con su saldo; "Aportar" abre Mover hacia ese bolsillo; con fecha, dice cuánto apartar al mes. 1 meta gratis, ilimitadas con Pro. La pidieron 7 de 9 testers en la encuesta del 2026-11-10.
 - [x] **Filtro por fechas en Actividad (1.10.0):** "Fechas" junto a Hoy / Esta semana / Este mes abre un calendario (primer día, último día) y atajos (7 días, 30 días, este año).
 - [ ] **Pro, siguientes:** "Tu mes en Rumi" (resumen al cerrar el mes, compartible); resumen para la declaración de renta (patrimonio y deudas al 31 de diciembre, ingresos del año). Después, captura desde notificaciones del banco (Fase 4).
+
+### Encuesta a testers (2026-11-10/11, 9 respuestas)
+
+Google Form de la prueba cerrada (`marketing/encuesta/`). Les gustó 4,7/5; anotar un gasto 4,7; entender el mes 4,3. NPS +56 (6 promotores, 2 neutros, 1 detractor). Uso: 2 casi a diario, 5 varias veces por semana, 1 semanal, 1 pocas veces. Antes de Rumi: 6 usaban Excel o Sheets, 3 no llevaban sus gastos.
+
+| Pedido | Votos | Dónde quedó |
+|---|---|---|
+| Metas de ahorro | 7 | Hecho (1.10.0) |
+| Leer notificaciones del banco o Nequi | 4 | Fase 4 |
+| Más gráficas y comparar meses | 4 | Fase 2, "Comparar meses" |
+| Varios teléfonos o computador | 3 | Fase 4, sincronizar |
+| Compartir con pareja o familia | 3 | Fase 4, sincronizar |
+| Presupuesto por quincena | 3 | Fase 2 |
+| Contraseña al entrar | 1 | Ya existía el bloqueo; el tip de seguridad de 1.10.0 lo muestra |
+| Filtrar por rango de fechas | 1 | Hecho (1.10.0) |
+| Widget, varias monedas a la vez, más categorías por defecto | 1 c/u | Sin plan |
+
+Dónde se enredaron: configurar al principio 2, cuentas y mover plata 2, la app se cerró 1, elegir la categoría 1, registrar una deuda 1, Pregúntale no entendió 1, encontrar cada cosa 1. Precio y Pro: ver `PRO.md`.
 
 ## Fase 3 — Publicar
 

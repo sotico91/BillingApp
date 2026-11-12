@@ -32,6 +32,16 @@ The limits only stop adding a new limit, reminder or question; what was already 
 
 **Owner's phone, Pro for good:** the owner's install gets a lifetime promotional `pro` entitlement in RevenueCat (Customers → the customer → Grant promotional → Lifetime). The customer is found by the "ID de soporte" at the bottom of the Pro screen (1.9.0), which is the RevenueCat app user id. It is tied to the install, not the Google account: after a reinstall or a new phone, grant it again to the new id.
 
+## Tester survey (2026-11-10/11, 9 answers)
+
+From the closed-test Google Form (see `marketing/encuesta/`). Small sample, mostly friends and family, so read it as a direction, not a forecast.
+
+- **Would they pay without free Pro?** Annual plan: 4. Only if cheaper: 2. No: 3 (2 "the free version is enough", 1 "I don't pay for apps").
+- **Most they would pay a year:** COP 50.000–70.000: 3; 70.000–100.000: 1; 30.000–50.000: 1; under 30.000: 1; nothing: 3. The annual COP 69.900 sits at the top of the most common range.
+- **What would make them pay** (6 people who picked something): unlimited Ask Rumi 6, unlimited limits and reminders 6, exports 6, debt plan 4, "¿me alcanza?" 4, supporting the app 4.
+- **Decision:** keep COP 69.900 a year. To push conversions, try a launch discount on the annual plan (a Play offer) instead of lowering the base price. One answer asked for "free with ads"; ads are not planned.
+- **Asked for, could be Pro later:** month-to-month comparisons and charts (4), budget by fortnight (3). Reading bank or Nequi notifications (4) stays in Phase 4 of the roadmap.
+
 ## Code
 
 - `src/utils/pro.ts`: the free allowances and pure rules (tested in `src/utils/__tests__/pro.test.ts`).
