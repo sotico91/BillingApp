@@ -27,8 +27,11 @@ Signing: only the **EAS AAB** goes to Play. Turn on **Play App Signing** and let
 
 ## App Store Connect fields
 
+Everything to paste (listing es/en, keywords, subscription, privacy, review notes, submit config): `APP_STORE_LISTING.md`.
+
+
 - **Encryption:** the app encrypts its stored data with AES-256 (`expo-crypto`, key in the iOS Keychain) and uses HTTPS only through the system. That's standard encryption and not the app's main purpose, so it's exempt → answer **No** (the app sets `ITSAppUsesNonExemptEncryption = false`).
-- **App Privacy (nutrition labels):** “Data Not Collected”; no tracking. Everything stays on the device. Speech is turned into text by Apple's recognizer when the phone can't do it on the device; Rumi gets only the text and keeps nothing (privacy policy §3).
+- **App Privacy (nutrition labels):** since Rumi Pro, purchase history and the anonymous RevenueCat user id are collected (app functionality, not linked, no tracking); movements stay on the device. Exact answers in `APP_STORE_LISTING.md`. Speech is turned into text by Apple's recognizer when the phone can't do it on the device; Rumi gets only the text and keeps nothing (privacy policy §3).
 - **Age rating:** fill in the new questionnaire (no user-generated content, no ads, no gambling, no web access).
 - **iPad:** `supportsTablet` is off (2026-11-13, no iPad to test on), so no iPad screenshots are needed. iPads still run Rumi in iPhone mode. Turn it on only with iPad screenshots and a real iPad test.
 - **Review notes:** personal finance tracker; no login; data stays on the device; not a bank, lender or payment processor.
