@@ -132,7 +132,7 @@ expense,tracker,money,finance,savings,goals,debt,bills,reminders,wallet,personal
 
 ### Capturas
 
-iPhone 6.9" (1320×2868): `marketing/store/ios/` (es) y `marketing/store/ios-en/` (en), las 6. Sin iPad.
+App Store Connect pide primero el iPhone mediano (6,3"): `marketing/store/ios-6.3/` (es) y `marketing/store/ios-en-6.3/` (en), 1206×2622 JPG, las 6. Las de 6,9" (`ios/`, 1320×2868) no las acepta en esa casilla. Sin iPad.
 
 ## 4. Suscripción (Monetization → Subscriptions)
 
