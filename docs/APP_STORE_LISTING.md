@@ -13,6 +13,13 @@ Estado (2026-11-13): Apple Developer Program pagado como persona natural; activa
 3. **Small Business Program** (15 % de comisión en vez de 30 %): se pide aparte en https://developer.apple.com/app-store/small-business-program/ después de firmar el acuerdo. Empieza a regir desde la aprobación, así que conviene pedirlo antes de la primera venta.
 4. **Clave de la API de App Store Connect** (para subir builds sin contraseña): Users and Access → Integrations → App Store Connect API → **Generate API Key**, rol **App Manager**. Descarga el `.p8` (solo se descarga una vez) en `credentials/asc-api-key.p8` (está en `.gitignore`). Anota el **Key ID** y el **Issuer ID**.
 
+## Estado y API (2026-11-13)
+
+- App creada: Apple ID **6834433231**, bundle `com.sotico91.rumi`, SKU `rumi-ios`. Suscripciones: grupo **Rumi Pro** (22576991), `rumi_pro_monthly` (6834543169, COP 9.900 / US$1,99) y `rumi_pro_annual` (6834543413, COP 69.900 / US$14,99, 1 semana gratis), las dos `READY_TO_SUBMIT`, con la captura de revisión de `e2e/pro/screen.yaml`.
+- **Clave de la API de App Store Connect:** `credentials/asc-api-key.p8` (Key ID `A4SMWC32N9`, Issuer `0289bb86-99d4-4ed9-a9e5-139a808fcdd7`, rol Admin). Cliente mínimo: `node scripts/asc/asc.mjs GET /v1/apps`. Con ella se configuran suscripciones, precios y la versión sin entrar a la web.
+- **Una suscripción necesita precio en los 175 territorios** (aunque se venda en 18); con solo 18 se queda en `MISSING_METADATA`.
+- **Builds:** `npm run ios:testflight` (Xcode, equipo 3Q53N2B5XD). `BUILD_NUMBER=<n>` para fijar el número. EAS no pudo entrar a la cuenta de Apple el 2026-11-13.
+
 ## 1. Crear la app (Apps → + → New App)
 
 | Campo | Valor |

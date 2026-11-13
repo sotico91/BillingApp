@@ -1,0 +1,29 @@
+# Opens the Pro screen after a fresh onboarding, for the App Store review
+# screenshot of the subscriptions. Needs the same Debug build + Test Store key
+# as limits.yaml. Run: E2E_FLOW=pro/screen npm run e2e (or maestro test).
+appId: com.sotico91.rumi
+---
+- runFlow: ../subflows/fresh-start.yaml
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "Open debugger to view warnings."
+    commands:
+      - tapOn:
+          point: "92%,93%"
+- openLink: "rumi:///pro"
+# iOS asks "¿Abrir en Rumi?" for a link opened from outside the app.
+- tapOn:
+    text: "Abrir"
+    optional: true
+- runFlow:
+    when:
+      visible: "Open debugger to view warnings."
+    commands:
+      - tapOn:
+          point: "92%,93%"
+- extendedWaitUntil:
+    visible: ".*Anual.*"
+    timeout: 20000
+- waitForAnimationToEnd
+- takeScreenshot: pro-screen
