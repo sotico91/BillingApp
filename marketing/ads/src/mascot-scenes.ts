@@ -32,6 +32,11 @@ export type SceneKind =
   | 'goal'
   | 'streak'
   | 'comment'
+  | 'goalForm'
+  | 'goalPlan'
+  | 'goalAdd'
+  | 'goalDone'
+  | 'goalPro'
   | 'end';
 
 /** `chat`: the question and Rumi's answer (copy the app's real answer text). `bars`: limits for `limit`. */
@@ -353,6 +358,44 @@ export const retoScenes: Scene[] = [
   { kind: 'end', title: 'Rumi', say: 'Rumi. ¿Te le mides? Empieza el primero de enero.' },
 ];
 
+// "Metas de ahorro": the real flow in Patrimonio (src/components/wealth/SavingsGoalsCard.tsx):
+// + Meta → what for, how much, by when (no date, 3, 6, 12, 24 months) and the pocket → the card says
+// how much to put aside a month → Aportar opens Mover into the pocket → "¡Meta cumplida! 🎉".
+// The first goal is free; Pro has no limit.
+export const metasScenes: Scene[] = [
+  {
+    kind: 'hello',
+    title: '¿Para qué estás ahorrando?',
+    say: '¿Un viaje, un celular nuevo, o un fondo para emergencias? Te ayudo a llegar.',
+  },
+  {
+    kind: 'goalForm',
+    title: 'Crea tu meta',
+    say: 'En Patrimonio, toca «más Meta». Dime para qué ahorras, cuánto necesitas y para cuándo. Y yo le creo su propio bolsillo.',
+  },
+  {
+    kind: 'goalPlan',
+    title: 'Te digo cuánto apartar',
+    say: 'Yo hago la cuenta: aparta doscientos mil al mes, y llegas a tiempo.',
+  },
+  {
+    kind: 'goalAdd',
+    title: 'Aporta cuando te paguen',
+    say: 'Cuando te paguen, toca «Aportar», y mueve la plata a su bolsillo. La meta avanza sola.',
+  },
+  {
+    kind: 'goalDone',
+    title: '¡Meta cumplida!',
+    say: 'Mes a mes la ves crecer, hasta que llegas. ¡Meta cumplida!',
+  },
+  {
+    kind: 'goalPro',
+    title: 'Tu primera meta, gratis',
+    say: 'Tu primera meta es gratis. Con Rumi Pro, todas las que quieras.',
+  },
+  { kind: 'end', title: 'Rumi', say: 'Rumi. Ahorra para lo que quieres. Gratis en Google Play.' },
+];
+
 export const PLAY_URL = 'https://play.google.com/store/apps/details?id=com.sotico91.rumiapp';
 
 export const TESTER_URL = 'https://sotico91.github.io/RumiApp/probar.html';
@@ -408,6 +451,13 @@ export const mascotVideos: Record<string, MascotVideo> = {
     cta: 'Ya en Google Play',
     tagline: 'Cuentas claras, mente tranquila.',
     qr: 'qr-play.png',
+  },
+  'rumi-metas-es': {
+    scenes: metasScenes,
+    cta: 'Ya en Google Play',
+    tagline: 'Ahorra para lo que quieres.',
+    qr: 'qr-play.png',
+    confetti: true,
   },
   // The first two videos with a Play ending, for when the store is live.
   'rumi-habla-play-es': {

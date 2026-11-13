@@ -43,6 +43,7 @@ Hay que alternar dos formatos: la **mascota** (reconocible, buena para el anunci
 | Hacia el 20 de noviembre | `rumi-tintos-es` |
 | 25 a 27 de noviembre (Black Friday) | `rumi-alcanza-es` |
 | 28 a 30 de noviembre (quincena) | `rumi-quincena-es` |
+| Primera semana de diciembre | `rumi-metas-es` (metas de ahorro, antes de la prima) |
 | 1 a 12 de diciembre (prima) | `rumi-prima-es` |
 | Para rellenar entre semana | `rumi-habla-play-es`, `rumi-recuerda-play-es` y los de 15 s con grabación real |
 | 30 de diciembre a 1 de enero | `rumi-reto-enero-es` |
@@ -61,6 +62,8 @@ Los videos ya traen el título de cada escena, pero no la frase completa. Al sub
 - **Para después:** X, Threads (sale solo con Instagram) y Pinterest. No valen el esfuerzo ahora.
 
 **Con cuidado:** separa una mañana para crear todo junto, con el mismo nombre, foto (el ícono) y bio en todas: "Tu plata clara, sin conectar tu banco 🐜 Gratis en Google Play". Y no publiques en las de Rumi hasta que Play apruebe; lo que sí puedes hacer antes es reservar los nombres y contar la historia desde tu cuenta personal.
+
+Imágenes, nombres, bios, los pasos para abrir cada cuenta y el texto de cada video: `redes/README.md`.
 
 **Ritmo realista para una sola persona:** 3 videos a la semana en la cuenta de Rumi (el mismo en TikTok, Reels y Shorts) y 1 post a la semana en tu cuenta personal. Responde todos los comentarios el primer día: la serie "¿me alcanza para…?" vive de ellos.
 

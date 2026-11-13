@@ -50,9 +50,9 @@ function mouthAt(frame: number, list: Scene[]): number {
   return 0;
 }
 
-function Rumi({ talk, wave, look }: { talk: number; wave: number; look: number }) {
+export function Rumi({ talk, wave, look, still }: { talk: number; wave: number; look: number; still?: boolean }) {
   const frame = useCurrentFrame();
-  const blink = frame % 96 < 4 || frame % 211 < 4 ? 0.1 : 1;
+  const blink = !still && (frame % 96 < 4 || frame % 211 < 4) ? 0.1 : 1;
   const armSwing = Math.sin(frame / 3.2) * 28 * wave;
   const mouthH = 6 + talk * 50;
   const mouthW = 64 + talk * 22;
@@ -1074,6 +1074,179 @@ function CommentCard() {
   );
 }
 
+const GOAL = { name: 'Viaje a Cartagena', target: 2400000, monthly: 200000, date: 'noviembre de 2027' };
+
+function Field({ label: l, value, delay, children }: { label: string; value?: string; delay: number; children?: ReactNode }) {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const p = pop(frame, fps, delay);
+  return (
+    <div style={{ marginBottom: 22, opacity: p, transform: `translateY(${(1 - p) * 20}px)` }}>
+      <div style={{ ...label, fontSize: 30 }}>{l}</div>
+      {value !== undefined ? (
+        <div style={{ marginTop: 8, padding: '16px 24px', borderRadius: 20, border: '3px solid #E3E8EA', fontSize: 38, fontWeight: 700 }}>
+          {value}
+        </div>
+      ) : (
+        children
+      )}
+    </div>
+  );
+}
+
+function Chip({ on, children }: { on?: boolean; children: ReactNode }) {
+  return (
+    <span
+      style={{
+        padding: '12px 20px',
+        borderRadius: 999,
+        fontSize: 28,
+        fontWeight: 700,
+        background: on ? brand.petrol700 : '#F1F4F5',
+        color: on ? '#fff' : '#5B6B73',
+      }}
+    >
+      {children}
+    </span>
+  );
+}
+
+function GoalFormCard() {
+  const frame = useCurrentFrame();
+  const name = GOAL.name.slice(0, Math.max(0, Math.floor((frame - 16) / 2)));
+  const picked = frame > 110;
+  return (
+    <Card>
+      <Field label="¿Para qué ahorras?" value={name} delay={10} />
+      <Field label="¿Cuánto necesitas?" value={frame > 60 ? cop(GOAL.target) : ''} delay={50} />
+      <Field label="¿Para cuándo?" delay={80}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginTop: 10 }}>
+          <Chip>Sin fecha</Chip>
+          <Chip>En 3 meses</Chip>
+          <Chip>En 6 meses</Chip>
+          <Chip on={picked}>En 1 año</Chip>
+        </div>
+      </Field>
+      <Field label="¿Dónde lo vas a guardar?" delay={130}>
+        <div style={{ marginTop: 10 }}>
+          <Chip on>Bolsillo nuevo: {GOAL.name}</Chip>
+        </div>
+      </Field>
+    </Card>
+  );
+}
+
+function GoalBox({ saved, delay = 14, children }: { saved: number; delay?: number; children?: ReactNode }) {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const p = pop(frame, fps, delay);
+  const ratio = Math.min(1, saved / GOAL.target);
+  return (
+    <Card delay={delay}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+        <span style={{ fontSize: 44, fontWeight: 700 }}>✈️&nbsp;&nbsp;{GOAL.name}</span>
+        <span style={{ ...label, fontWeight: 700 }}>{Math.round(ratio * 100)}%</span>
+      </div>
+      <div style={{ marginTop: 22, height: 34, borderRadius: 17, background: '#EEF1F2', overflow: 'hidden' }}>
+        <div style={{ width: `${ratio * 100 * p}%`, height: '100%', borderRadius: 17, background: ratio >= 1 ? brand.gold : brand.teal }} />
+      </div>
+      <div style={{ marginTop: 14, fontSize: 36 }}>
+        <b style={{ color: '#13635B' }}>{cop(saved)}</b> <span style={{ color: '#5B6B73' }}>de {cop(GOAL.target)}</span>
+      </div>
+      {children}
+    </Card>
+  );
+}
+
+function GoalPlanCard() {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const p = pop(frame, fps, 40);
+  return (
+    <GoalBox saved={0}>
+      <div
+        style={{
+          marginTop: 24,
+          padding: '20px 26px',
+          borderRadius: 24,
+          background: '#E3F5F2',
+          color: '#13635B',
+          fontSize: 36,
+          fontWeight: 700,
+          lineHeight: 1.3,
+          opacity: p,
+          transform: `scale(${0.9 + p * 0.1})`,
+        }}
+      >
+        Aparta {cop(GOAL.monthly)} al mes para llegar en {GOAL.date}.
+      </div>
+    </GoalBox>
+  );
+}
+
+function GoalAddCard() {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const press = interpolate(frame, [30, 36, 44], [1, 0.9, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
+  const move = pop(frame, fps, 50);
+  const saved = interpolate(frame, [95, 130], [0, GOAL.monthly], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
+  return (
+    <GoalBox saved={saved}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 24, marginTop: 24 }}>
+        <div
+          style={{
+            padding: '18px 36px',
+            borderRadius: 999,
+            background: brand.petrol700,
+            color: '#fff',
+            fontSize: 36,
+            fontWeight: 700,
+            transform: `scale(${press})`,
+          }}
+        >
+          Aportar
+        </div>
+        <div style={{ fontSize: 34, opacity: move, transform: `translateX(${(1 - move) * 30}px)` }}>
+          Banco → {GOAL.name.split(' ')[0]} · <b>{cop(GOAL.monthly)}</b>
+        </div>
+      </div>
+    </GoalBox>
+  );
+}
+
+function GoalDoneCard() {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const saved = interpolate(frame, [14, 80], [GOAL.monthly, GOAL.target], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
+  const done = pop(frame, fps, 84);
+  return (
+    <>
+      <Sequence from={70}>
+        <Confetti />
+      </Sequence>
+      <GoalBox saved={saved}>
+        <div style={{ marginTop: 22, fontSize: 46, fontWeight: 700, color: '#9A6B00', opacity: done, transform: `scale(${done})`, transformOrigin: 'left center' }}>
+          ¡Meta cumplida! 🎉
+        </div>
+      </GoalBox>
+    </>
+  );
+}
+
+function GoalProCard() {
+  return (
+    <Card>
+      <Row delay={18} icon="🎯" title="1 meta" detail="Gratis" />
+      <Row
+        delay={34}
+        icon="⭐"
+        title="Metas sin límite"
+        detail="Con Rumi Pro"
+      />
+    </Card>
+  );
+}
+
 const CARDS: Partial<Record<Scene['kind'], (p: { qr?: string; scene: Scene }) => ReactNode>> = {
   quick: QuickCard,
   limit: LimitCard,
@@ -1103,6 +1276,11 @@ const CARDS: Partial<Record<Scene['kind'], (p: { qr?: string; scene: Scene }) =>
   goal: GoalCard,
   streak: StreakCard,
   comment: CommentCard,
+  goalForm: GoalFormCard,
+  goalPlan: GoalPlanCard,
+  goalAdd: GoalAddCard,
+  goalDone: GoalDoneCard,
+  goalPro: GoalProCard,
 };
 
 function SceneView({ scene, video }: { scene: Scene; video: MascotVideo }) {
