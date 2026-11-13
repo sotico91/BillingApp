@@ -10,6 +10,13 @@ El detalle de cada cambio está en `git log`.
 - **Comentarios de código en inglés:** todos los comentarios del código van en inglés.
   Los textos que ve el usuario van en `src/i18n/translations.ts` (es/en).
 
+## 2026-11-13
+
+- **Versión 1.10.1, la primera para la App Store:**
+  - **Solo iPhone:** `supportsTablet` apagado en `app.json` y `TARGETED_DEVICE_FAMILY = 1` en el proyecto de iOS, que está en git y por eso EAS no lo regenera desde `app.json`. No hay iPad para probarla y así no se piden capturas de iPad; en iPad corre en modo iPhone.
+  - **Versión del proyecto de iOS al día:** decía 1.0 en `Info.plist` y `MARKETING_VERSION`; ahora 1.10.1, igual que `app.json`.
+  - Ficha, privacidad y notas para Apple en `docs/APP_STORE_LISTING.md`.
+
 ## 2026-11-11
 
 - **Versión 1.10.0, a partir de la encuesta a testers** (8 respuestas, NPS +75):
