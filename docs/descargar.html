@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Descarga Rumi</title>
+  <meta name="description" content="Descarga Rumi gratis en Google Play o en la App Store: anota tus gastos en segundos, pon topes y pregúntale a Rumi si te alcanza. Sin cuenta y sin conectar tu banco." />
+  <meta name="theme-color" content="#1B3A4B" />
+  <meta property="og:title" content="Descarga Rumi" />
+  <meta property="og:description" content="Gratis para Android y iPhone. Tu plata clara, sin conectar tu banco." />
+  <meta property="og:image" content="https://sotico91.github.io/RumiApp/assets/icon.png" />
+  <link rel="icon" href="assets/icon.png" />
+  <link rel="stylesheet" href="assets/site.css?v=2" />
+</head>
+<body>
+  <header class="hero">
+    <div class="wrap">
+      <nav class="nav">
+        <a class="brand" href="./"><img src="assets/icon.png" alt="" /><span>Rumi</span></a>
+        <div class="nav-links">
+          <a class="hide-sm" href="#iphone">iPhone</a>
+          <a class="hide-sm" href="#android">Android</a>
+          <a class="hide-sm" href="privacy-policy.html">Privacidad</a>
+        </div>
+      </nav>
+      <div class="hero-grid">
+        <div>
+          <span class="eyebrow">Gratis para Android y iPhone</span>
+          <h1>Descarga <em>Rumi</em></h1>
+          <p class="lead">
+            Anota tus gastos en segundos, ponles tope, ahorra con metas y pregúntale a Rumi si te
+            alcanza. Sin cuenta y sin conectar tu banco.
+          </p>
+          <div class="actions">
+            <a class="btn btn-primary" id="app-store" href="https://apps.apple.com/app/id6834433231">App Store (iPhone)</a>
+            <a class="btn btn-primary" id="play-install" href="https://play.google.com/store/apps/details?id=com.sotico91.rumiapp">Google Play (Android)</a>
+          </div>
+          <p class="fine" id="redirect-note">Gratis · Sin anuncios · Sin crear cuenta</p>
+        </div>
+        <div class="phone"><img src="assets/1-inicio.jpg" alt="Pantalla de Inicio de Rumi con el saldo disponible y el resumen del mes" /></div>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section id="iphone">
+      <h2 class="section-title">En iPhone</h2>
+      <p class="section-lead">Funciona en iPhone con iOS 16.4 o más reciente, en Colombia, Estados Unidos y Latinoamérica.</p>
+      <ol class="steps">
+        <li>
+          <h3>Abre la App Store</h3>
+          <p>Toca el botón de abajo, o abre la App Store y busca <strong>“Rumi gastos”</strong>. Es la del billete coral.</p>
+          <a class="btn btn-primary" href="https://apps.apple.com/app/id6834433231">Abrir en la App Store</a>
+        </li>
+        <li>
+          <h3>Toca “Obtener”</h3>
+          <p>Confirma con Face ID, Touch ID o tu contraseña de Apple. Es gratis: no se cobra nada al descargarla.</p>
+        </li>
+        <li>
+          <h3>Ábrela y empieza</h3>
+          <p>Escribe tu nombre, marca tus gastos hormiga y cuánta plata tienes hoy. No pide correo ni cuenta.</p>
+        </li>
+      </ol>
+    </section>
+
+    <section id="android">
+      <h2 class="section-title">En Android</h2>
+      <p class="section-lead">En cualquier celular con Google Play.</p>
+      <ol class="steps">
+        <li>
+          <h3>Abre Google Play</h3>
+          <p>Toca el botón de abajo, o abre la Play Store y busca <strong>“Rumi gastos”</strong>.</p>
+          <a class="btn btn-primary" id="play-install-2" href="https://play.google.com/store/apps/details?id=com.sotico91.rumiapp">Abrir en Google Play</a>
+        </li>
+        <li>
+          <h3>Toca “Instalar”</h3>
+          <p>Es gratis. Cuando termine, toca “Abrir”.</p>
+        </li>
+        <li>
+          <h3>Ábrela y empieza</h3>
+          <p>Escribe tu nombre, marca tus gastos hormiga y cuánta plata tienes hoy. No pide correo ni cuenta.</p>
+        </li>
+      </ol>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <a class="brand" href="./"><img src="assets/icon.png" alt="" /><span>Rumi</span></a>
+      <nav>
+        <a href="./">Inicio</a>
+        <a href="privacy-policy.html">Política de privacidad</a>
+        <a href="terms.html">Términos de uso</a>
+        <a href="mailto:edavidvelascop@gmail.com">Soporte</a>
+      </nav>
+      <span>© 2026 Sotico91</span>
+    </div>
+  </footer>
+  <script>
+    // The QR in the videos points here: send each phone straight to its store.
+    // On a computer (or with #ver in the link) the page just shows both options.
+    var ua = navigator.userAgent;
+    var isIOS = /iPhone|iPad|iPod/i.test(ua) || (/Macintosh/.test(ua) && 'ontouchend' in document);
+    var isAndroid = /Android/i.test(ua);
+    // Inside WhatsApp or Instagram the web Play page can show "item not found";
+    // hand the link to the Play Store app instead.
+    var playIntent =
+      'intent://details?id=com.sotico91.rumiapp#Intent;scheme=market;package=com.android.vending;' +
+      'S.browser_fallback_url=https%3A%2F%2Fplay.google.com%2Fstore%2Fapps%2Fdetails%3Fid%3Dcom.sotico91.rumiapp;end';
+    if (isAndroid) {
+      document.getElementById('play-install').href = playIntent;
+      document.getElementById('play-install-2').href = playIntent;
+    }
+    if (location.hash !== '#ver' && (isIOS || isAndroid)) {
+      document.getElementById('redirect-note').textContent = 'Abriendo tu tienda… Si no se abre, toca el botón.';
+      location.href = isIOS ? 'https://apps.apple.com/app/id6834433231' : playIntent;
+    }
+  </script>
+</body>
+</html>

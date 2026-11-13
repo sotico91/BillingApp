@@ -46,6 +46,9 @@ export type Scene = {
   say: string;
   chat?: [string, string];
   bars?: [string, number, number][];
+  /** `steps`: numbered steps (defaults to the tester steps). `button`: the store button in `store`. */
+  steps?: string[];
+  button?: string;
 };
 
 /** One mascot video: its scenes and the button on the closing card (with a QR when `qr` is set). */
@@ -169,13 +172,13 @@ export const testerScenes: Scene[] = [
   },
 ];
 
-// "Ya estoy en Google Play": the launch video. Use it only once production is live on Play;
-// the QR (public/qr-play.png) opens the listing.
+// "Ya estoy en Google Play y App Store": the launch video. Use it once both listings are public;
+// the QR (public/qr-descargar.png) opens docs/descargar.html, which sends each phone to its store.
 export const launchScenes: Scene[] = [
   {
     kind: 'hello',
-    title: '¡Ya estoy en Google Play!',
-    say: '¡Hola! Soy Rumi, y tengo una gran noticia: ¡ya estoy en Google Play!',
+    title: '¡Ya estoy en Google Play y App Store!',
+    say: '¡Hola! Soy Rumi, y tengo una gran noticia: ¡ya estoy en Google Play y en la App Store!',
   },
   {
     kind: 'thanks',
@@ -199,8 +202,8 @@ export const launchScenes: Scene[] = [
   },
   {
     kind: 'store',
-    title: 'Búscame en Google Play',
-    say: 'Búscame como Rumi en Google Play, o escanea el código. ¿Tienes iPhone? Muy pronto llego a la App Store.',
+    title: 'Búscame en tu tienda',
+    say: 'Búscame como Rumi en Google Play o en la App Store, o escanea el código y te llevo directo.',
   },
   {
     kind: 'end',
@@ -235,7 +238,7 @@ export const tintoScenes: Scene[] = [
   {
     kind: 'end',
     title: 'Rumi',
-    say: 'Rumi. Gratis en Google Play.',
+    say: 'Rumi. Gratis en Google Play y en la App Store.',
   },
 ];
 
@@ -270,7 +273,7 @@ export const quincenaScenes: Scene[] = [
       ['Salidas', 96000, 200000],
     ],
   },
-  { kind: 'end', title: 'Rumi', say: 'Rumi. Gratis en Google Play.' },
+  { kind: 'end', title: 'Rumi', say: 'Rumi. Gratis en Google Play y en la App Store.' },
 ];
 
 export const alcanzaScenes: Scene[] = [
@@ -293,7 +296,7 @@ export const alcanzaScenes: Scene[] = [
     title: '¿Y tú qué quieres comprar?',
     say: '¿Y tú qué quieres comprar? Déjamelo en los comentarios, y en el próximo video le pregunto a Rumi.',
   },
-  { kind: 'end', title: 'Rumi', say: 'Rumi. Gratis en Google Play.' },
+  { kind: 'end', title: 'Rumi', say: 'Rumi. Gratis en Google Play y en la App Store.' },
 ];
 
 export const bancoScenes: Scene[] = [
@@ -312,7 +315,7 @@ export const bancoScenes: Scene[] = [
     title: 'Solo tú entras',
     say: 'Me bloqueas con tu huella. Y no tengo anuncios, ni le vendo tus datos a nadie.',
   },
-  { kind: 'end', title: 'Rumi', say: 'Rumi. Tu plata clara, y solo para ti. Gratis en Google Play.' },
+  { kind: 'end', title: 'Rumi', say: 'Rumi. Tu plata clara, y solo para ti. Gratis en Google Play y en la App Store.' },
 ];
 
 export const primaScenes: Scene[] = [
@@ -331,7 +334,7 @@ export const primaScenes: Scene[] = [
     title: 'Y aparta para enero',
     say: 'Aparta una parte en una meta de ahorro, para que enero no te coja en rojo.',
   },
-  { kind: 'end', title: 'Rumi', say: 'Rumi. Gratis en Google Play.' },
+  { kind: 'end', title: 'Rumi', say: 'Rumi. Gratis en Google Play y en la App Store.' },
 ];
 
 export const retoScenes: Scene[] = [
@@ -393,7 +396,34 @@ export const metasScenes: Scene[] = [
     title: 'Tu primera meta, gratis',
     say: 'Tu primera meta es gratis. Con Rumi Pro, todas las que quieras.',
   },
-  { kind: 'end', title: 'Rumi', say: 'Rumi. Ahorra para lo que quieres. Gratis en Google Play.' },
+  { kind: 'end', title: 'Rumi', say: 'Rumi. Ahorra para lo que quieres. Gratis en Google Play y en la App Store.' },
+];
+
+// "Rumi en iPhone": how to install from the App Store. Publish once the App Store listing is live.
+export const iphoneScenes: Scene[] = [
+  {
+    kind: 'hello',
+    title: '¿Tienes iPhone?',
+    say: '¿Tienes iPhone? ¡Ya puedes tenerme! Te muestro cómo instalarme en un minuto.',
+  },
+  {
+    kind: 'store',
+    title: 'Búscame en la App Store',
+    say: 'Abre la App Store y busca «Rumi gastos». Soy el del billete coral.',
+    button: 'Obtener',
+  },
+  {
+    kind: 'steps',
+    title: 'Así me instalas',
+    say: 'Toca «Obtener» y confirma con Face ID o con tu clave de Apple. Es gratis, y no te pido cuenta ni correo.',
+    steps: ['Abre la App Store', 'Busca “Rumi gastos”', 'Toca “Obtener”', 'Confirma con Face ID'],
+  },
+  {
+    kind: 'privacy',
+    title: 'Tus datos, en tu iPhone',
+    say: 'Y todo se queda cifrado en tu iPhone, sin conectar tu banco.',
+  },
+  { kind: 'end', title: 'Rumi', say: 'Rumi. Ya en la App Store. ¡Escanea, y te llevo directo!' },
 ];
 
 export const PLAY_URL = 'https://play.google.com/store/apps/details?id=com.sotico91.rumiapp';
@@ -411,65 +441,71 @@ export const mascotVideos: Record<string, MascotVideo> = {
   },
   'rumi-lanzamiento-es': {
     scenes: launchScenes,
-    cta: 'Ya en Google Play',
-    tagline: 'Gratis para Android.',
-    qr: 'qr-play.png',
+    cta: 'Android y iPhone',
+    tagline: 'Gratis en Google Play y App Store.',
+    qr: 'qr-descargar.png',
     confetti: true,
   },
   'rumi-tintos-es': {
     scenes: tintoScenes,
-    cta: 'Ya en Google Play',
+    cta: 'Android y iPhone',
     tagline: 'Cuentas claras, mente tranquila.',
-    qr: 'qr-play.png',
+    qr: 'qr-descargar.png',
   },
   'rumi-quincena-es': {
     scenes: quincenaScenes,
-    cta: 'Ya en Google Play',
+    cta: 'Android y iPhone',
     tagline: 'Cuentas claras, mente tranquila.',
-    qr: 'qr-play.png',
+    qr: 'qr-descargar.png',
   },
   'rumi-alcanza-es': {
     scenes: alcanzaScenes,
-    cta: 'Ya en Google Play',
+    cta: 'Android y iPhone',
     tagline: 'Cuentas claras, mente tranquila.',
-    qr: 'qr-play.png',
+    qr: 'qr-descargar.png',
   },
   'rumi-banco-es': {
     scenes: bancoScenes,
-    cta: 'Ya en Google Play',
+    cta: 'Android y iPhone',
     tagline: 'Cuentas claras, mente tranquila.',
-    qr: 'qr-play.png',
+    qr: 'qr-descargar.png',
   },
   'rumi-prima-es': {
     scenes: primaScenes,
-    cta: 'Ya en Google Play',
+    cta: 'Android y iPhone',
     tagline: 'Cuentas claras, mente tranquila.',
-    qr: 'qr-play.png',
+    qr: 'qr-descargar.png',
   },
   'rumi-reto-enero-es': {
     scenes: retoScenes,
-    cta: 'Ya en Google Play',
+    cta: 'Android y iPhone',
     tagline: 'Cuentas claras, mente tranquila.',
-    qr: 'qr-play.png',
+    qr: 'qr-descargar.png',
   },
   'rumi-metas-es': {
     scenes: metasScenes,
-    cta: 'Ya en Google Play',
+    cta: 'Android y iPhone',
     tagline: 'Ahorra para lo que quieres.',
-    qr: 'qr-play.png',
+    qr: 'qr-descargar.png',
     confetti: true,
   },
-  // The first two videos with a Play ending, for when the store is live.
+  'rumi-iphone-es': {
+    scenes: iphoneScenes,
+    cta: 'Ya en la App Store',
+    tagline: 'Gratis para iPhone.',
+    qr: 'qr-descargar.png',
+  },
+  // The first two videos with a store ending, for when the store is live.
   'rumi-habla-play-es': {
     scenes: mascotScenes,
-    cta: 'Ya en Google Play',
+    cta: 'Android y iPhone',
     tagline: 'Cuentas claras, mente tranquila.',
-    qr: 'qr-play.png',
+    qr: 'qr-descargar.png',
   },
   'rumi-recuerda-play-es': {
     scenes: reminderScenes,
-    cta: 'Ya en Google Play',
+    cta: 'Android y iPhone',
     tagline: 'Para que ningún pago se te pase.',
-    qr: 'qr-play.png',
+    qr: 'qr-descargar.png',
   },
 };

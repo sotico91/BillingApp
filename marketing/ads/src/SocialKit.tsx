@@ -58,7 +58,7 @@ function Cover({ safeW, safeH, scale }: { safeW: number; safeH: number; scale: n
             {TAGLINE} 🐜
           </div>
           <div style={{ fontFamily: fonts.body, fontWeight: 500, fontSize: 32 * scale, color: '#CFE0E4', marginTop: 10 * scale }}>
-            Gratis en Google Play
+            Gratis en Google Play y App Store
           </div>
         </div>
       </div>

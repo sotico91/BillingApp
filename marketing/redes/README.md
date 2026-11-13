@@ -29,20 +29,20 @@ El mismo en todas las redes. Prueba en este orden y quédate con el primero que 
 4. `@holarumi`
 
 - **Nombre visible:** Rumi · Finanzas personales
-- **Enlace:** `https://play.google.com/store/apps/details?id=com.sotico91.rumiapp` (cuando sea pública). Mientras tanto, `https://sotico91.github.io/RumiApp/`.
+- **Enlace (bio):** `https://sotico91.github.io/RumiApp/descargar.html`. Abre Google Play en Android y la App Store en iPhone, así que sirve un solo enlace para todos. Mientras las tiendas no estén públicas, `https://sotico91.github.io/RumiApp/`.
 
 ## Bios
 
-- **TikTok** (máximo 80 caracteres): `Tu plata clara, sin conectar tu banco 🐜 Gratis en Google Play 👇`
+- **TikTok** (máximo 80 caracteres): `Tu plata clara, sin conectar tu banco 🐜 Gratis en Android y iPhone 👇`
 - **Instagram** (máximo 150):
   ```
   Tu plata clara, sin conectar tu banco 🐜
   Anota en segundos · Pregúntale a Rumi · Metas de ahorro
-  Gratis en Google Play 👇
+  Gratis en Android y iPhone 👇
   ```
 - **YouTube y Facebook:**
   ```
-  Rumi es una app de finanzas personales hecha en Colombia. Anotas un gasto en segundos, le pones topes a lo que quieres cuidar, cazas tus gastos hormiga, ahorras con metas y le preguntas a Rumi cosas como "¿me alcanza para unos tenis de 300 mil?". Sin cuenta, sin conectar tu banco: todo queda cifrado en tu teléfono. Gratis en Google Play; iPhone muy pronto.
+  Rumi es una app de finanzas personales hecha en Colombia. Anotas un gasto en segundos, le pones topes a lo que quieres cuidar, cazas tus gastos hormiga, ahorras con metas y le preguntas a Rumi cosas como "¿me alcanza para unos tenis de 300 mil?". Sin cuenta, sin conectar tu banco: todo queda cifrado en tu teléfono. Gratis en Google Play y en la App Store.
   ```
 
 ## Abrir las cuentas (una mañana, en este orden)
@@ -63,11 +63,12 @@ Pega el texto, y agrega los hashtags al final. Activa los subtítulos automátic
 
 | Video | Texto |
 |---|---|
-| `rumi-lanzamiento-es` | ¡Ya estoy en Google Play! 🎉 Gracias a los testers que me probaron estas semanas. Anota tus gastos, ponles tope y pregúntame lo que quieras de tu plata. Sin cuenta y sin conectar tu banco. Gratis, enlace en la bio 👆 |
+| `rumi-lanzamiento-es` | ¡Ya estoy en Google Play y en la App Store! 🎉 Gracias a los testers que me probaron estas semanas. Anota tus gastos, ponles tope y pregúntame lo que quieras de tu plata. Sin cuenta y sin conectar tu banco. Gratis, enlace en la bio 👆 |
 | `rumi-banco-es` | ¿Le darías la clave de tu banco a una app? 🔒 Yo no te la pido: todo queda cifrado en tu teléfono. #privacidad |
 | `rumi-tintos-es` | ¿Cuánto te gastas en tintos al año? ☕ Haz la cuenta… 🐜 #tinto #cafe |
 | `rumi-alcanza-es` | ¿Me alcanza para unos tenis de 300 mil? 👟 Déjame en comentarios qué quieres comprar y le pregunto a Rumi en el próximo video 👇 #blackfriday |
 | `rumi-quincena-es` | La quincena llegó… y se fue 💸 ¿A ti también te pasa? #quincena |
+| `rumi-iphone-es` | ¿Tienes iPhone? 🍎 Así instalas Rumi en un minuto: App Store → busca "Rumi gastos" → Obtener. Gratis, sin cuenta y sin conectar tu banco. Enlace en la bio 👆 #iphone |
 | `rumi-metas-es` | ¿Para qué estás ahorrando? ✈️ Crea tu meta, y Rumi te dice cuánto apartar cada mes. Tu primera meta es gratis. #metas |
 | `rumi-prima-es` | Llegó la prima 🎁 ¿Ya sabes en qué se te va a ir? Ponle un plan antes de que se esfume. #prima #diciembre |
 | `rumi-reto-enero-es` | Reto enero: 31 días anotando todo 📅 ¿Te le mides? Comenta "me le mido" y empezamos juntos el 1 de enero. #propositos2027 #retoenero |
@@ -90,7 +91,7 @@ Cámbiale lo que no sea tuyo: es un borrador, y funciona mejor con tus palabras.
 **Foto:** `avatar.png`
 **Descripción:**
 ```
-Novedades de Rumi, la app para saber en qué se te va la plata 🐜 Sin cuenta y sin conectar tu banco. Aquí te cuento cada versión nueva, trucos para ahorrar y lo que viene. Gratis en Google Play; iPhone muy pronto.
+Novedades de Rumi, la app para saber en qué se te va la plata 🐜 Sin cuenta y sin conectar tu banco. Aquí te cuento cada versión nueva, trucos para ahorrar y lo que viene. Gratis en Google Play y en la App Store.
 ```
 
 **Primer mensaje (puede salir ya, no promete la tienda):**
@@ -109,17 +110,19 @@ Por si no me conoces:
 Muy pronto, una gran noticia. Activa la campanita 🔔 para enterarte primero.
 ```
 
-**El día que Play apruebe:**
+**El día que salga en las dos tiendas** (si una aprueba antes, quita la otra del mensaje):
 ```
-🎉 *¡Ya estoy en Google Play!*
+🎉 *¡Ya estoy en Google Play y en la App Store!*
 
-Después de semanas de prueba con un grupo de testers (¡gracias! 💚), Rumi ya es pública y gratis para Android.
+Después de semanas de prueba con un grupo de testers (¡gracias! 💚), Rumi ya es pública y gratis para Android y iPhone.
 
-👉 https://play.google.com/store/apps/details?id=com.sotico91.rumiapp
+👉 https://sotico91.github.io/RumiApp/descargar.html
+(te lleva a tu tienda: Google Play en Android, App Store en iPhone)
+
+*En iPhone:* abre la App Store, busca "Rumi gastos", toca *Obtener* y confirma con Face ID.
+*En Android:* abre Google Play, busca "Rumi gastos" y toca *Instalar*.
 
 Si me pruebas y te gusto, déjame una reseña ⭐: me ayuda muchísimo a que más gente me encuentre.
-
-¿Tienes iPhone? Ya estoy en camino a la App Store 🍎
 ```
 
 **A los testers (por el grupo o por WhatsApp directo), el mismo día:**
@@ -133,3 +136,13 @@ Tu Pro de fundador sigue activo hasta que se cumplan sus 90 días. ¡Gracias! �
 ```
 
 **Ritmo:** 1 o 2 mensajes por semana: la novedad de cada versión, un truco (ej. "¿Sabías que puedes preguntarle a Rumi cuánto gastaste en domicilios este mes?") y el video de la semana. Más seguido cansa y la gente silencia el canal.
+
+**Solo para quien tiene iPhone (mensaje directo):**
+```
+¡Hola! Rumi ya está en la App Store 🍎 Para instalarla:
+1. Abre la App Store
+2. Busca "Rumi gastos" (es la del billete coral)
+3. Toca "Obtener" y confirma con Face ID
+O directo aquí: https://apps.apple.com/app/id6834433231
+Es gratis, no pide cuenta ni correo y no se conecta a tu banco. ¡Me cuentas qué tal! 💚
+```

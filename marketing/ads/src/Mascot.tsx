@@ -607,11 +607,11 @@ function Qr({ file, size }: { file: string; size: number }) {
   );
 }
 
-function StepsCard({ qr }: { qr?: string }) {
+function StepsCard({ qr, scene }: { qr?: string; scene: Scene }) {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const q = pop(frame, fps, 14);
-  const steps = [
+  const steps = scene.steps ?? [
     'Escanea el código',
     'Únete al grupo de testers',
     'Acepta la invitación de Google Play',
@@ -746,7 +746,7 @@ function FreeCard() {
   );
 }
 
-function StoreCard({ qr }: { qr?: string }) {
+function StoreCard({ qr, scene }: { qr?: string; scene: Scene }) {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const word = 'Rumi';
@@ -797,7 +797,7 @@ function StoreCard({ qr }: { qr?: string }) {
             transform: `scale(${press})`,
           }}
         >
-          Instalar
+          {scene.button ?? 'Instalar'}
         </div>
       </div>
       {qr ? (

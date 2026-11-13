@@ -38,7 +38,8 @@ Hay que alternar dos formatos: la **mascota** (reconocible, buena para el anunci
 
 | Cuándo | Video |
 |---|---|
-| El día de la aprobación | `rumi-lanzamiento-es` |
+| El día de la aprobación | `rumi-lanzamiento-es` (dice Google Play y App Store; si solo una tienda está pública, espera la otra o avísame para ajustarlo) |
+| El día que salga en la App Store | `rumi-iphone-es` (cómo instalar en iPhone) |
 | 1 o 2 días después | `rumi-banco-es` (quita el miedo antes de que alguien lo pregunte) |
 | Hacia el 20 de noviembre | `rumi-tintos-es` |
 | 25 a 27 de noviembre (Black Friday) | `rumi-alcanza-es` |
