@@ -21,7 +21,8 @@ Plan de crecimiento de Rumi tras salir de la prueba cerrada (escrito el 2026-11-
 | `rumi-lanzamiento-es` (nuevo, ~50 s) | Listo; publicarlo **el día que Play apruebe** | Anuncio del lanzamiento: gracias a los testers, qué hace, privacidad, gratis + Pro, cómo encontrarla. QR a la ficha. |
 | `rumi-habla-play-es`, `rumi-recuerda-play-es` (nuevos) | Listos | Los mismos dos de la mascota, que terminaban en "Muy pronto en tu tienda", ahora cierran con "Ya en Google Play" y el QR. |
 | `rumi-pruebame-es` | Se retira al salir a producción | Solo sirve si Google pide más días de prueba. |
-| `anota`, `pregunta`, `hormiga`, `todo`, `billeteras`, `privacidad` (15 s, grabación real) | Siguen sirviendo | Reels y TikTok cortos. Les falta la tarjeta final con "Ya en Google Play"; se puede agregar en `Ad.tsx`. |
+| `pregunta`, `hormiga`, `privacidad`, `anota` (grabación real, 21–40 s) | Al día (revisado 2026-11-13); final "Android y iPhone" con el QR de descarga | Reels y TikTok. A `anota` le falta la barra "Díctaselo a Rumi" (se agregó el día después de grabarlo); casi no se nota. |
+| `todo`, `billeteras` (grabación real) | **No publicar**: muestran el interruptor "Modo guiado / Formulario avanzado", quitado en la 1.8.1 | Hay que volver a grabarlos (`record.sh`) y cuadrar de nuevo los tiempos de `src/ads.ts`. |
 
 **Los próximos videos.** Lo que mejor funciona en TikTok, Reels y Shorts es corto (7 a 20 s), con un gancho en los dos primeros segundos y con algo de la vida real, no con una lista de funciones:
 

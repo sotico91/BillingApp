@@ -4,8 +4,9 @@ const end = {
   endTitle: 'Rumi',
   tagline: 'Cuentas claras, mente tranquila.',
   endLine: 'Tus finanzas claras. Tus datos se quedan en tu teléfono.',
-  // Not in the stores yet; switch to the store CTA at launch.
-  cta: 'Muy pronto',
+  // Both stores; the QR opens docs/descargar.html, which sends each phone to its store.
+  cta: 'Android y iPhone',
+  qr: 'qr-descargar.png',
   endSay: 'Rumi. Cuentas claras, mente tranquila.',
 };
 

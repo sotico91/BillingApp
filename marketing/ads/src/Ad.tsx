@@ -49,10 +49,13 @@ export type AdProps = {
   endLine: string;
   endSay?: string;
   cta: string;
+  /** QR beside the button (public/), e.g. the download page. */
+  qr?: string;
 };
 
 const HOOK_SECONDS = 2.2;
-const END_SECONDS = 3;
+// Long enough to scan the QR.
+const END_SECONDS = 4;
 // Breath after a voice line before the next step starts.
 const VOICE_GAP = 0.45;
 const VOICE_LEAD = 0.15;
@@ -245,7 +248,7 @@ function Captions({ p }: { p: AdProps }) {
   );
 }
 
-function EndCard({ title, tagline, line, cta }: { title: string; tagline: string; line: string; cta: string }) {
+function EndCard({ title, tagline, line, cta, qr }: { title: string; tagline: string; line: string; cta: string; qr?: string }) {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const pop = spring({ frame, fps, config: { damping: 13 } });
@@ -274,9 +277,9 @@ function EndCard({ title, tagline, line, cta }: { title: string; tagline: string
         }}>
         {line}
       </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 40, marginTop: 20, opacity: later }}>
       <div
         style={{
-          marginTop: 20,
           padding: '28px 64px',
           borderRadius: 999,
           background: brand.coral,
@@ -288,6 +291,12 @@ function EndCard({ title, tagline, line, cta }: { title: string; tagline: string
           transform: `translateY(${(1 - later) * 40}px)`,
         }}>
         {cta}
+      </div>
+      {qr ? (
+        <div style={{ padding: 16, borderRadius: 28, background: '#FFFFFF' }}>
+          <Img src={staticFile(qr)} style={{ width: 230, height: 230, display: 'block' }} />
+        </div>
+      ) : null}
       </div>
     </AbsoluteFill>
   );
@@ -371,7 +380,7 @@ export function Ad(props: AdProps) {
         <Captions p={props} />
       </Sequence>
       <Sequence from={hook + body}>
-        <EndCard title={props.endTitle} tagline={props.tagline} line={props.endLine} cta={props.cta} />
+        <EndCard title={props.endTitle} tagline={props.tagline} line={props.endLine} cta={props.cta} qr={props.qr} />
       </Sequence>
       <Soundtrack p={props} total={durationInFrames} />
     </AbsoluteFill>
