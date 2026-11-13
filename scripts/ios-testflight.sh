@@ -15,7 +15,8 @@ OUT="$HOME/Library/Caches/rumi-testflight"
 ARCHIVE="$OUT/Rumi.xcarchive"
 
 BASE="$(grep -m1 -E 'CURRENT_PROJECT_VERSION = ' "$ROOT/ios/Rumi.xcodeproj/project.pbxproj" | sed -E 's/.*= ([^;]+);/\1/')"
-BUILD="${BASE}.$(date +%Y%m%d).$((10#$(date +%H%M)))"
+# BUILD_NUMBER=<n> overrides it (e.g. a plain integer if App Store Connect does not show a build).
+BUILD="${BUILD_NUMBER:-${BASE}.$(date +%Y%m%d).$((10#$(date +%H%M)))}"
 VERSION="$(node -p "require('$ROOT/app.json').expo.version")"
 
 rm -rf "$OUT"
