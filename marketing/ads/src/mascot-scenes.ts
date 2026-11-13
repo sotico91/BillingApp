@@ -19,12 +19,16 @@ export type SceneKind =
   | 'play'
   | 'feedback'
   | 'iphone'
+  | 'thanks'
+  | 'features'
+  | 'free'
+  | 'store'
   | 'end';
 
 export type Scene = { kind: SceneKind; title: string; say: string };
 
 /** One mascot video: its scenes and the button on the closing card (with a QR when `qr` is set). */
-export type MascotVideo = { scenes: Scene[]; cta: string; tagline: string; qr?: string };
+export type MascotVideo = { scenes: Scene[]; cta: string; tagline: string; qr?: string; confetti?: boolean };
 
 export const mascotScenes: Scene[] = [
   {
@@ -144,6 +148,48 @@ export const testerScenes: Scene[] = [
   },
 ];
 
+// "Ya estoy en Google Play": the launch video. Use it only once production is live on Play;
+// the QR (public/qr-play.png) opens the listing.
+export const launchScenes: Scene[] = [
+  {
+    kind: 'hello',
+    title: '¡Ya estoy en Google Play!',
+    say: '¡Hola! Soy Rumi, y tengo una gran noticia: ¡ya estoy en Google Play!',
+  },
+  {
+    kind: 'thanks',
+    title: 'Gracias a mis testers',
+    say: 'Gracias a quienes me probaron estas semanas. Con sus ideas, mejoré para todos.',
+  },
+  {
+    kind: 'features',
+    title: 'Tu plata, clara',
+    say: 'Anota tus gastos en segundos, ponles un tope, caza los gastos hormiga, y pregúntame lo que quieras de tu plata.',
+  },
+  {
+    kind: 'privacy',
+    title: 'Tus datos, en tu teléfono',
+    say: 'Y todo se queda en tu teléfono: sin cuentas, y sin conectar tu banco.',
+  },
+  {
+    kind: 'free',
+    title: 'Gratis para empezar',
+    say: 'Descárgame gratis. Y si quieres más, está Rumi Pro.',
+  },
+  {
+    kind: 'store',
+    title: 'Búscame en Google Play',
+    say: 'Búscame como Rumi en Google Play, o escanea el código. ¿Tienes iPhone? Muy pronto llego a la App Store.',
+  },
+  {
+    kind: 'end',
+    title: 'Rumi',
+    say: 'Rumi. Cuentas claras, mente tranquila. ¡Descárgame hoy!',
+  },
+];
+
+export const PLAY_URL = 'https://play.google.com/store/apps/details?id=com.sotico91.rumiapp';
+
 export const TESTER_URL = 'https://sotico91.github.io/RumiApp/probar.html';
 
 export const mascotVideos: Record<string, MascotVideo> = {
@@ -154,5 +200,25 @@ export const mascotVideos: Record<string, MascotVideo> = {
     cta: 'Únete a la prueba',
     tagline: 'Escanea y sé de los primeros.',
     qr: 'qr-probar.png',
+  },
+  'rumi-lanzamiento-es': {
+    scenes: launchScenes,
+    cta: 'Ya en Google Play',
+    tagline: 'Gratis para Android.',
+    qr: 'qr-play.png',
+    confetti: true,
+  },
+  // The first two videos with a Play ending, for when the store is live.
+  'rumi-habla-play-es': {
+    scenes: mascotScenes,
+    cta: 'Ya en Google Play',
+    tagline: 'Cuentas claras, mente tranquila.',
+    qr: 'qr-play.png',
+  },
+  'rumi-recuerda-play-es': {
+    scenes: reminderScenes,
+    cta: 'Ya en Google Play',
+    tagline: 'Para que ningún pago se te pase.',
+    qr: 'qr-play.png',
   },
 };

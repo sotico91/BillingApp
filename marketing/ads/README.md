@@ -29,3 +29,7 @@ Con la misma mascota (`mascotVideos` en `src/mascot-scenes.ts`; `voice/mascot.ts
 
 - **Rumi te recuerda (`rumi-recuerda-es`, ~43 s):** recordatorios de recibos (día y hora de cada mes), cuotas de créditos con aviso un día antes, las notificaciones con el texto real de la app y las sugerencias de recordatorio.
 - **Pruébame (`rumi-pruebame-es`, ~65 s):** invita a la prueba cerrada de Google Play (Android en Colombia o EE. UU., cuenta de Google, 14 días), los cuatro pasos de `probar.html` (escanear, unirse al grupo, aceptar la invitación, instalar), qué cumple Rumi de lo que Google pide (política de privacidad pública, seguridad de los datos declarada, sin anuncios, cifrado), cómo reportar un error y que iPhone llega pronto. El QR (`public/qr-probar.png`) abre `docs/probar.html`. Al salir a producción, cambiar sus textos y el QR por el enlace de la ficha.
+- **Lanzamiento (`rumi-lanzamiento-es`, ~50 s):** "¡Ya estoy en Google Play!" con confeti, gracias a los testers (4,7/5), qué hace, privacidad, gratis + Rumi Pro, la búsqueda "Rumi" en Play y el QR (`public/qr-play.png`, abre la ficha). Publicarlo solo cuando Play apruebe producción.
+- **Con final de Play (`rumi-habla-play-es`, `rumi-recuerda-play-es`):** los mismos videos, que ahora cierran con "Ya en Google Play" y el QR de la ficha en vez de "Muy pronto en tu tienda".
+
+Estrategia para llegar a más gente e ideas para los próximos videos: `../ESTRATEGIA.md`.

@@ -691,6 +691,152 @@ function IphoneCard() {
   );
 }
 
+
+function ThanksCard() {
+  return (
+    <Card>
+      <div style={{ ...label, marginBottom: 14 }}>Lo que dijeron en la prueba</div>
+      <Row delay={20} icon="⭐" title="4,7 de 5" detail="Les gustó Rumi" />
+      <Row delay={34} icon="✍️" title="4,7 de 5" detail="Anotar un gasto es fácil" />
+      <Row delay={48} icon="💡" title="Sus ideas, en la app" detail="Fechas, metas de ahorro y más" />
+    </Card>
+  );
+}
+
+function FeaturesCard() {
+  return (
+    <Card>
+      <Row delay={16} icon="✍️" title="Anota en segundos" />
+      <Row delay={30} icon="🎯" title="Topes al mes" />
+      <Row delay={44} icon="🐜" title="Gastos hormiga" />
+      <Row delay={58} icon="💬" title="Pregúntale a Rumi" />
+    </Card>
+  );
+}
+
+function FreeCard() {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const pro = pop(frame, fps, 50);
+  return (
+    <Card>
+      <div style={{ ...big, fontSize: 56, color: '#13635B' }}>Gratis</div>
+      <div style={{ ...label, marginTop: 8 }}>Anotar, Inicio, cuentas y bloqueo con huella</div>
+      <div
+        style={{
+          marginTop: 34,
+          padding: '26px 30px',
+          borderRadius: 28,
+          background: '#FFF6E0',
+          opacity: pro,
+          transform: `translateY(${(1 - pro) * 30}px)`,
+        }}
+      >
+        <div style={{ fontSize: 42, fontWeight: 700, color: brand.petrol900 }}>
+          Rumi <span style={{ color: '#9A6B00' }}>PRO</span>
+        </div>
+        <div style={{ ...label, marginTop: 6 }}>Preguntas y topes sin límite, metas y Excel</div>
+      </div>
+    </Card>
+  );
+}
+
+function StoreCard({ qr }: { qr?: string }) {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const word = 'Rumi';
+  const typed = word.slice(0, Math.max(0, Math.floor((frame - 20) / 6)));
+  const hit = pop(frame, fps, 20 + word.length * 6 + 8);
+  const press = interpolate(frame, [90, 96, 104], [1, 0.9, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
+  const q = pop(frame, fps, 110);
+  return (
+    <Card>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 20,
+          padding: '22px 30px',
+          borderRadius: 999,
+          background: '#F1F4F5',
+          fontSize: 42,
+        }}
+      >
+        <span style={{ fontSize: 38 }}>🔍</span>
+        {typed}
+        <span style={{ opacity: frame % 20 < 10 ? 1 : 0, color: brand.petrol500, marginLeft: -16 }}>|</span>
+      </div>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 28,
+          marginTop: 34,
+          opacity: hit,
+          transform: `translateY(${(1 - hit) * 30}px)`,
+        }}
+      >
+        <Img src={staticFile('icon.png')} style={{ width: 130, height: 130, borderRadius: 30 }} />
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 46, fontWeight: 700 }}>Rumi</div>
+          <div style={{ ...label, fontSize: 32 }}>Finanzas personales</div>
+        </div>
+        <div
+          style={{
+            padding: '20px 34px',
+            borderRadius: 999,
+            background: '#13635B',
+            color: '#fff',
+            fontSize: 36,
+            fontWeight: 700,
+            transform: `scale(${press})`,
+          }}
+        >
+          Instalar
+        </div>
+      </div>
+      {qr ? (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 30, marginTop: 34, opacity: q }}>
+          <Qr file={qr} size={170} />
+          <div style={{ ...label, fontSize: 34 }}>O escanea y te lleva directo</div>
+        </div>
+      ) : null}
+    </Card>
+  );
+}
+
+/** Confetti falling over the launch hello. */
+function Confetti() {
+  const frame = useCurrentFrame();
+  const colors = [BILL, brand.teal, brand.gold, brand.petrol500];
+  return (
+    <>
+      {Array.from({ length: 36 }, (_, i) => {
+        const t = (frame - 20 - (i % 9) * 4) / 90;
+        if (t < 0 || t > 1) return null;
+        const x = ((i * 137) % 1040) + Math.sin(frame / 10 + i) * 30;
+        const y = -60 + t * 2000;
+        return (
+          <div
+            key={i}
+            style={{
+              position: 'absolute',
+              left: x,
+              top: y,
+              width: 22,
+              height: 36,
+              borderRadius: 6,
+              background: colors[i % colors.length],
+              transform: `rotate(${frame * 6 + i * 40}deg)`,
+              opacity: 0.9,
+            }}
+          />
+        );
+      })}
+    </>
+  );
+}
+
 const CARDS: Partial<Record<Scene['kind'], (p: { qr?: string }) => ReactNode>> = {
   quick: QuickCard,
   limit: LimitCard,
@@ -707,6 +853,10 @@ const CARDS: Partial<Record<Scene['kind'], (p: { qr?: string }) => ReactNode>> =
   play: PlayCard,
   feedback: FeedbackCard,
   iphone: IphoneCard,
+  thanks: ThanksCard,
+  features: FeaturesCard,
+  free: FreeCard,
+  store: StoreCard,
 };
 
 function SceneView({ scene, video }: { scene: Scene; video: MascotVideo }) {
@@ -717,7 +867,7 @@ function SceneView({ scene, video }: { scene: Scene; video: MascotVideo }) {
   const solo = scene.kind === 'hello' || scene.kind === 'end';
   return (
     <AbsoluteFill>
-      {scene.kind === 'hello' ? <Flying /> : null}
+      {scene.kind === 'hello' ? video.confetti ? <Confetti /> : <Flying /> : null}
       <div
         style={{
           position: 'absolute',
