@@ -16,4 +16,4 @@ done
 
 - `play-feature-es.png` / `play-feature-en.png` — gráfico destacado de Play (1024×500): ícono, nombre, lema y la parte de arriba de Inicio (`FeatureGraphic` en `../ads/src/StoreShot.tsx`, usa `icon.png` de esta carpeta). Se generan con el mismo bucle cambiando el patrón a `'play-feature-[a-z]+'` y la salida a `../store/$id.png`.
 
-Faltan: si se mantiene `supportsTablet`, las de iPad 13".
+No hacen falta las de iPad: `supportsTablet` está apagado.
