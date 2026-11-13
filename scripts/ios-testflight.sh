@@ -6,6 +6,9 @@
 # so it is <CURRENT_PROJECT_VERSION>.<YYYYMMDD>.<HHMM>, passed to xcodebuild
 # without touching the project files.
 set -euo pipefail
+# Store builds must not pick up .env.local (RevenueCat Test Store key, simulated purchases).
+# The real iOS key, once it exists, is passed as EXPO_PUBLIC_REVENUECAT_IOS_KEY in the environment.
+export EXPO_NO_DOTENV=1
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 TEAM_ID="3Q53N2B5XD"
 OUT="$HOME/Library/Caches/rumi-testflight"
