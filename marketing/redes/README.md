@@ -83,3 +83,53 @@ Primer post, para TikTok o Instagram (hablando a cámara, 30 a 45 s) o para Link
 > Llevo meses haciendo una app de finanzas personales en las noches, después del trabajo. Se llama Rumi. Nació porque yo llevaba mis gastos en Excel y nunca sabía en qué se me iba la plata. Quería algo que no me pidiera la clave del banco ni un correo, y que pudiera preguntarle "¿me alcanza?" como a una amiga. La probaron más de 12 personas durante dos semanas; me pidieron fechas, metas de ahorro y presupuesto por quincena, y ya están las dos primeras. Hoy está en Google Play, gratis. Si la pruebas, cuéntame qué le falta. 👉 @rumi.app
 
 Cámbiale lo que no sea tuyo: es un borrador, y funciona mejor con tus palabras. Después, una vez por semana: qué se aprendió, cuántas descargas lleva, qué pidió la gente y qué viene.
+
+## Canal de WhatsApp
+
+**Nombre:** Rumi · Finanzas personales
+**Foto:** `avatar.png`
+**Descripción:**
+```
+Novedades de Rumi, la app para saber en qué se te va la plata 🐜 Sin cuenta y sin conectar tu banco. Aquí te cuento cada versión nueva, trucos para ahorrar y lo que viene. Gratis en Google Play; iPhone muy pronto.
+```
+
+**Primer mensaje (puede salir ya, no promete la tienda):**
+```
+¡Hola! 👋 Soy Rumi.
+
+Este es mi canal: aquí te cuento cada novedad, te comparto trucos para que la plata te rinda y te aviso primero cuando llegue algo nuevo.
+
+Por si no me conoces:
+✍️ Anotas un gasto en segundos
+🎯 Le pones tope a lo que quieres cuidar
+🐜 Te muestro tus gastos hormiga
+💬 Me preguntas "¿me alcanza para…?" y te respondo con tus números
+🔒 Todo queda cifrado en tu teléfono: sin cuenta y sin conectar tu banco
+
+Muy pronto, una gran noticia. Activa la campanita 🔔 para enterarte primero.
+```
+
+**El día que Play apruebe:**
+```
+🎉 *¡Ya estoy en Google Play!*
+
+Después de semanas de prueba con un grupo de testers (¡gracias! 💚), Rumi ya es pública y gratis para Android.
+
+👉 https://play.google.com/store/apps/details?id=com.sotico91.rumiapp
+
+Si me pruebas y te gusto, déjame una reseña ⭐: me ayuda muchísimo a que más gente me encuentre.
+
+¿Tienes iPhone? Ya estoy en camino a la App Store 🍎
+```
+
+**A los testers (por el grupo o por WhatsApp directo), el mismo día:**
+```
+¡Hola! Rumi ya salió de la prueba y está pública en Google Play 🎉 Gracias por acompañarme estas semanas: varias cosas que pidieron ya están en la app.
+
+¿Me ayudas con 1 minuto? Entra a la ficha y déjame una reseña con lo que te pareció ⭐ Las primeras reseñas son las que hacen que más gente encuentre la app:
+https://play.google.com/store/apps/details?id=com.sotico91.rumiapp
+
+Tu Pro de fundador sigue activo hasta que se cumplan sus 90 días. ¡Gracias! 💚
+```
+
+**Ritmo:** 1 o 2 mensajes por semana: la novedad de cada versión, un truco (ej. "¿Sabías que puedes preguntarle a Rumi cuánto gastaste en domicilios este mes?") y el video de la semana. Más seguido cansa y la gente silencia el canal.
