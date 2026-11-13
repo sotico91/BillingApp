@@ -28,6 +28,7 @@ Estado (2026-11-13): Apple Developer Program pagado como persona natural; activa
 
 | Campo | Valor |
 |---|---|
+| Nombre en inglés | Rumi: Expense & Budget ("Rumi: spending & budget" ya estaba tomado en la App Store) |
 | Subtítulo (≤30) | es: Tu plata clara, sin tu banco · en: Spending made clear, no bank |
 | Categoría | Finanzas; secundaria: Productividad |
 | Derechos de contenido | No contiene contenido de terceros |
