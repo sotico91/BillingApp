@@ -69,6 +69,10 @@ Pega el texto, y agrega los hashtags al final. Activa los subtítulos automátic
 | `rumi-alcanza-es` | ¿Me alcanza para unos tenis de 300 mil? 👟 Déjame en comentarios qué quieres comprar y le pregunto a Rumi en el próximo video 👇 #blackfriday |
 | `rumi-quincena-es` | La quincena llegó… y se fue 💸 ¿A ti también te pasa? #quincena |
 | `rumi-iphone-es` | ¿Tienes iPhone? 🍎 Así instalas Rumi en un minuto: App Store → busca "Rumi gastos" → Obtener. Gratis, sin cuenta y sin conectar tu banco. Enlace en la bio 👆 #iphone |
+| `rumi-dictar-es` | Le hablo a mi app y anota sola 🎙️ "Gasté veinte mil en almuerzo con Nequi ayer" y listo: monto, categoría, cuenta y fecha. #productividad |
+| `rumi-deudas-es` | ¿Cuándo terminas de pagar tus deudas? 💳 Rumi te dice la fecha, y cuántos meses antes sales si abonas un poco más. #deudas #tarjetadecredito |
+| `rumi-excel-es` | ¿Todavía llevas tus gastos en Excel? 📊 Anota desde el celular y Rumi te arma el Excel del año solo. #excel |
+| `rumi-diapago-es` | Tu mes no empieza el 1, empieza cuando te pagan 📅 Dile a Rumi tu día de pago y todo se cuenta desde ahí. #quincena |
 | `rumi-metas-es` | ¿Para qué estás ahorrando? ✈️ Crea tu meta, y Rumi te dice cuánto apartar cada mes. Tu primera meta es gratis. #metas |
 | `rumi-prima-es` | Llegó la prima 🎁 ¿Ya sabes en qué se te va a ir? Ponle un plan antes de que se esfume. #prima #diciembre |
 | `rumi-reto-enero-es` | Reto enero: 31 días anotando todo 📅 ¿Te le mides? Comenta "me le mido" y empezamos juntos el 1 de enero. #propositos2027 #retoenero |

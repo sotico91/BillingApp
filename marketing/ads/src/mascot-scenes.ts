@@ -37,6 +37,14 @@ export type SceneKind =
   | 'goalAdd'
   | 'goalDone'
   | 'goalPro'
+  | 'dictate'
+  | 'dictateMore'
+  | 'debtBase'
+  | 'debtPlan'
+  | 'debtPro'
+  | 'excel'
+  | 'payStart'
+  | 'payEffect'
   | 'end';
 
 /** `chat`: the question and Rumi's answer (copy the app's real answer text). `bars`: limits for `limit`. */
@@ -426,6 +434,89 @@ export const iphoneScenes: Scene[] = [
   { kind: 'end', title: 'Rumi', say: 'Rumi. Ya en la App Store. ¡Escanea, y te llevo directo!' },
 ];
 
+// Four feature videos (2026-11-13). Texts on the cards are the app's own
+// (voice.*, debtPlan.*, settings.monthStart, excel.*); the amounts are an example.
+export const dictarScenes: Scene[] = [
+  {
+    kind: 'hello',
+    title: 'Le hablo a mi app y anota sola',
+    say: '¿Te da pereza escribir cada gasto? Solo dímelo.',
+  },
+  {
+    kind: 'dictate',
+    title: 'Díctaselo a Rumi',
+    say: 'Tocas «Díctaselo a Rumi» y dices: gasté veinte mil en almuerzo con Nequi ayer. Y yo lleno todo.',
+  },
+  {
+    kind: 'dictateMore',
+    title: 'Entiendo cómo hablas',
+    say: 'También entiendo cuando te pagan la quincena, o cuando pasas plata a tus ahorros.',
+  },
+  { kind: 'end', title: 'Rumi', say: 'Rumi. Tú hablas, yo anoto. Gratis en Google Play y en la App Store.' },
+];
+
+export const deudasScenes: Scene[] = [
+  {
+    kind: 'hello',
+    title: '¿Cuándo terminas de pagar tus deudas?',
+    say: '¿Tarjeta, el crédito del carro, un préstamo… y no sabes cuándo vas a terminar de pagar?',
+  },
+  {
+    kind: 'debtBase',
+    title: 'Tu fecha para salir de deudas',
+    say: 'En Patrimonio te digo en qué fecha sales de deudas, pagando solo las cuotas.',
+  },
+  {
+    kind: 'debtPlan',
+    title: 'Abona un poco más',
+    say: 'Y si abonas un poco más cada mes, te digo cuántos meses antes terminas, cuánto te ahorras en intereses, y cuál pagar primero.',
+  },
+  {
+    kind: 'debtPro',
+    title: 'Tu fecha, gratis',
+    say: 'Ver tu fecha es gratis. El plan para salir antes es de Rumi Pro, con siete días gratis en el plan anual.',
+  },
+  { kind: 'end', title: 'Rumi', say: 'Rumi. Sal de deudas antes. Gratis en Google Play y en la App Store.' },
+];
+
+export const excelScenes: Scene[] = [
+  {
+    kind: 'hello',
+    title: '¿Todavía llevas tus gastos en Excel?',
+    say: '¿Todavía llevas tus gastos en Excel? Llenar celdas cada noche cansa.',
+  },
+  {
+    kind: 'quick',
+    title: 'Anota desde el celular',
+    say: 'Conmigo anotas en segundos desde el celular, y yo pongo cada gasto en su categoría.',
+  },
+  {
+    kind: 'excel',
+    title: 'Tu Excel, armado solo',
+    say: 'Y cuando quieras tu Excel, te lo armo solo: un resumen del año con los doce meses, y una hoja por mes con cada movimiento.',
+  },
+  { kind: 'end', title: 'Rumi', say: 'Rumi. Deja de llenar celdas. Gratis en Google Play y en la App Store.' },
+];
+
+export const diaPagoScenes: Scene[] = [
+  {
+    kind: 'hello',
+    title: 'Tu mes no empieza el 1',
+    say: 'Si te pagan el quince, ¿por qué tu mes empieza el primero?',
+  },
+  {
+    kind: 'payStart',
+    title: 'Dime qué día te pagan',
+    say: 'En Ajustes, eliges: mi mes empieza el día quince.',
+  },
+  {
+    kind: 'payEffect',
+    title: 'Todo, desde tu día de pago',
+    say: 'Y todo se cuenta desde ahí: tu Inicio, tus topes, el pronóstico del mes, y lo que me preguntes.',
+  },
+  { kind: 'end', title: 'Rumi', say: 'Rumi. Tu mes, a tu ritmo. Gratis en Google Play y en la App Store.' },
+];
+
 export const PLAY_URL = 'https://play.google.com/store/apps/details?id=com.sotico91.rumiapp';
 
 export const TESTER_URL = 'https://sotico91.github.io/RumiApp/probar.html';
@@ -493,6 +584,30 @@ export const mascotVideos: Record<string, MascotVideo> = {
     scenes: iphoneScenes,
     cta: 'Ya en la App Store',
     tagline: 'Gratis para iPhone.',
+    qr: 'qr-descargar.png',
+  },
+  'rumi-dictar-es': {
+    scenes: dictarScenes,
+    cta: 'Android y iPhone',
+    tagline: 'Tú hablas, yo anoto.',
+    qr: 'qr-descargar.png',
+  },
+  'rumi-deudas-es': {
+    scenes: deudasScenes,
+    cta: 'Android y iPhone',
+    tagline: 'Sal de deudas antes.',
+    qr: 'qr-descargar.png',
+  },
+  'rumi-excel-es': {
+    scenes: excelScenes,
+    cta: 'Android y iPhone',
+    tagline: 'Deja de llenar celdas.',
+    qr: 'qr-descargar.png',
+  },
+  'rumi-diapago-es': {
+    scenes: diaPagoScenes,
+    cta: 'Android y iPhone',
+    tagline: 'Tu mes, a tu ritmo.',
     qr: 'qr-descargar.png',
   },
   // The first two videos with a store ending, for when the store is live.

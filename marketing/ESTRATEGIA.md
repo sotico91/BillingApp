@@ -46,6 +46,8 @@ Hay que alternar dos formatos: la **mascota** (reconocible, buena para el anunci
 | 25 a 27 de noviembre (Black Friday) | `rumi-alcanza-es` |
 | 28 a 30 de noviembre (quincena) | `rumi-quincena-es` |
 | Primera semana de diciembre | `rumi-metas-es` (metas de ahorro, antes de la prima) |
+| Semana del lanzamiento, intercalados | `rumi-dictar-es` (el que más sorprende), `rumi-diapago-es` (antes de la quincena del 30) |
+| Diciembre | `rumi-deudas-es` (con las compras de fin de año en tarjeta), `rumi-excel-es` (cierre del año) |
 | 1 a 12 de diciembre (prima) | `rumi-prima-es` |
 | Para rellenar entre semana | `rumi-habla-play-es`, `rumi-recuerda-play-es` y los de 15 s con grabación real |
 | 30 de diciembre a 1 de enero | `rumi-reto-enero-es` |

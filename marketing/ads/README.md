@@ -37,5 +37,6 @@ Con la misma mascota (`mascotVideos` en `src/mascot-scenes.ts`; `voice/mascot.ts
 - **Imágenes de perfil y portadas** (`social-avatar`, `social-youtube-banner`, `social-facebook-cover` en `src/SocialKit.tsx`): ver `../redes/README.md`.
 - **Rumi en iPhone (`rumi-iphone-es`, ~35 s):** cómo instalar desde la App Store: buscar "Rumi gastos", "Obtener", confirmar con Face ID; privacidad y el QR.
 - **Las dos tiendas (2026-11-13):** los videos con final de tienda dicen "Gratis en Google Play y en la App Store", el botón "Android y iPhone" y usan `public/qr-descargar.png`, que abre `docs/descargar.html`: esa página manda a Google Play en Android y a la App Store en iPhone. El QR viejo (`qr-play.png`, solo Play) queda para referencia.
+- **Cuatro funciones (2026-11-13):** `rumi-dictar-es` (Díctaselo a Rumi: la frase llena monto, categoría, cuenta y fecha), `rumi-deudas-es` (plan para salir de deudas: la fecha gratis, el abono extra con meses antes, intereses y orden en Pro), `rumi-excel-es` (Exportar a Excel por año, Pro) y `rumi-diapago-es` ("Mi mes empieza el día"). Los textos de las tarjetas son los de la app; los montos son de ejemplo.
 
 Estrategia para llegar a más gente e ideas para los próximos videos: `../ESTRATEGIA.md`.

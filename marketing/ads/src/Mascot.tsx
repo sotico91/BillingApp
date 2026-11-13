@@ -1247,6 +1247,228 @@ function GoalProCard() {
   );
 }
 
+function Pill({ children, on, delay = 0 }: { children: ReactNode; on?: boolean; delay?: number }) {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const p = pop(frame, fps, delay);
+  return (
+    <span
+      style={{
+        display: 'inline-block',
+        padding: '12px 22px',
+        borderRadius: 999,
+        fontSize: 32,
+        fontWeight: 700,
+        background: on ? brand.petrol700 : '#F1F4F5',
+        color: on ? '#fff' : '#5B6B73',
+        transform: `scale(${p})`,
+      }}
+    >
+      {children}
+    </span>
+  );
+}
+
+/** "Díctaselo a Rumi": listening, what it heard, and the form filled in. */
+function DictateCard() {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const listening = frame > 24 && frame < 110;
+  const heard = pop(frame, fps, 110);
+  const fields: [string, string][] = [
+    ['Monto', '$20.000'],
+    ['En qué', 'Alimentación · Almuerzo'],
+    ['De dónde', 'Nequi'],
+    ['Cuándo', 'Ayer'],
+  ];
+  return (
+    <Card>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 20,
+          padding: '20px 28px',
+          borderRadius: 999,
+          background: listening ? brand.coral : '#FDEDE8',
+          color: listening ? '#fff' : brand.coral,
+          fontSize: 38,
+          fontWeight: 700,
+        }}
+      >
+        <span style={{ fontSize: 40, transform: `scale(${listening ? 1 + Math.sin(frame / 3) * 0.15 : 1})` }}>🎙️</span>
+        {listening ? 'Te escucho…' : 'Díctaselo a Rumi'}
+        {listening ? (
+          <span style={{ display: 'flex', gap: 6, marginLeft: 'auto', alignItems: 'center' }}>
+            {[0, 1, 2, 3, 4].map((i) => (
+              <span key={i} style={{ width: 8, borderRadius: 4, background: '#fff', height: 14 + Math.abs(Math.sin(frame / 4 + i)) * 30 }} />
+            ))}
+          </span>
+        ) : null}
+      </div>
+      <div style={{ ...label, fontSize: 32, marginTop: 22, opacity: heard }}>
+        Escuché: “gasté veinte mil en almuerzo con Nequi ayer”
+      </div>
+      <div style={{ marginTop: 16 }}>
+        {fields.map(([k, v], i) => {
+          const p = pop(frame, fps, 125 + i * 10);
+          return (
+            <div key={k} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 38, padding: '10px 0', opacity: p, transform: `translateX(${(1 - p) * 30}px)` }}>
+              <span style={{ color: '#5B6B73' }}>{k}</span>
+              <b>{v}</b>
+            </div>
+          );
+        })}
+      </div>
+    </Card>
+  );
+}
+
+function DictateMoreCard() {
+  return (
+    <Card>
+      <Row delay={16} icon="💰" title="“Me pagaron la quincena”" detail="Lo anoto como ingreso" />
+      <Row delay={34} icon="🔁" title="“Pasé 100 mil a ahorros”" detail="Lo muevo de una cuenta a otra" />
+      <Row delay={52} icon="☕" title="“Un tinto de 4 mil”" detail="Gasto hormiga, en Café" />
+    </Card>
+  );
+}
+
+function DebtBaseCard() {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const d = pop(frame, fps, 60);
+  return (
+    <Card>
+      <div style={{ ...label, marginBottom: 6 }}>Plan para salir de deudas</div>
+      <Row delay={14} icon={dot(brand.coral)} title="Tarjeta de crédito" detail={`${cop(2400000)} · cuota ${cop(180000)}`} />
+      <Row delay={28} icon={dot(BILL)} title="Crédito del carro" detail={`${cop(11000000)} · cuota ${cop(420000)}`} />
+      <div
+        style={{
+          marginTop: 18,
+          padding: '20px 26px',
+          borderRadius: 24,
+          background: '#F1F4F5',
+          fontSize: 36,
+          lineHeight: 1.3,
+          opacity: d,
+          transform: `scale(${0.92 + d * 0.08})`,
+        }}
+      >
+        Pagando solo las cuotas, sales de deudas en <b>marzo de 2029</b>.
+      </div>
+    </Card>
+  );
+}
+
+function DebtPlanCard() {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const extra = interpolate(frame, [16, 46], [0, 200000], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
+  const a = pop(frame, fps, 56);
+  const b = pop(frame, fps, 80);
+  const c = pop(frame, fps, 104);
+  return (
+    <Card>
+      <div style={label}>Si abonas de más cada mes</div>
+      <div style={{ ...big, fontSize: 80 }}>+{cop(extra)}</div>
+      <div style={{ marginTop: 18, fontSize: 38, fontWeight: 700, color: '#13635B', opacity: a, lineHeight: 1.3 }}>
+        Sales de deudas en septiembre de 2028, 6 meses antes.
+      </div>
+      <div style={{ marginTop: 12, fontSize: 36, opacity: b }}>Te ahorras <b>{cop(780000)}</b> en intereses.</div>
+      <div style={{ ...label, marginTop: 12, fontSize: 30, opacity: c }}>Orden: primero la más cara (ahorras más intereses)</div>
+    </Card>
+  );
+}
+
+function DebtProCard() {
+  return (
+    <Card>
+      <Row delay={18} icon="📅" title="Cuándo sales de deudas" detail="Gratis" />
+      <Row delay={34} icon="⭐" title="Abono extra, intereses y orden" detail="Con Rumi Pro · 7 días gratis en el anual" />
+    </Card>
+  );
+}
+
+/** A spreadsheet that fills itself: the "Resumen" sheet and one tab per month. */
+function ExcelCard() {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const months = ['Ene', 'Feb', 'Mar', 'Abr'];
+  const rows: [string, number[]][] = [
+    ['Ingresos', [3500, 3500, 3700, 3500]],
+    ['Gastos', [2810, 3120, 2650, 2930]],
+    ['Ahorro', [690, 380, 1050, 570]],
+  ];
+  const cell = { padding: '12px 10px', borderRight: '2px solid #E3E8EA', borderBottom: '2px solid #E3E8EA', fontSize: 28 } as const;
+  return (
+    <Card>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 18 }}>
+        <span style={{ width: 52, height: 52, borderRadius: 12, background: '#1D6F42', color: '#fff', fontWeight: 700, fontSize: 30, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>X</span>
+        <span style={{ fontSize: 36, fontWeight: 700 }}>Rumi-2026.xlsx</span>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1.4fr repeat(4, 1fr)', border: '2px solid #E3E8EA', borderRadius: 12, overflow: 'hidden' }}>
+        <div style={{ ...cell, background: '#F1F4F5' }} />
+        {months.map((m) => (
+          <div key={m} style={{ ...cell, background: '#F1F4F5', fontWeight: 700, textAlign: 'center' }}>{m}</div>
+        ))}
+        {rows.map(([name, vals], r) => (
+          <div key={name} style={{ display: 'contents' }}>
+            <div style={{ ...cell, fontWeight: 700 }}>{name}</div>
+            {vals.map((v, c) => {
+              const p = pop(frame, fps, 20 + (r * 4 + c) * 4);
+              return (
+                <div key={`${name}${c}`} style={{ ...cell, textAlign: 'right', opacity: p, color: r === 2 ? '#13635B' : brand.ink }}>
+                  {(v / 1000).toFixed(2).replace('.', ',')}M
+                </div>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+      <div style={{ display: 'flex', gap: 10, marginTop: 18, flexWrap: 'wrap' }}>
+        {['Resumen', 'Enero', 'Febrero', 'Marzo', 'Abril', '…'].map((t, i) => (
+          <Pill key={t} on={i === 0} delay={70 + i * 6}>{t}</Pill>
+        ))}
+      </div>
+      <div style={{ ...label, marginTop: 18, fontSize: 30 }}>Ajustes → Exportar a Excel (por año) · Rumi Pro</div>
+    </Card>
+  );
+}
+
+function PayStartCard() {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const picked = frame > 50;
+  const r = pop(frame, fps, 70);
+  return (
+    <Card>
+      <div style={{ fontSize: 40, fontWeight: 700 }}>Mi mes empieza el día</div>
+      <div style={{ display: 'flex', gap: 12, marginTop: 20, flexWrap: 'wrap' }}>
+        <Pill on={!picked} delay={10}>El 1</Pill>
+        <Pill delay={14}>Día 5</Pill>
+        <Pill delay={18}>Día 10</Pill>
+        <Pill on={picked} delay={22}>Día 15</Pill>
+        <Pill delay={26}>Día 25</Pill>
+      </div>
+      <div style={{ marginTop: 28, padding: '20px 26px', borderRadius: 24, background: '#E3F5F2', color: '#13635B', fontSize: 38, fontWeight: 700, opacity: r }}>
+        Noviembre · 15 nov – 14 dic
+      </div>
+    </Card>
+  );
+}
+
+function PayEffectCard() {
+  return (
+    <Card>
+      <Row delay={14} icon={check} title="Inicio y tu resultado del mes" />
+      <Row delay={26} icon={check} title="Topes del mes" />
+      <Row delay={38} icon={check} title="Pronóstico de fin de mes" />
+      <Row delay={50} icon={check} title="Lo que le preguntes a Rumi" />
+    </Card>
+  );
+}
+
 const CARDS: Partial<Record<Scene['kind'], (p: { qr?: string; scene: Scene }) => ReactNode>> = {
   quick: QuickCard,
   limit: LimitCard,
@@ -1281,6 +1503,14 @@ const CARDS: Partial<Record<Scene['kind'], (p: { qr?: string; scene: Scene }) =>
   goalAdd: GoalAddCard,
   goalDone: GoalDoneCard,
   goalPro: GoalProCard,
+  dictate: DictateCard,
+  dictateMore: DictateMoreCard,
+  debtBase: DebtBaseCard,
+  debtPlan: DebtPlanCard,
+  debtPro: DebtProCard,
+  excel: ExcelCard,
+  payStart: PayStartCard,
+  payEffect: PayEffectCard,
 };
 
 function SceneView({ scene, video }: { scene: Scene; video: MascotVideo }) {
