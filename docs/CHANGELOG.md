@@ -15,6 +15,7 @@ El detalle de cada cambio está en `git log`.
 - **Versión 1.10.1, la primera para la App Store:**
   - **Solo iPhone:** `supportsTablet` apagado en `app.json` y `TARGETED_DEVICE_FAMILY = 1` en el proyecto de iOS, que está en git y por eso EAS no lo regenera desde `app.json`. No hay iPad para probarla y así no se piden capturas de iPad; en iPad corre en modo iPhone.
   - **Versión del proyecto de iOS al día:** decía 1.0 en `Info.plist` y `MARKETING_VERSION`; ahora 1.10.1, igual que `app.json`.
+  - **`NSPhotoLibraryUsageDescription`:** Apple rechazó la build 2 (ITMS-90683) porque `expo-file-system` (código heredado) menciona la fototeca. Rumi nunca la pide; el texto lo dice así.
   - Ficha, privacidad y notas para Apple en `docs/APP_STORE_LISTING.md`.
 
 ## 2026-11-11

@@ -52,6 +52,8 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Rumi never asks for your photos. A file component it includes mentions the photo library, so iOS needs this text.</string>
 	<key>NSFaceIDUsageDescription</key>
 	<string>Rumi uses Face ID to unlock your money data on this device.</string>
 	<key>NSMicrophoneUsageDescription</key>

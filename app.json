@@ -21,6 +21,7 @@
       "buildNumber": "1",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
+        "NSPhotoLibraryUsageDescription": "Rumi never asks for your photos. A file component it includes mentions the photo library, so iOS needs this text.",
         "CFBundleAllowMixedLocalizations": true,
         "CFBundleLocalizations": ["en", "es"],
         "CFBundleDisplayName": "Rumi",
