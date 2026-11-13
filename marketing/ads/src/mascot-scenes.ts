@@ -23,6 +23,8 @@ export type SceneKind =
   | 'features'
   | 'free'
   | 'store'
+  | 'tinto'
+  | 'tintoYear'
   | 'end';
 
 export type Scene = { kind: SceneKind; title: string; say: string };
@@ -188,6 +190,36 @@ export const launchScenes: Scene[] = [
   },
 ];
 
+// "Tintos": a short hook for Reels/TikTok. The daily coffee adds up to a month and a year,
+// then the ant spends. Ends on Play, so publish it once the listing is public.
+export const tintoScenes: Scene[] = [
+  {
+    kind: 'hello',
+    title: '¿Cuánto te gastas en tintos?',
+    say: '¿Un tintico de cuatro mil quinientos al día? Eso no es nada… ¿o sí?',
+  },
+  {
+    kind: 'tinto',
+    title: 'Haz la cuenta',
+    say: 'Cuatro mil quinientos, por veintidós días de trabajo: noventa y nueve mil pesos al mes.',
+  },
+  {
+    kind: 'tintoYear',
+    title: 'Al año, más de un millón',
+    say: 'Y al año, ¡más de un millón cien mil! Sin darte cuenta.',
+  },
+  {
+    kind: 'ants',
+    title: 'Caza tus gastos hormiga',
+    say: 'Yo te muestro tus gastos hormiga, y tú decides cuáles valen la pena.',
+  },
+  {
+    kind: 'end',
+    title: 'Rumi',
+    say: 'Rumi. Gratis en Google Play.',
+  },
+];
+
 export const PLAY_URL = 'https://play.google.com/store/apps/details?id=com.sotico91.rumiapp';
 
 export const TESTER_URL = 'https://sotico91.github.io/RumiApp/probar.html';
@@ -207,6 +239,12 @@ export const mascotVideos: Record<string, MascotVideo> = {
     tagline: 'Gratis para Android.',
     qr: 'qr-play.png',
     confetti: true,
+  },
+  'rumi-tintos-es': {
+    scenes: tintoScenes,
+    cta: 'Ya en Google Play',
+    tagline: 'Cuentas claras, mente tranquila.',
+    qr: 'qr-play.png',
   },
   // The first two videos with a Play ending, for when the store is live.
   'rumi-habla-play-es': {

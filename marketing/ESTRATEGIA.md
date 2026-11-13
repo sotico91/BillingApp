@@ -25,7 +25,7 @@ Plan de crecimiento de Rumi tras salir de la prueba cerrada (escrito el 2026-11-
 
 **Los próximos videos.** Lo que mejor funciona en TikTok, Reels y Shorts es corto (7 a 20 s), con un gancho en los dos primeros segundos y con algo de la vida real, no con una lista de funciones:
 
-1. **"¿Cuánto te gastas en tintos al mes?"** La mascota hace la cuenta de 4.500 × 22 días = 99.000 y remata con la pantalla de gastos hormiga.
+1. **"¿Cuánto te gastas en tintos al mes?"** (hecho: `rumi-tintos-es`) La mascota hace la cuenta de 4.500 × 22 días = 99.000 y remata con la pantalla de gastos hormiga.
 2. **"La quincena llegó… y se fue."** Día 15 contra día 22. Rumi responde "¿me alcanza hasta el 30?".
 3. **"Le pregunté a mi app si me alcanza para…"** Una serie con preguntas que manda la gente en los comentarios, respondidas con la app real. Es contenido gratis cada semana.
 4. **"No le doy mi clave del banco a ninguna app."** Privacidad en 10 s: sin correo, sin banco, cifrado.

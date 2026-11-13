@@ -837,6 +837,53 @@ function Confetti() {
   );
 }
 
+function TintoCard() {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const shown = Math.max(0, Math.min(22, Math.floor((frame - 20) / 3)));
+  const total = interpolate(frame, [20, 20 + 22 * 3], [0, 99000], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
+  return (
+    <Card>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, minHeight: 190 }}>
+        {Array.from({ length: shown }, (_, i) => (
+          <span key={i} style={{ fontSize: 56, transform: `scale(${pop(frame, fps, 20 + i * 3)})` }}>
+            ☕
+          </span>
+        ))}
+      </div>
+      <div style={{ ...label, marginTop: 24 }}>{cop(4500)} × 22 días</div>
+      <div style={{ ...big, fontSize: 100, color: brand.coral }}>{cop(total)}</div>
+      <div style={{ ...label }}>al mes</div>
+    </Card>
+  );
+}
+
+function TintoYearCard() {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const total = interpolate(frame, [15, 60], [99000, 1188000], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
+  const note = pop(frame, fps, 66);
+  return (
+    <Card>
+      <div style={label}>{cop(99000)} × 12 meses</div>
+      <div style={{ ...big, fontSize: 112, color: brand.coral }}>{cop(total)}</div>
+      <div
+        style={{
+          marginTop: 26,
+          padding: '20px 28px',
+          borderRadius: 24,
+          background: '#FFF3E8',
+          fontSize: 38,
+          opacity: note,
+          transform: `translateY(${(1 - note) * 24}px)`,
+        }}
+      >
+        🐜 Solo en tintos, en un año
+      </div>
+    </Card>
+  );
+}
+
 const CARDS: Partial<Record<Scene['kind'], (p: { qr?: string }) => ReactNode>> = {
   quick: QuickCard,
   limit: LimitCard,
@@ -857,6 +904,8 @@ const CARDS: Partial<Record<Scene['kind'], (p: { qr?: string }) => ReactNode>> =
   features: FeaturesCard,
   free: FreeCard,
   store: StoreCard,
+  tinto: TintoCard,
+  tintoYear: TintoYearCard,
 };
 
 function SceneView({ scene, video }: { scene: Scene; video: MascotVideo }) {
