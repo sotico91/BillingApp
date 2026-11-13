@@ -25,9 +25,23 @@ export type SceneKind =
   | 'store'
   | 'tinto'
   | 'tintoYear'
+  | 'payday'
+  | 'chat'
+  | 'lock'
+  | 'prima'
+  | 'goal'
+  | 'streak'
+  | 'comment'
   | 'end';
 
-export type Scene = { kind: SceneKind; title: string; say: string };
+/** `chat`: the question and Rumi's answer (copy the app's real answer text). `bars`: limits for `limit`. */
+export type Scene = {
+  kind: SceneKind;
+  title: string;
+  say: string;
+  chat?: [string, string];
+  bars?: [string, number, number][];
+};
 
 /** One mascot video: its scenes and the button on the closing card (with a QR when `qr` is set). */
 export type MascotVideo = { scenes: Scene[]; cta: string; tagline: string; qr?: string; confetti?: boolean };
@@ -220,6 +234,125 @@ export const tintoScenes: Scene[] = [
   },
 ];
 
+// Short hooks for Reels/TikTok (see marketing/ESTRATEGIA.md). All end on Play.
+// Rumi's answers in `chat` are the app's own texts (search.answerProjection*, search.answerAffordYes).
+export const quincenaScenes: Scene[] = [
+  {
+    kind: 'hello',
+    title: 'La quincena llegó… y se fue',
+    say: '¿Te pagaron el quince, y el veintidós ya no queda nada? Te entiendo.',
+  },
+  {
+    kind: 'payday',
+    title: 'Se esfuma en una semana',
+    say: 'Entre el arriendo, el mercado y los domicilios, la quincena se va en una semana.',
+  },
+  {
+    kind: 'chat',
+    title: 'Pregúntame cómo vas',
+    say: 'Pregúntame cómo vas a cerrar el mes, y te respondo con tus números, a tiempo para ajustar.',
+    chat: [
+      '¿Cómo voy a cerrar el mes?',
+      'A este ritmo gastarías cerca de $2.150.000 al cierre del mes. Con $2.000.000 de ingresos registrados, te faltarían unos $150.000.',
+    ],
+  },
+  {
+    kind: 'limit',
+    title: 'Ponle tope a lo que se va',
+    say: 'Ponle un tope a los domicilios y a las salidas, y llega tranquilo a la otra quincena.',
+    bars: [
+      ['Domicilios', 118000, 150000],
+      ['Salidas', 96000, 200000],
+    ],
+  },
+  { kind: 'end', title: 'Rumi', say: 'Rumi. Gratis en Google Play.' },
+];
+
+export const alcanzaScenes: Scene[] = [
+  {
+    kind: 'hello',
+    title: '¿Me alcanza para unos tenis?',
+    say: 'Le pregunté a Rumi si me alcanza para unos tenis de trescientos mil. Mira lo que me dijo.',
+  },
+  {
+    kind: 'chat',
+    title: 'Le pregunté a Rumi',
+    say: 'Revisa cómo voy este mes, y me dice con cuánto cerraría si los compro. Así decido sin culpa.',
+    chat: [
+      '¿Me alcanza para unos tenis de 300 mil?',
+      'Si compras algo de $300.000, a tu ritmo actual cerrarías el mes con unos $180.000 a favor.',
+    ],
+  },
+  {
+    kind: 'comment',
+    title: '¿Y tú qué quieres comprar?',
+    say: '¿Y tú qué quieres comprar? Déjamelo en los comentarios, y en el próximo video le pregunto a Rumi.',
+  },
+  { kind: 'end', title: 'Rumi', say: 'Rumi. Gratis en Google Play.' },
+];
+
+export const bancoScenes: Scene[] = [
+  {
+    kind: 'hello',
+    title: '¿Tu clave del banco a una app?',
+    say: '¿Le darías la clave de tu banco a una app? Yo tampoco te la pido.',
+  },
+  {
+    kind: 'privacy',
+    title: 'Tus datos, en tu teléfono',
+    say: 'Sin cuenta, sin correo y sin conectar tu banco. Tus datos se quedan cifrados en tu teléfono.',
+  },
+  {
+    kind: 'lock',
+    title: 'Solo tú entras',
+    say: 'Me bloqueas con tu huella. Y no tengo anuncios, ni le vendo tus datos a nadie.',
+  },
+  { kind: 'end', title: 'Rumi', say: 'Rumi. Tu plata clara, y solo para ti. Gratis en Google Play.' },
+];
+
+export const primaScenes: Scene[] = [
+  {
+    kind: 'hello',
+    title: '¿En qué se te va la prima?',
+    say: 'Llegó la prima de diciembre. ¿Ya sabes en qué se te va a ir?',
+  },
+  {
+    kind: 'prima',
+    title: 'Dale un plan a la prima',
+    say: 'Anótala como ingreso, y ponle un tope a los regalos y a las salidas de diciembre.',
+  },
+  {
+    kind: 'goal',
+    title: 'Y aparta para enero',
+    say: 'Aparta una parte en una meta de ahorro, para que enero no te coja en rojo.',
+  },
+  { kind: 'end', title: 'Rumi', say: 'Rumi. Gratis en Google Play.' },
+];
+
+export const retoScenes: Scene[] = [
+  {
+    kind: 'hello',
+    title: 'Reto enero: 31 días anotando todo',
+    say: '¿Tu propósito de año nuevo es ordenar la plata? Hagamos un reto: treinta y un días anotando todo.',
+  },
+  {
+    kind: 'quick',
+    title: 'Cada gasto, en segundos',
+    say: 'Cada gasto, en segundos: escribes «almuerzo», y yo lo pongo en su categoría.',
+  },
+  {
+    kind: 'streak',
+    title: 'Un día a la vez',
+    say: 'Un día a la vez. Al terminar enero, vas a ver en qué se te va la plata como nunca.',
+  },
+  {
+    kind: 'ants',
+    title: 'Y cazas tus gastos hormiga',
+    say: 'Y de paso, cazas tus gastos hormiga: esos que suman sin que te des cuenta.',
+  },
+  { kind: 'end', title: 'Rumi', say: 'Rumi. ¿Te le mides? Empieza el primero de enero.' },
+];
+
 export const PLAY_URL = 'https://play.google.com/store/apps/details?id=com.sotico91.rumiapp';
 
 export const TESTER_URL = 'https://sotico91.github.io/RumiApp/probar.html';
@@ -242,6 +375,36 @@ export const mascotVideos: Record<string, MascotVideo> = {
   },
   'rumi-tintos-es': {
     scenes: tintoScenes,
+    cta: 'Ya en Google Play',
+    tagline: 'Cuentas claras, mente tranquila.',
+    qr: 'qr-play.png',
+  },
+  'rumi-quincena-es': {
+    scenes: quincenaScenes,
+    cta: 'Ya en Google Play',
+    tagline: 'Cuentas claras, mente tranquila.',
+    qr: 'qr-play.png',
+  },
+  'rumi-alcanza-es': {
+    scenes: alcanzaScenes,
+    cta: 'Ya en Google Play',
+    tagline: 'Cuentas claras, mente tranquila.',
+    qr: 'qr-play.png',
+  },
+  'rumi-banco-es': {
+    scenes: bancoScenes,
+    cta: 'Ya en Google Play',
+    tagline: 'Cuentas claras, mente tranquila.',
+    qr: 'qr-play.png',
+  },
+  'rumi-prima-es': {
+    scenes: primaScenes,
+    cta: 'Ya en Google Play',
+    tagline: 'Cuentas claras, mente tranquila.',
+    qr: 'qr-play.png',
+  },
+  'rumi-reto-enero-es': {
+    scenes: retoScenes,
     cta: 'Ya en Google Play',
     tagline: 'Cuentas claras, mente tranquila.',
     qr: 'qr-play.png',

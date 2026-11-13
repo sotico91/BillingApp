@@ -26,13 +26,43 @@ Plan de crecimiento de Rumi tras salir de la prueba cerrada (escrito el 2026-11-
 **Los próximos videos.** Lo que mejor funciona en TikTok, Reels y Shorts es corto (7 a 20 s), con un gancho en los dos primeros segundos y con algo de la vida real, no con una lista de funciones:
 
 1. **"¿Cuánto te gastas en tintos al mes?"** (hecho: `rumi-tintos-es`) La mascota hace la cuenta de 4.500 × 22 días = 99.000 y remata con la pantalla de gastos hormiga.
-2. **"La quincena llegó… y se fue."** Día 15 contra día 22. Rumi responde "¿me alcanza hasta el 30?".
-3. **"Le pregunté a mi app si me alcanza para…"** Una serie con preguntas que manda la gente en los comentarios, respondidas con la app real. Es contenido gratis cada semana.
-4. **"No le doy mi clave del banco a ninguna app."** Privacidad en 10 s: sin correo, sin banco, cifrado.
-5. **"Reto enero: 31 días anotando todo."** Para el 1 de enero, cuando todo el mundo hace propósitos con la plata.
-6. **La prima de diciembre:** "¿En qué se te va la prima?", con un tope para ella. Sale en la primera quincena de diciembre.
+2. **"La quincena llegó… y se fue."** (hecho: `rumi-quincena-es`) El saldo del 15 al 20 y la pregunta "¿Cómo voy a cerrar el mes?", con la respuesta real de la app. "¿Me alcanza hasta el 30?" sin monto todavía no lo entiende Pregúntale a Rumi.
+3. **"Le pregunté a mi app si me alcanza para…"** (episodio 1 hecho: `rumi-alcanza-es`, unos tenis de 300 mil) Una serie con preguntas que manda la gente en los comentarios, respondidas con la app real. Es contenido gratis cada semana.
+4. **"No le doy mi clave del banco a ninguna app."** (hecho: `rumi-banco-es`) Privacidad en 10 s: sin correo, sin banco, cifrado.
+5. **"Reto enero: 31 días anotando todo."** (hecho: `rumi-reto-enero-es`) Para el 1 de enero, cuando todo el mundo hace propósitos con la plata.
+6. **La prima de diciembre:** (hecho: `rumi-prima-es`) "¿En qué se te va la prima?", con topes para regalos y salidas y una meta de ahorro para enero. Sale en la primera quincena de diciembre.
 
 Hay que alternar dos formatos: la **mascota** (reconocible, buena para el anuncio y la marca) y la **grabación de pantalla con voz en off de una persona** (da más confianza y tiene más alcance orgánico). Con tu cara o tu voz contando "hice esta app porque…" funciona mejor que cualquier animación.
+
+**Orden de publicación** (todos cierran con "Ya en Google Play", así que empiezan el día de la aprobación):
+
+| Cuándo | Video |
+|---|---|
+| El día de la aprobación | `rumi-lanzamiento-es` |
+| 1 o 2 días después | `rumi-banco-es` (quita el miedo antes de que alguien lo pregunte) |
+| Hacia el 20 de noviembre | `rumi-tintos-es` |
+| 25 a 27 de noviembre (Black Friday) | `rumi-alcanza-es` |
+| 28 a 30 de noviembre (quincena) | `rumi-quincena-es` |
+| 1 a 12 de diciembre (prima) | `rumi-prima-es` |
+| Para rellenar entre semana | `rumi-habla-play-es`, `rumi-recuerda-play-es` y los de 15 s con grabación real |
+| 30 de diciembre a 1 de enero | `rumi-reto-enero-es` |
+
+Los videos ya traen el título de cada escena, pero no la frase completa. Al subirlos, activa los subtítulos automáticos de TikTok o de Instagram y corrígelos.
+
+## Redes: ¿cuenta de Rumi o la tuya?
+
+**Las dos, cada una con su papel.**
+
+- **Cuentas de Rumi** en TikTok e Instagram, con el mismo nombre en todas (por ejemplo `@rumi.app` o `@rumifinanzas`, el que esté libre en las dos). Ahí van los videos de la mascota, los consejos y la serie "¿me alcanza para…?". Créalas como cuenta de empresa o de creador: así ves las estadísticas, pones el enlace de la ficha en la bio y después puedes pagar pauta desde ahí. Crea un correo solo para Rumi (por ejemplo, un Gmail nuevo) y abre las redes con él. Así quedan separadas de lo personal y, si algún día alguien te ayuda con ellas, no le pasas tu correo. Ese mismo correo puede reemplazar al personal como contacto en la ficha de Play.
+- **Tu cuenta personal** (TikTok o Instagram, y LinkedIn): la historia de quien la hizo. "Soy desarrollador, hice una app de finanzas que no pide tu banco": cómo nació, qué te pidieron los testers, cuántas descargas lleva. A esto se le llama construir en público, y es lo que más confianza y alcance da al principio, porque la gente sigue a personas, no a marcas. Siempre etiqueta a la cuenta de Rumi.
+- **Facebook:** crea la página de Rumi desde Meta Business Suite y conéctala con el Instagram. No hace falta publicar ahí a mano: Business Suite programa el mismo post en los dos. Hace falta para la pauta de Meta y para entrar como página a los grupos de Facebook de finanzas, que es donde está el público de más de 30 años.
+- **YouTube:** un canal de Rumi. Ahí suben los mismos videos como Shorts, y Play pide un enlace de YouTube para el video de la ficha.
+- **WhatsApp:** un canal de WhatsApp de Rumi para novedades y para los testers. En Colombia es donde la gente sí lee.
+- **Para después:** X, Threads (sale solo con Instagram) y Pinterest. No valen el esfuerzo ahora.
+
+**Con cuidado:** separa una mañana para crear todo junto, con el mismo nombre, foto (el ícono) y bio en todas: "Tu plata clara, sin conectar tu banco 🐜 Gratis en Google Play". Y no publiques en las de Rumi hasta que Play apruebe; lo que sí puedes hacer antes es reservar los nombres y contar la historia desde tu cuenta personal.
+
+**Ritmo realista para una sola persona:** 3 videos a la semana en la cuenta de Rumi (el mismo en TikTok, Reels y Shorts) y 1 post a la semana en tu cuenta personal. Responde todos los comentarios el primer día: la serie "¿me alcanza para…?" vive de ellos.
 
 ## Canales, de lo más barato a lo más caro
 

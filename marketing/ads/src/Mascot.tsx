@@ -220,12 +220,17 @@ function Bar({ name, spent, limit, delay }: { name: string; spent: number; limit
   );
 }
 
-function LimitCard() {
+function LimitCard({ scene }: { scene: Scene }) {
+  const bars = scene.bars ?? [
+    ['Domicilios', 96000, 150000],
+    ['Salidas', 172000, 200000],
+  ];
   return (
     <Card>
       <div style={{ ...label, marginBottom: 30 }}>Tope al mes</div>
-      <Bar name="Domicilios" spent={96000} limit={150000} delay={20} />
-      <Bar name="Salidas" spent={172000} limit={200000} delay={50} />
+      {bars.map(([name, spent, limit], i) => (
+        <Bar key={name} name={name} spent={spent} limit={limit} delay={20 + i * 30} />
+      ))}
     </Card>
   );
 }
@@ -884,7 +889,192 @@ function TintoYearCard() {
   );
 }
 
-const CARDS: Partial<Record<Scene['kind'], (p: { qr?: string }) => ReactNode>> = {
+/** The balance after payday, dropping as the big spends go out. */
+function PaydayCard() {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const spends: [string, string, number][] = [
+    ['15', 'Arriendo', 900000],
+    ['16', 'Mercado', 380000],
+    ['18', 'Domicilios', 118000],
+    ['20', 'Salidas', 162000],
+  ];
+  const start = 1800000;
+  let left = start;
+  const rows = spends.map(([day, name, n], i) => {
+    const p = pop(frame, fps, 20 + i * 18);
+    left -= n * Math.min(1, p);
+    return { day, name, n, p };
+  });
+  return (
+    <Card>
+      <div style={label}>Te quedan</div>
+      <div style={{ ...big, fontSize: 92, color: left < 400000 ? brand.coral : brand.petrol900 }}>{cop(left)}</div>
+      <div style={{ marginTop: 18 }}>
+        {rows.map(({ day, name, n, p }) => (
+          <div
+            key={name}
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              fontSize: 38,
+              padding: '10px 0',
+              opacity: p,
+              transform: `translateX(${(1 - p) * 40}px)`,
+            }}
+          >
+            <span>
+              <span style={{ color: '#5B6B73' }}>{day} nov · </span>
+              {name}
+            </span>
+            <span style={{ fontWeight: 700 }}>−{cop(n)}</span>
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+}
+
+/** A question to Rumi and the answer, typed after a short "thinking". */
+function ChatCard({ scene }: { scene: Scene }) {
+  const frame = useCurrentFrame();
+  const [q, a] = scene.chat ?? ['', ''];
+  const thinking = frame > 50 && frame < 80;
+  return (
+    <Card>
+      <div style={{ display: 'flex', flexDirection: 'column' }}>
+        <Bubble me delay={16}>
+          {q}
+        </Bubble>
+        {thinking ? (
+          <Bubble delay={50}>
+            <span style={{ letterSpacing: 8 }}>{'•••'.slice(0, 1 + (Math.floor(frame / 6) % 3))}</span>
+          </Bubble>
+        ) : null}
+        {frame >= 80 ? <Bubble delay={80}>{a}</Bubble> : null}
+      </div>
+    </Card>
+  );
+}
+
+function LockCard() {
+  return (
+    <Card>
+      <Row delay={18} icon="👆" title="Bloqueo con huella" detail="O con el PIN de tu teléfono" />
+      <Row delay={32} icon="🚫" title="Sin anuncios ni rastreo" />
+      <Row delay={46} icon={check} title="No recopila ni comparte tus datos" detail="Así está declarado en Google Play" />
+    </Card>
+  );
+}
+
+function PrimaCard() {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const inc = pop(frame, fps, 14);
+  return (
+    <Card>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', opacity: inc }}>
+        <span style={{ fontSize: 40, fontWeight: 700 }}>Prima de diciembre</span>
+        <span style={{ ...big, fontSize: 52, color: '#13635B' }}>+{cop(1300000)}</span>
+      </div>
+      <div style={{ ...label, margin: '30px 0 20px' }}>Tope en diciembre</div>
+      <Bar name="Regalos" spent={250000} limit={400000} delay={36} />
+      <Bar name="Salidas" spent={120000} limit={300000} delay={60} />
+    </Card>
+  );
+}
+
+function GoalCard() {
+  const frame = useCurrentFrame();
+  const p = interpolate(frame, [20, 70], [0, 0.6], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
+  const target = 600000;
+  return (
+    <Card>
+      <div style={label}>Meta de ahorro</div>
+      <div style={{ fontSize: 48, fontWeight: 700, marginTop: 6 }}>🎯 Enero sin sustos</div>
+      <div style={{ marginTop: 26, height: 34, borderRadius: 17, background: '#EEF1F2', overflow: 'hidden' }}>
+        <div style={{ width: `${(p / 1) * 100}%`, height: '100%', borderRadius: 17, background: brand.teal }} />
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 16, fontSize: 38 }}>
+        <span style={{ fontWeight: 700, color: '#13635B' }}>{cop(target * p)}</span>
+        <span style={{ color: '#5B6B73' }}>de {cop(target)}</span>
+      </div>
+    </Card>
+  );
+}
+
+/** January as a calendar filling up, one check a day. */
+function StreakCard() {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const done = Math.max(0, Math.min(31, Math.floor((frame - 16) / 2.5)));
+  return (
+    <Card>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+        <span style={{ fontSize: 44, fontWeight: 700 }}>Enero</span>
+        <span style={{ ...label, fontWeight: 700, color: '#13635B' }}>{done} de 31 días</span>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 12, marginTop: 24 }}>
+        {Array.from({ length: 31 }, (_, i) => {
+          const on = i < done;
+          const p = on ? pop(frame, fps, 16 + i * 2.5) : 0;
+          return (
+            <div
+              key={i}
+              style={{
+                height: 74,
+                borderRadius: 18,
+                background: on ? brand.teal : '#EEF1F2',
+                color: on ? '#fff' : '#5B6B73',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 30,
+                fontWeight: 700,
+                transform: `scale(${on ? 0.8 + p * 0.2 : 1})`,
+              }}
+            >
+              {on ? '✓' : i + 1}
+            </div>
+          );
+        })}
+      </div>
+    </Card>
+  );
+}
+
+/** A comment bubble inviting people to send their own question. */
+function CommentCard() {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const comments = ['¿Me alcanza para un viaje a Cartagena? ✈️', '¿Y para un celular de 1 millón? 📱', '¿Puedo pedir domicilio hoy? 🍔'];
+  return (
+    <Card>
+      <div style={{ ...label, marginBottom: 20 }}>💬 Comentarios</div>
+      {comments.map((c, i) => {
+        const p = pop(frame, fps, 18 + i * 16);
+        return (
+          <div
+            key={c}
+            style={{
+              fontSize: 38,
+              padding: '18px 26px',
+              marginBottom: 16,
+              borderRadius: 26,
+              background: '#F1F4F5',
+              opacity: p,
+              transform: `translateY(${(1 - p) * 24}px)`,
+            }}
+          >
+            {c}
+          </div>
+        );
+      })}
+    </Card>
+  );
+}
+
+const CARDS: Partial<Record<Scene['kind'], (p: { qr?: string; scene: Scene }) => ReactNode>> = {
   quick: QuickCard,
   limit: LimitCard,
   ants: AntsCard,
@@ -906,6 +1096,13 @@ const CARDS: Partial<Record<Scene['kind'], (p: { qr?: string }) => ReactNode>> =
   store: StoreCard,
   tinto: TintoCard,
   tintoYear: TintoYearCard,
+  payday: PaydayCard,
+  chat: ChatCard,
+  lock: LockCard,
+  prima: PrimaCard,
+  goal: GoalCard,
+  streak: StreakCard,
+  comment: CommentCard,
 };
 
 function SceneView({ scene, video }: { scene: Scene; video: MascotVideo }) {
@@ -936,7 +1133,7 @@ function SceneView({ scene, video }: { scene: Scene; video: MascotVideo }) {
         {scene.title}
       </div>
       {scene.kind === 'end' ? <EndCard video={video} /> : null}
-      {Body ? <Body qr={video.qr} /> : null}
+      {Body ? <Body qr={video.qr} scene={scene} /> : null}
     </AbsoluteFill>
   );
 }
