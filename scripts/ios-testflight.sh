@@ -10,6 +10,11 @@ set -euo pipefail
 # The real iOS key, once it exists, is passed as EXPO_PUBLIC_REVENUECAT_IOS_KEY in the environment.
 export EXPO_NO_DOTENV=1
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+# RevenueCat public iOS key (appl_…, also in EAS env production). Without it Pro stays off.
+if [[ -z "${EXPO_PUBLIC_REVENUECAT_IOS_KEY:-}" && -f "$ROOT/credentials/revenuecat-ios-public-key.txt" ]]; then
+  export EXPO_PUBLIC_REVENUECAT_IOS_KEY="$(cat "$ROOT/credentials/revenuecat-ios-public-key.txt")"
+fi
+[[ "${EXPO_PUBLIC_REVENUECAT_IOS_KEY:-}" == appl_* ]] || echo "warning: no appl_ RevenueCat key, Pro will be off in this build" >&2
 TEAM_ID="3Q53N2B5XD"
 OUT="$HOME/Library/Caches/rumi-testflight"
 ARCHIVE="$OUT/Rumi.xcarchive"
